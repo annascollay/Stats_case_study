@@ -110,7 +110,24 @@ quality_summary <- river_data %>%
 print(quality_summary)
 ```
 
-We observe that 95.89% of our data is "Good" by SEPA's quality control standards.
+We observe that the majority of the data is "Good" by SEPA's quality control standards. Given that only 0.01% of the data is "Unchecked", we remove these entries from the data set to ensure all of the data we use in our analysis has been quality checked.
+
+```{r}
+# Remove rows where QualityCode is 254
+river_data <- river_data %>%
+  filter(QualityCode != 254)
+
+# Produce new data segmentation by QualityCode split
+quality_summary <- river_data %>%
+  count(QualityCode) %>%
+  mutate(
+    Percentage = sprintf("%.2f%%", (n / sum(n)) * 100)
+  )
+
+print(quality_summary)
+```
+
+Next, 4.10% of the data is assigned quality code 100, meaning they are estimated. Many of the peaks we will observe are estimated, but we cannot remove these for now given these are the extreme values we are studying.
 
 ## Discharge summary statistics
 
@@ -135,3 +152,6 @@ ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
 ```
 
 ## Threshold selection for Peaks Over Threshold method
+
+To choose a defensible threshold $u$, we start by comparing standard empirical benchmarks such as setting a threshold yielding an average of 3-5 peaks per year or selecting the 95th percentile of discharge values.
+
