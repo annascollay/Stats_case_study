@@ -15,6 +15,7 @@ We start by loading the required libraries.
 
 ```{r, echo=TRUE}
 # Load required libraries
+library(ismev)
 library(tidyverse)
 library(knitr)
 library(kableExtra)
@@ -155,3 +156,195 @@ ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
 
 To choose a defensible threshold $u$, we start by comparing standard empirical benchmarks such as setting a threshold yielding an average of 3-5 peaks per year or selecting the 95th percentile of discharge values.
 
+Selecting $u_{3-5}$:
+
+```{r, echo=TRUE}
+# Calculate length of the dataset in years
+n_years <- as.numeric(difftime(max(river_data$Timestamp), 
+                               min(river_data$Timestamp), 
+                               units = "days")) / 365.25
+
+# Counts independent peak events for a given candidate threshold u
+get_annual_peak_rate <- function(u, data, n_yrs, min_gap_hours = 72) {
+  
+  # Filter observations above candidate threshold u
+  exceedances <- data %>% 
+    filter(Discharge > u) %>%
+    arrange(Timestamp)
+  
+  if (nrow(exceedances) == 0) return(0)
+  
+  # Flag new independent event if time since last exceedance > min_gap_hours
+  exceedances <- exceedances %>%
+    mutate(
+      time_gap = as.numeric(difftime(Timestamp, lag(Timestamp, default = Timestamp[5]), units = "hours")),
+      new_event = ifelse(time_gap > min_gap_hours | row_number() == 1, 1, 0),
+      event_id = cumsum(new_event)
+    )
+  
+  # Calculate number of unique peak events
+  n_peaks <- max(exceedances$event_id)
+  
+  return(n_peaks / n_yrs)
+}
+
+# Grid search over candidate discharge thresholds
+u_grid <- seq(quantile(river_data$Discharge, 0.80), 
+              quantile(river_data$Discharge, 0.99), 
+              length.out = 100)
+
+# Calculate annual peak rate for each threshold in the grid
+rate_results <- tibble(u = u_grid) %>%
+  mutate(peaks_per_year = map_dbl(u, ~get_annual_peak_rate(.x, river_data, n_years)))
+
+# Extract thresholds corresponding to target rates (e.g., 3, 4, and 5 peaks/year)
+u_target_3 <- rate_results %>% filter(peaks_per_year <= 3) %>% pull(u) %>% first()
+u_target_4 <- rate_results %>% filter(peaks_per_year <= 4) %>% pull(u) %>% first()
+u_target_5 <- rate_results %>% filter(peaks_per_year <= 5) %>% pull(u) %>% first()
+
+cat("Threshold for ~5 peaks/year:", round(u_target_5, 2), "m^3/s\n")
+cat("Threshold for ~4 peaks/year:", round(u_target_4, 2), "m^3/s\n")
+cat("Threshold for ~3 peaks/year:", round(u_target_3, 2), "m^3/s\n")
+```
+
+Selecting $u_{95}$:
+
+```{r, echo=TRUE}
+# Compute 95th percentile threshold
+u_95 <- quantile(river_data$Discharge, probs = 0.95, na.rm = TRUE)
+
+cat("95th Percentile Threshold", round(u_95, 2), "m^3/s\n")
+cat("Total record length:", round(n_years, 2), "years\n")
+```
+
+Now we turn our attention to using asymptotic theory to justify a selection of a threshold, $u$. Since the 95th Percentile Threshold is less than the threshold for 5 peaks/year, we choose $u_{emp} = u_3$ where $u_3$ is the threshold for 3 peaks per year.
+
+```{r, echo=TRUE}
+u_emp <- u_target_3
+```
+
+Calculating the average time to rise from 5 clean peaks:
+
+```{r, echo=TRUE}
+# Identify continuous exceedance clusters above u_emp
+exceedance_clusters <- river_data %>%
+  mutate(above_u = Discharge > u_emp) %>%
+  mutate(cluster_id = cumsum(above_u != lag(above_u, default = FALSE) & above_u)) %>%
+  filter(above_u)
+
+# Select top 5 largest distinct hydrograph crests
+top_5_peaks <- exceedance_clusters %>%
+  group_by(cluster_id) %>%
+  slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  arrange(desc(Discharge)) %>%
+  slice(1:5) %>%
+  arrange(Timestamp)
+
+# Measure duration between preceding trough and peak crest
+t_rise_list <- numeric(nrow(top_5_peaks))
+
+for (i in seq_len(nrow(top_5_peaks))) {
+  peak_time <- top_5_peaks$Timestamp[i]
+  window_start <- peak_time - (5 * 24 * 3600) # Look back 5 days for trough
+  
+  preceding_window <- river_data %>%
+    filter(Timestamp >= window_start & Timestamp <= peak_time)
+  
+  trough_time <- preceding_window %>%
+    filter(Discharge == min(Discharge)) %>%
+    pull(Timestamp) %>%
+    min()
+  
+  t_rise_list[i] <- as.numeric(difftime(peak_time, trough_time, units = "hours"))
+}
+
+# Append t_rise_list as a new column to top_5_peaks
+top_5_peaks <- top_5_peaks %>%
+  mutate(t_rise_hours = t_rise_list)
+
+t_rise_avg_hours <- mean(t_rise_list)
+min_sep_hours <- 3 * t_rise_avg_hours # Robson & Reed rule: 3 * T_rise
+
+cat("Measured T_rise for 5 clean peaks (hrs):", round(t_rise_list, 1), "\n")
+cat("Mean T_rise:", round(t_rise_avg_hours, 1), "hours\n")
+cat("Min Time Separation Criterion (3 * T_rise):", round(min_sep_hours, 1), "hours\n")
+```
+
+Implementing the Robson & Reed independence criteria:
+
+```{r, echo=TRUE}
+decluster_robson_reed <- function(data, u, min_sep_hrs, trough_drop_ratio = 2/3) {
+  
+  exceed_data <- data %>%
+    mutate(above_u = Discharge > u) %>%
+    mutate(cluster_id = cumsum(above_u != lag(above_u, default = FALSE) & above_u)) %>%
+    filter(above_u)
+  
+  if (nrow(exceed_data) == 0) return(tibble())
+  
+  cluster_peaks <- exceed_data %>%
+    group_by(cluster_id) %>%
+    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    arrange(Timestamp)
+  
+  independent_peaks <- list()
+  
+  for (i in seq_len(nrow(cluster_peaks))) {
+    if (length(independent_peaks) == 0) {
+      independent_peaks[[4]] <- cluster_peaks[i, ]
+    } else {
+      prev_peak <- independent_peaks[[length(independent_peaks)]]
+      curr_peak <- cluster_peaks[i, ]
+      
+      # Robson & Reed: Time interval between two adjacent peaks >= 3 * average time to rise
+      time_gap_hrs <- as.numeric(difftime(curr_peak$Timestamp, prev_peak$Timestamp, units = "hours"))
+      
+      # Inter-peak trough discharge <= (1 - 2/3) * previous peak
+      trough_data <- data %>%
+        filter(Timestamp >= prev_peak$Timestamp & Timestamp <= curr_peak$Timestamp)
+      
+      min_trough_discharge <- min(trough_data$Discharge, na.rm = TRUE)
+      
+      time_valid <- time_gap_hrs >= min_sep_hrs
+      drop_valid <- min_trough_discharge <= (1 - trough_drop_ratio) * prev_peak$Discharge
+      
+      if (time_valid && drop_valid) {
+        independent_peaks[[length(independent_peaks) + 1]] <- curr_peak
+      }
+    }
+  }
+  
+  bind_rows(independent_peaks)
+}
+
+# Run declustering
+declustered_events <- decluster_robson_reed(
+  data = river_data, 
+  u = u_emp, 
+  min_sep_hrs = min_sep_hours, 
+  trough_drop_ratio = 2/3
+)
+
+cat("Total independent peak events identified:", nrow(declustered_events), "\n")
+cat("Final annual rate:", round(nrow(declustered_events) / n_years, 2), "peaks/year\n")
+```
+
+Plotting the ismev asymptotic diagnostics:
+
+```{r, echo=TRUE}
+# Convert declustered peak magnitudes to 1D numeric vector for ismev
+peak_vector <- declustered_events$Discharge
+
+# Mean Residual Life (MRL) Plot
+mrl.plot(peak_vector)
+
+# Parameter Stability Plot
+gpd.fitrange(peak_vector, umin = 50, umax = 150)
+```
+
+```{r, echo=TRUE}
+gpd_fit <- gpd.fit(peak_vector, 90)
+gpd.diag(gpd_fit)
+```
