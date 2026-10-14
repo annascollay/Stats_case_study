@@ -1,0 +1,137 @@
+---
+title: "Statistical Case Studies, Project 1 Part 1, Code"
+author: "Anna Scollay, Lewis Seath, Zacharias Onyejiaka"
+date: "2026-10-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data import, parsing & cleaning
+
+We start by loading the required libraries.
+
+```{r, echo=TRUE}
+# Load required libraries
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+Next, we fetch data from our chosen river gauging station, *Don at Parkhill* in Scotland. For 10 years of 15-minute interval data, we are fetching over 350,000 records. To minimse the chances of a 504 Gateway Timeout, we will fetch the data in 1-year blocks and save it to our local disk so future runs do not have to re-download the data.
+
+```{r, echo=TRUE}
+# Extend R's default HTTP timeout limit to 300 seconds
+options(timeout = 300)
+
+cache_file <- "river_don_parkhill_flow.rds"
+
+if (file.exists(cache_file)) {
+  # Load from local cache if file already exists
+  river_data <- readRDS(cache_file)
+  
+} else {
+  # If no local cache exists, fetch from SEPA in 1-year chunks
+  start_years <- seq(2016, 2025, by = 1)
+  
+  fetch_chunk <- function(yr) {
+    from_date <- paste0(yr, "-08-31T00:00:00")
+    to_date   <- paste0(yr + 1, "-08-31T00:00:00")
+    
+    url <- paste0(
+      "https://timeseries.sepa.org.uk/KiWIS/KiWIS?",
+      "service=kisters&type=queryServices&datasource=0&",
+      "request=getTimeseriesValues&ts_path=1/234292/Q/15m.Cmd&",
+      "from=", from_date, "&to=", to_date, "&",
+      "metadata=true&returnfields=Timestamp,Value,Quality%20Code&format=csv"
+    )
+    
+    read_delim(
+      url, 
+      delim = ";", 
+      comment = "#",
+      col_names = c("Timestamp", "Discharge", "QualityCode"),
+      show_col_types = FALSE
+    )
+  }
+  
+  river_data <- map_dfr(start_years, fetch_chunk) %>%
+    mutate(Timestamp = as.POSIXct(Timestamp, format = "%Y-%m-%dT%H:%M:%S")) %>%
+    filter(!is.na(Discharge)) %>%
+    distinct(Timestamp, .keep_all = TRUE)
+  
+  # Save to local file so future runs don't need to use the API
+  saveRDS(river_data, cache_file)
+}
+```
+
+Shifting our attention to the `QualityCode` column, let us assess the data segmented by quality code.
+
+```{r, echo=FALSE}
+# Create the quality code table from SEPA guidance
+quality_code_table <- tibble(
+  `Code number` = c(50, 100, 140, 150, 200, 254),
+  `Code name` = c(
+    "Good", 
+    "Estimated", 
+    "Provisional", 
+    "Suspect", 
+    "Unchecked<br>(imported from legacy database)", 
+    "Unchecked"
+  ),
+  `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U")
+)
+
+# Generate table
+quality_code_table %>%
+  kable(
+    format = "html", 
+    escape = FALSE, 
+    caption = "Table 1 — quality codes",
+    align = c("c", "l", "c") # c = center, l = left
+  ) %>%
+  kable_styling(
+    bootstrap_options = c("bordered", "striped", "hover"), 
+    full_width = FALSE,
+    position = "left"
+  )
+```
+
+```{r, echo=TRUE}
+# Segment data by QualityCode split
+quality_summary <- river_data %>%
+  count(QualityCode) %>%
+  mutate(
+    Percentage = sprintf("%.2f%%", (n / sum(n)) * 100)
+  )
+
+print(quality_summary)
+```
+
+We observe that 95.89% of our data is "Good" by SEPA's quality control standards.
+
+## Discharge summary statistics
+
+Below is the statistical summary of the 15-minute flow discharge ($m^3/s$) for the River Don at Parkhill across the 10-year period:
+
+```{r, echo=TRUE}
+summary(river_data$Discharge)
+```
+
+## River Hydrograph
+
+```{r, echo=TRUE}
+ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(color = "steelblue", linewidth = 0.4) +
+  labs(
+    title = "Hydrograph: Don at Parkhill (15-min Interval)",
+    subtitle = "August 2016 – August 2026",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+```
+
+## Threshold selection for Peaks Over Threshold method

@@ -1,0 +1,19 @@
+ZACHARIAS:
+- Fix timestamps so we can plot
+  STATUS: timestamps still required for calculating time to peak.
+- convert from tidyverse plot to ismev plot
+  STATUS: Not required
+- Understand QualityCode
+  STATUS: Done, 95.89% of data "Good". Some extremes are extrapolated values so
+  we will have to decide whether we want to include these.
+
+ALL:
+- Try and select a threshold using:
+  - 3-5 peaks per year
+  - use asymptotic theory
+  - 95th percentile
+  - one informed by a mix of all
+- implement independence criteria
+
+OTHER:
+- riverdon.org -- could use for documentation
