@@ -1,5 +1,6 @@
 library(tidyverse)
 library(ismev)
+library(lubridate)
 
 ## Initial checks of the data
 # Checking the coverage of the data
@@ -28,42 +29,110 @@ interval_check <- river_data %>%
   count(interval_minutes, sort = TRUE)
 
 
-## 3-5 peaks method
-ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
-  geom_line(color = "steelblue", linewidth = 0.4) +
-  labs(
-    title = "Hydrograph: Don at Parkhill (15-min Interval)",
-    subtitle = "August 2016 – August 2026",
-    x = "Date",
-    y = expression("Discharge ("*m^3*"/s)")
-  ) +
-  theme_minimal()
 
+## 3-5 peaks method
 #Check the mean residual life plot
 mrl.plot(river_data$Discharge) # Stable around 80-200 
 
 # Checking the stability of parameter estimates
 gpd.fitrange(river_data$Discharge, 80, 200)
+gpd.fitrange(river_data$Discharge, 100)
 
-# Trying 100-200 the stability of parameter estimates
-gpd.fitrange(river_data$Discharge, 100, 200)
+# Trying 100 as a thresholdand visulasing this 
+u <- 100
 
-# Fit GPD
-gpd_fit <- gpd.fit(river_data$Discharge, 80)
+ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "steelblue", linewidth = 0.3) +
+  geom_hline(yintercept = u,
+             colour = "red",
+             linetype = "dashed") +
+  labs(
+    title = "River Don discharge with POT threshold",
+    x = "Date",
+    y = "Discharge (m³/s)"
+  ) +
+  theme_minimal()
 
-#Check parameter estimates
-gpd_fit$mle
+# trying multiple theresholds
+ggplot(river_data, aes(Timestamp, Discharge)) +
+  geom_line(colour = "steelblue", linewidth = 0.3) +
+  geom_hline(
+    yintercept = c(80, 100, 120, 150, 180),
+    colour = c("pink", "red", "orange", "green", "purple"),
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Comparing POT thresholds",
+    x = "Date",
+    y = "Discharge (m³/s)"
+  ) +
+  theme_minimal()
 
-# Plot diagnostics
-gpd.diag(gpd_fit)
 
-# Trying 100
-# Fit GPD
-gpd_fit <- gpd.fit(river_data$Discharge, 100)
+# Looking at it by year
+river_data_year <- river_data %>%
+  mutate(year = year(Timestamp))
 
-#Check parameter estimates
-gpd_fit$mle
+thresholds <- data.frame(
+  threshold = c(80, 100, 120, 150, 180),
+  colour = c("pink", "red", "orange", "green", "purple")
+)
 
-# Plot diagnostics
-gpd.diag(gpd_fit)
+ggplot(river_data_year, aes(Timestamp, Discharge)) +
+  geom_line(colour = "steelblue", linewidth = 0.3) +
+  geom_hline(
+    data = thresholds,
+    aes(yintercept = threshold, colour = factor(threshold)),
+    linetype = "dashed"
+  ) +
+  scale_colour_manual(
+    name = "Threshold (m³/s)",
+    values = thresholds$colour
+  ) +
+  facet_wrap(~ year, scales = "free_x") +
+  labs(
+    title = "Comparing POT thresholds by year",
+    x = "Date",
+    y = "Discharge (m³/s)"
+  ) +
+  theme_bw()
 
+
+# Lowering the thresholds for more per year and examining 
+thresholds <- data.frame(
+  threshold = c(40, 60, 70, 80, 100),
+  colour = c("blue", "green", "purple", "pink", "red")
+)
+
+ggplot(river_data_year, aes(Timestamp, Discharge)) +
+  geom_line(colour = "steelblue", linewidth = 0.3) +
+  geom_hline(
+    data = thresholds,
+    aes(yintercept = threshold, colour = factor(threshold)),
+    linetype = "dashed"
+  ) +
+  scale_colour_manual(
+    name = "Threshold (m³/s)",
+    values = thresholds$colour
+  ) +
+  facet_wrap(~ year, scales = "free_x") +
+  labs(
+    title = "Comparing POT thresholds by year",
+    x = "Date",
+    y = "Discharge (m³/s)"
+  ) +
+  theme_bw()
+
+# Calculating the number of candidate peaks at each threshold
+thresholds <- c(40, 60, 70, 80, 100)
+
+peak_counts <- data.frame(
+  threshold = thresholds,
+  candidate_peaks = sapply(thresholds, function(u) {
+    sum(peaks$Discharge > u)
+  })
+)
+
+peak_counts
+
+## Implementing indpendence Criterion
