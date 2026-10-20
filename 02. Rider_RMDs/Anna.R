@@ -1,6 +1,7 @@
 library(tidyverse)
 library(ismev)
 library(lubridate)
+library(patchwork)
 
 ## Initial checks of the data
 # Checking the coverage of the data
@@ -700,3 +701,145 @@ ggplot(
     y = "Spearman correlation"
   ) +
   theme_minimal()
+
+
+
+
+
+# Plot 95
+plot_95 <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(color = "steelblue", linewidth = 0.4) +
+  geom_hline(yintercept = u95, linetype = "dashed", color = "red") +
+  geom_point(data = peaks_95, color = "red", size = 1) +
+  labs(
+    title = "Peaks above the 95th percentile threshold",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+
+thresholds <- 0:max(river_data$Discharge)
+
+# Peaks per year for each threshold
+peaks_per_year <- sapply(thresholds, function(u) {
+  above <- river_data$Discharge > u
+  sum(above & !lag(above, default = FALSE))
+}) / n_distinct(river_data$water_year)
+
+
+# Find all thresholds giving 3-5 peaks per year
+selected_thresholds <- thresholds[
+  peaks_per_year >= 3 & peaks_per_year <= 5
+]
+
+# Identify the peak for each exceedance period at each threshold
+peaks_35_all <- purrr::map_dfr(selected_thresholds, function(u) {
+  
+  river_data %>%
+    arrange(Timestamp) %>%
+    mutate(
+      above = Discharge > u,
+      start = above & !lag(above, default = FALSE),
+      run = cumsum(start)
+    ) %>%
+    filter(above) %>%
+    group_by(run) %>%
+    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    mutate(threshold = u)
+  
+})
+
+# Categorise the peaks by discharge
+peaks_coloured <- peaks_35_all %>%
+  distinct(Timestamp, Discharge) %>%
+  mutate(
+    Peak_category = if_else(
+      Discharge >= min(selected_thresholds) &
+        Discharge <= max(selected_thresholds),
+      "Within threshold band",
+      "Above threshold band"
+    )
+  )
+
+# Plot all thresholds on the hydrograph
+plot_35 <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(color = "steelblue", linewidth = 0.4) +
+  geom_point(
+    data = peaks_coloured,
+    aes(color = Peak_category),
+    size = 1.5
+  )  +
+  annotate(
+    "rect",
+    xmin = min(river_data$Timestamp),
+    xmax = max(river_data$Timestamp),
+    ymin = min(selected_thresholds),
+    ymax = max(selected_thresholds),
+    fill = "red",
+    alpha = 0.15
+  ) + scale_color_manual(
+    values = c(
+      "Within threshold band" = "red",
+      "Above threshold band" = "red4"
+    ),
+    name = "Peak classification"
+  ) +
+  labs(
+    title = "Peaks using the 3-5 peaks per year method",
+    subtitle = "All qualifying thresholds (73-113 m³/s)",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+# GPD diagnostic threshold
+# 80 was used for the exploratory GPD fit
+u_gpd <- 80
+
+# Identify peaks above 80 m³/s
+peaks_gpd <- river_data %>%
+  arrange(Timestamp) %>%
+  mutate(
+    above = Discharge > u_gpd,
+    start = above & !lag(above, default = FALSE),
+    run = cumsum(start)
+  ) %>%
+  filter(above) %>%
+  group_by(run) %>%
+  slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+  ungroup()
+
+# Common plot settings
+base_plot <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(color = "steelblue", linewidth = 0.35) +
+  labs(
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal(base_size = 12)
+
+# GPD exploratory threshold
+plot_gpd <- base_plot +
+  geom_hline(
+    yintercept = u_gpd,
+    color = "red",
+    linetype = "dashed"
+  ) +
+  geom_point(
+    data = peaks_gpd,
+    color = "red",
+    size = 1.3
+  ) +
+  labs(
+    title = "Peaks using the Extreme-Value Theory (GPD)",
+    subtitle = "Exploratory threshold = 80 m³/s"
+  )
+
+plot_35 / plot_95 / plot_gpd
+
+
