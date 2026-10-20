@@ -260,7 +260,7 @@ base_plot <- ggplot(
   river_data,
   aes(x = Timestamp, y = Discharge)
 ) +
-  geom_line(color = "steelblue", linewidth = 0.35) +
+  geom_line(color = "#5298BC", linewidth = 0.35) +
   labs(
     x = "Date",
     y = expression("Discharge ("*m^3*"/s)")
@@ -270,8 +270,8 @@ base_plot <- ggplot(
 
 # 95th percentile threshold plot
 plot_95 <- base_plot +
-  geom_hline(yintercept = u95, linetype = "dashed", color = "red") +
-  geom_point(data = peaks_95, color = "red", size = 1) +
+  geom_hline(yintercept = u95, linetype = "dashed", color = "#AA1945") +
+  geom_point(data = peaks_95, color = "#AA1945", size = 1) +
   labs(
     title = "Peaks above the 95th percentile threshold",
     subtitle = expression("95th percentile threshold: 57.878 "*m^3*"/s")
@@ -326,12 +326,12 @@ plot_35 <- base_plot + geom_point(
     xmax = max(river_data$Timestamp),
     ymin = min(selected_thresholds),
     ymax = max(selected_thresholds),
-    fill = "red",
+    fill = "#AA1945",
     alpha = 0.15
   ) + scale_color_manual(
     values = c(
-      "Within threshold band" = "red",
-      "Above threshold band" = "red4"
+      "Within threshold band" = "#AA1945",
+      "Above threshold band" = "#6E0C2A"
     ),
     name = "Peak classification"
   ) +
@@ -345,12 +345,12 @@ plot_35 <- base_plot + geom_point(
 plot_gpd <- base_plot +
   geom_hline(
     yintercept = u_gpd,
-    color = "red",
+    color = "#AA1945",
     linetype = "dashed"
   ) +
   geom_point(
     data = peaks_gpd,
-    color = "red",
+    color = "#AA1945",
     size = 1.3
   ) +
   labs(
