@@ -340,7 +340,7 @@ final_u <- 65
 q <- river_data$Discharge
 t <- river_data$Timestamp
 
-# IMPORTANT:
+
 # independent_peaks() from Lewis's code.
 # Re-run its function definition after sorting river_data.
 
@@ -624,7 +624,7 @@ analyse_threshold <- function(u) {
     return(tibble(
       threshold = u,
       events = nrow(ep),
-      events_per_year = nrow(ep) / years_observed,
+      events_per_year = nrow(ep) / ep$water_year,
       median_flow = NA_real_,
       median_time = NA_real_,
       IQR_time = NA_real_,
@@ -653,7 +653,7 @@ analyse_threshold <- function(u) {
   tibble(
     threshold = u,
     events = nrow(ep),
-    events_per_year = nrow(ep) / years_observed,
+    events_per_year = nrow(ep) / ep$water_year,
     median_flow = median(ep$max_flow),
     median_time = median(ep$time_to_peak_h),
     IQR_time = IQR(ep$time_to_peak_h),
@@ -704,7 +704,8 @@ ggplot(
 
 
 
-
+#------------------------------------------------------
+#Threshold Comparison 
 
 # Plot 95
 plot_95 <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
@@ -841,5 +842,51 @@ plot_gpd <- base_plot +
   )
 
 plot_35 / plot_95 / plot_gpd
+
+#--------------------------------------------------------------------
+# Scenario based analyse
+
+ggplot(events,
+       aes(x = time_to_peak_h,
+           y = Discharge)) +
+  geom_point(
+    color = "steelblue",
+    alpha = 0.7,
+    size = 2
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = " Variation in Flood Hydrograph Parameters",
+    subtitle = "River Don at Parkhill",
+    x = "Time to peak (hours)",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+ggplot(events,
+       aes(x = max_flow,
+           y = Discharge)) +
+  geom_point(
+    color = "steelblue",
+    alpha = 0.7,
+    size = 2
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = TRUE,
+    color = "red"
+  ) +
+  labs(
+    title = " Variation in Flood Hydrograph Parameters",
+    subtitle = "River Don at Parkhill",
+    x = "Max flow",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
 
 
