@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo=FALSE}
+```{r Loading libraries, include=FALSE}
 # Load required libraries
 library(tidyverse)
 library(knitr)
@@ -19,7 +19,7 @@ library(kableExtra)
 library(ismev)
 ```
 
-```{r, echo=FALSE}
+```{r loading data, include=FALSE}
 # Extend R's default HTTP timeout limit to 300 seconds
 options(timeout = 300)
 
@@ -72,7 +72,7 @@ if (file.exists(cache_file)) {
 
 ## Filtering and Cleaning
 
-```{r, echo=FALSE}
+```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE}
 quality_code_table <- tibble(
   `Code number` = c(50, 100, 140, 150, 200, 254),
   `Code name` = c(
@@ -134,7 +134,7 @@ river_data <- river_data %>%
 
 We first construct the hydrograph for Don at Parkhill over our chosen period.
 
-```{r, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
   geom_line(color = "steelblue", linewidth = 0.4) +
   labs(
@@ -146,7 +146,7 @@ ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
   theme_minimal()
 ```
 
-```{r, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 river_data %>%
   summarise(
     `Mean`               = mean(Discharge),
@@ -188,7 +188,7 @@ We observe that discharge is low for most of the year, with a smaller number of 
 
 From figure ..., we also observe an upward trend in discharge, and larger maximum flows, over the time period.
 
-```{r, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 river_data %>%
   group_by(water_year) %>%
   summarise(
@@ -319,7 +319,7 @@ ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
             inherit.aes = FALSE)
 ```
 
-```{r, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 # Months in water year order (September to August)
 wy_months <- month.abb[c(9:12, 1:8)]
 
@@ -445,7 +445,7 @@ river_data %>%
   theme_minimal()
 ```
 
-```{r, echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 river_data %>%
   group_by(season) %>%
   summarise(
