@@ -144,7 +144,7 @@ We first construct the hydrograph for Don at Parkhill over our chosen period.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
-  geom_line(color = "steelblue", linewidth = 0.4) +
+  geom_line(color = "#5298BC", linewidth = 0.4) +
   labs(
     title = "Hydrograph: Don at Parkhill (15-min Interval)",
     subtitle = "August 2016 – August 2026",
@@ -177,9 +177,9 @@ river_data %>%
 
 ```{r, echo=FALSE}
 ggplot(river_data, aes(x = Discharge)) +
-  geom_histogram(bins = 60, fill = "steelblue", colour = "white") +
+  geom_histogram(bins = 60, fill = "#5298BC", colour = "white") +
   geom_vline(xintercept = quantile(river_data$Discharge, c(0.5, 0.95, 0.99)),
-             linetype = "dashed", colour = "red") +
+             linetype = "dashed", colour = "#AA1945") +
   scale_x_log10() +
   labs(
     title = "Distribution of 15-minute discharge",
@@ -224,13 +224,13 @@ yearly <- river_data %>%
 
 ```{r, echo=FALSE}
 ggplot(yearly, aes(x = factor(water_year))) +
-  geom_col(aes(y = Maximum, fill = "Maximum")) +
+  geom_col(aes(y = Maximum, fill = "Maximum", , colour = "#2A5267")) +
   geom_line(aes(y = Mean, colour = "Mean", group = 1), linewidth = 1) +
   geom_point(aes(y = Mean, colour = "Mean"), size = 2) +
   geom_line(aes(y = Median, colour = "Median", group = 1), linewidth = 1) +
   geom_point(aes(y = Median, colour = "Median"), size = 2) +
-  scale_fill_manual(values = c("Maximum" = "steelblue")) +
-  scale_colour_manual(values = c("Mean" = "darkorange", "Median" = "firebrick")) +
+  scale_fill_manual(values = c("Maximum" = "#5298BC")) +
+  scale_colour_manual(values = c("Mean" = "#BFDC80", "Median" = "#AA1945")) +
   labs(
     title = "Maximum, mean and median discharge",
     x = "Water year ending",
@@ -248,7 +248,7 @@ ggplot(yearly, aes(x = factor(water_year))) +
   geom_point(aes(y = Mean, colour = "Mean"), size = 2) +
   geom_line(aes(y = Median, colour = "Median", group = 1), linewidth = 1) +
   geom_point(aes(y = Median, colour = "Median"), size = 2) +
-  scale_colour_manual(values = c("Mean" = "darkorange", "Median" = "firebrick")) +
+  scale_colour_manual(values = c("Mean" = "#BFDC80", "Median" = "#AA1945")) +
   labs(
     title = "Mean and median discharge",
     x = "Water year ending",
@@ -302,8 +302,8 @@ ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
   geom_hline(yintercept = grid_breaks, colour = "grey50", linewidth = 0.3, alpha = 0.5) +
   annotate("text", x = 0.5, y = grid_breaks, label = grid_breaks,
            colour = "grey30", size = 3, fontface = "bold", vjust = -0.3) +
-  scale_fill_manual(values = c("Autumn" = "#F28E2B", "Winter" = "#4E79A7",
-                               "Spring" = "#59A14F", "Summer" = "#EDC948")) +
+  scale_fill_manual(values = c("Autumn" = "#AA1945", "Winter" = "#5298BC",
+                               "Spring" = "#BFDC80", "Summer" = "#FEE060")) +
   ylim(-y_max, y_max * 1.4) +
   coord_polar() +
   theme_minimal() +
@@ -353,7 +353,7 @@ river_data %>%
 river_data %>%
   mutate(month = factor(month, levels = wy_months)) %>%
   ggplot(aes(x = month, y = Discharge)) +
-  stat_summary(fun = mean, geom = "col", fill = "steelblue") +
+  stat_summary(fun = mean, geom = "col", fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Average discharge by month",
     x = "Month",
@@ -370,7 +370,7 @@ river_data %>%
   mutate(month = factor(month, levels = wy_months)) %>%
   count(month) %>%
   ggplot(aes(x = month, y = n / 96)) +
-  geom_col(fill = "steelblue") +
+  geom_col(fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Time spent above the 95th percentile of flow, by month",
     x = "Month",
@@ -390,8 +390,8 @@ seasonal <- river_data %>%
   ) %>%
   mutate(season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")))
 
-season_colours <- c("Autumn" = "#F28E2B", "Winter" = "#4E79A7",
-                    "Spring" = "#59A14F", "Summer" = "#EDC948")
+season_colours <- c("Autumn" = "#AA1945", "Winter" = "#5298BC",
+                    "Spring" = "#BFDC80", "Summer" = "#FEE060")
 ```
 
 ```{r, echo=FALSE}
@@ -430,7 +430,7 @@ ggplot(seasonal, aes(x = factor(water_year), y = Maximum, colour = season, group
 ```{r, echo=FALSE}
 
 ggplot(river_data, aes(x = month, y = Discharge)) +
-  stat_summary(fun = mean, geom = "col", fill = "steelblue") +
+  stat_summary(fun = mean, geom = "col", fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Average discharge by month",
     x = "Month",
@@ -444,7 +444,7 @@ river_data %>%
   filter(Discharge > high_flow) %>%
   count(month) %>%
   ggplot(aes(x = month, y = n / 96)) +
-  geom_col(fill = "steelblue") +
+  geom_col(fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Time spent above the 95th percentile of flow, by month",
     x = "Month",
@@ -471,7 +471,7 @@ river_data %>%
   )
 
 ggplot(river_data, aes(x = season, y = Discharge)) +
-  geom_boxplot(fill = "steelblue", alpha = 0.5, outlier.size = 0.5) +
+  geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5, outlier.size = 0.5) +
   scale_y_log10() +
   labs(
     title = "Discharge by season",
