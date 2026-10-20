@@ -270,7 +270,7 @@ base_plot <- ggplot(
 
 # 95th percentile threshold plot
 plot_95 <- base_plot +
-  geom_hline(yintercept = u95, linetype = "dashed", color = "#AA1945") +
+  geom_hline(yintercept = u95, linetype = "dashed", color = "#ACD35A") +
   geom_point(data = peaks_95, color = "#AA1945", size = 1) +
   labs(
     title = "Peaks above the 95th percentile threshold",
@@ -326,8 +326,8 @@ plot_35 <- base_plot + geom_point(
     xmax = max(river_data$Timestamp),
     ymin = min(selected_thresholds),
     ymax = max(selected_thresholds),
-    fill = "#AA1945",
-    alpha = 0.15
+    fill = "#BFDC80",
+    alpha = 0.3
   ) + scale_color_manual(
     values = c(
       "Within threshold band" = "#AA1945",
@@ -345,7 +345,7 @@ plot_35 <- base_plot + geom_point(
 plot_gpd <- base_plot +
   geom_hline(
     yintercept = u_gpd,
-    color = "#AA1945",
+    color = "#BFDC80",
     linetype = "dashed"
   ) +
   geom_point(
