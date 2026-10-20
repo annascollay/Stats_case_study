@@ -843,6 +843,56 @@ plot_gpd <- base_plot +
 
 plot_35 / plot_95 / plot_gpd
 
+
+# 3-5 threshold plot
+
+# Find all thresholds giving 3-5 peaks per year
+selected_thresholds345 <- thresholds[peaks_per_year = c(3,4,5)]
+
+# Identify the peak for each exceedance period at each threshold
+peaks_345 <- purrr::map_dfr(selected_thresholds345, function(u) {
+  
+  river_data %>%
+    arrange(Timestamp) %>%
+    mutate(
+      above = Discharge > u,
+      start = above & !lag(above, default = FALSE),
+      run = cumsum(start)
+    ) %>%
+    filter(above) %>%
+    group_by(run) %>%
+    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    mutate(threshold = u)
+  
+})
+
+# Plot all thresholds on the hydrograph
+plot_345 <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(color = "steelblue", linewidth = 0.4) +
+  geom_point(
+    data = peaks_35,
+    size = 1.5
+  )  +
+  annotate(
+    "rect",
+    xmin = min(river_data$Timestamp),
+    xmax = max(river_data$Timestamp),
+    ymin = min(selected_thresholds),
+    ymax = max(selected_thresholds),
+    fill = "red",
+    alpha = 0.15
+  ) +
+  geom_line(data = peaks_345)
+  labs(
+    title = "Peaks using the 3-5 peaks per year method",
+    subtitle = "All qualifying thresholds (73-113 m³/s)",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+
 #--------------------------------------------------------------------
 # Scenario based analyse
 
@@ -887,6 +937,7 @@ ggplot(events,
     y = expression("Discharge ("*m^3*"/s)")
   ) +
   theme_minimal()
+
 
 
 
