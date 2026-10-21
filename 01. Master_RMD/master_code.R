@@ -25,8 +25,8 @@ if (file.exists(cache_file)) {
   start_years <- seq(2016, 2025, by = 1)
   
   fetch_chunk <- function(yr) {
-    from_date <- paste0(yr, "-08-31T00:00:00")
-    to_date   <- paste0(yr + 1, "-08-31T00:00:00")
+    from_date <- paste0(yr, "-10-01T00:00:00")
+    to_date   <- paste0(yr + 1, "-09-30T23:59:59")
     
     url <- paste0(
       "https://timeseries.sepa.org.uk/KiWIS/KiWIS?",
@@ -95,7 +95,7 @@ quality_combined <- quality_code_table %>%
 river_data <- river_data %>%
   mutate(
     month      = month(Timestamp, label = TRUE),
-    water_year = if_else(month(Timestamp) >= 9, year(Timestamp) + 1, year(Timestamp)),
+    water_year = if_else(month(Timestamp) >= 10, year(Timestamp) + 1, year(Timestamp)),
     season     = case_when(
       month(Timestamp) %in% c(12, 1, 2) ~ "Winter",
       month(Timestamp) %in% c(3, 4, 5)  ~ "Spring",
@@ -129,7 +129,7 @@ monthly <- river_data %>%
       TRUE                        ~ "Summer"
     ),
     season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")),
-    month_order = (month_num - 9) %% 12   # Sep = 0, Oct = 1, ..., Aug = 11
+    month_order = (month_num - 10) %% 12   # Oct = 0, Nov = 1, ..., Sep = 11
   ) %>%
   arrange(month_order)
 monthly$id <- 1:nrow(monthly)
@@ -150,8 +150,8 @@ grid_breaks <- c(10, 20, 30, 40)
 y_max <- max(c(monthly$value, 40))
 
 
-# Months in water year order (September to August)
-wy_months <- month.abb[c(9:12, 1:8)]
+# Months in water year order (October to September)
+wy_months <- month.abb[c(10:12, 1:9)]
 
 
 # High flow defintion
