@@ -396,7 +396,7 @@ threshold_lines <- tibble(
 # the LOWEST of the four thresholds
 u_min <- min(threshold_lines$Value)
 
-peaks_combined <- river_plot %>%
+peaks_combined <- river_data %>%
   mutate(
     above = Discharge > u_min,
     start = above &
@@ -435,7 +435,7 @@ peaks_combined <- peaks_combined %>%
 
 # Combined hydrograph
 plot_thresholds <- ggplot(
-  river_plot,
+  river_data,
   aes(x = Timestamp, y = Discharge)
 ) +
   
