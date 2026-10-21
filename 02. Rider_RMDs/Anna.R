@@ -941,3 +941,225 @@ ggplot(events,
 
 
 
+
+
+
+
+#Threshold plots
+
+# Common plot settings
+base_plot <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(color = "#5298BC", linewidth = 0.35) +
+  labs(
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal(base_size = 12)
+
+
+# 95th percentile threshold plot
+plot_95 <- base_plot +
+  geom_hline(yintercept = u95, linetype = "dashed", color = "#ACD35A") +
+  geom_point(data = peaks_95, color = "#AA1945", size = 1) +
+  labs(
+    title = "Peaks above the 95th percentile threshold",
+    subtitle = expression("95th percentile threshold: 57.878 "*m^3*"/s")
+  ) +
+  theme_minimal()
+
+
+# Find all thresholds giving 3-5 peaks per year
+selected_thresholds <- thresholds[
+  peaks_per_year >= 3 & peaks_per_year <= 5
+]
+
+# Identify the peak for each exceedance period at each threshold
+peaks_35_all <- purrr::map_dfr(selected_thresholds, function(u) {
+  
+  river_data %>%
+    arrange(Timestamp) %>%
+    mutate(
+      above = Discharge > u,
+      start = above & !lag(above, default = FALSE),
+      run = cumsum(start)
+    ) %>%
+    filter(above) %>%
+    group_by(run) %>%
+    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    mutate(threshold = u)
+  
+})
+
+# Categorise the peaks by discharge
+peaks_coloured <- peaks_35_all %>%
+  distinct(Timestamp, Discharge) %>%
+  mutate(
+    Peak_category = if_else(
+      Discharge >= min(selected_thresholds) &
+        Discharge <= max(selected_thresholds),
+      "Within threshold band",
+      "Above threshold band"
+    )
+  )
+
+# Plot all 3-5 thresholds on the hydrograph
+plot_35 <- base_plot + geom_point(
+  data = peaks_coloured,
+  aes(color = Peak_category),
+  size = 1.5
+)  +
+  annotate(
+    "rect",
+    xmin = min(river_data$Timestamp),
+    xmax = max(river_data$Timestamp),
+    ymin = min(selected_thresholds),
+    ymax = max(selected_thresholds),
+    fill = "#BFDC80",
+    alpha = 0.3
+  ) + scale_color_manual(
+    values = c(
+      "Within threshold band" = "#6E0C2A",
+      "Above threshold band" = "#AA1945"
+    ),
+    name = "Peak classification"
+  ) +
+  labs(
+    title = "Peaks using the 3-5 peaks per year method",
+    subtitle = "All qualifying thresholds (73-113 m³/s)"
+  ) +
+  theme_minimal()
+
+
+
+
+
+
+
+# Find the threshold closest to 3, 4 and 5 peaks per year
+# Use the highest threshold meeting or exceeding each target rate
+get_threshold <- function(target) {
+  eligible <- thresholds[peaks_per_year >= target]
+  
+  if (length(eligible) == 0) {
+    stop(paste("No threshold gives at least", target,
+               "peaks per year."))
+  }
+  
+  max(eligible)
+}
+
+u3 <- get_threshold(3)
+u4 <- get_threshold(4)
+u5 <- get_threshold(5)
+
+# Create a table of the four threshold lines
+threshold_lines <- tibble(
+  Threshold = c(
+    "95th percentile",
+    "3 peaks/year",
+    "4 peaks/year",
+    "5 peaks/year"
+  ),
+  Value = c(u95, u3, u4, u5)
+)
+
+print(threshold_lines)
+
+# Identify the peak of each exceedance period above
+# the LOWEST of the four thresholds
+u_min <- min(threshold_lines$Value)
+
+peaks_combined <- river_plot %>%
+  mutate(
+    above = Discharge > u_min,
+    start = above &
+      !dplyr::lag(above, default = FALSE),
+    run = cumsum(start)
+  ) %>%
+  filter(above) %>%
+  group_by(run) %>%
+  slice_max(
+    Discharge,
+    n = 1,
+    with_ties = FALSE
+  ) %>%
+  ungroup()
+
+# Categorise each peak by exactly which thresholds it exceeds
+peaks_combined <- peaks_combined %>%
+  mutate(
+    Peak_category = case_when(
+      Discharge > max(threshold_lines$Value) ~
+        "Above all thresholds",
+      
+      Discharge > u4 & Discharge > u5 & Discharge > u95 ~
+        "Above 95th, 4-peak and 5-peak thresholds",
+      
+      Discharge > u5 & Discharge > u95 ~
+        "Above 95th and 5-peak thresholds",
+      
+      Discharge > u95 ~
+        "Above 95th percentile only",
+      
+      TRUE ~
+        "Other threshold combinations"
+    )
+  )
+
+# Combined hydrograph
+plot_thresholds <- ggplot(
+  river_plot,
+  aes(x = Timestamp, y = Discharge)
+) +
+  
+  geom_line(
+    color = "#5298BC",
+    linewidth = 0.35
+  ) +
+  
+  geom_hline(
+    data = threshold_lines,
+    aes(
+      yintercept = Value,
+      color = Threshold
+    ),
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  
+  geom_point(
+    data = peaks_combined,
+    aes(color = Peak_category),
+    size = 1.6
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "95th percentile" = "pink",
+      "3 peaks/year" = "#AA1945",
+      "4 peaks/year" = "red",
+      "5 peaks/year" = "pink3",
+      "Above all thresholds" = "#AA1945",
+      "Above 95th, 4-peak and 5-peak thresholds" = "red",
+      "Above 95th and 5-peak thresholds" = "pink3",
+      "Above 95th percentile only" = "pink",
+      "Other threshold combinations" = "#555555"
+    )
+  ) +
+  
+  labs(
+    title = "Comparison of Flood Peak Thresholds",
+    subtitle = "95th percentile and 3, 4 and 5 peaks per year",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)"),
+    color = "Threshold / Peak category"
+  ) +
+  
+  theme_minimal(base_size = 12)
+
+plot_thresholds
+
