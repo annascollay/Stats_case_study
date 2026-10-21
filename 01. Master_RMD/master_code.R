@@ -8,6 +8,7 @@ library(knitr)
 library(kableExtra)
 library(ismev)
 
+
 #-----------------------------------------------------------
 # LOAD THE DATA
 #-----------------------------------------------------------
@@ -167,8 +168,8 @@ seasonal <- river_data %>%
   ) %>%
   mutate(season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")))
 
-season_colours <- c("Autumn" = "#AA1945", "Winter" = "#5298BC",
-                    "Spring" = "#BFDC80", "Summer" = "#FEE060")
+season_colours <- c("Winter" = "#5298BC", "Spring" = "#BFDC80", "Summer" = "#FEE060", 
+                    "Autumn" = "#AA1945" )
 
 #-----------------------------------------------------------------------------------
 # THRESHOLD ANALYSIS
@@ -361,6 +362,127 @@ plot_gpd <- base_plot +
     subtitle = "Exploratory threshold = 80 m³/s"
   )
 
+#Graph of all thresholds together
+# Find the threshold closest to 3, 4 and 5 peaks per year
+# Use the highest threshold meeting or exceeding each target rate
+get_threshold <- function(target) {
+  eligible <- thresholds[peaks_per_year >= target]
+  
+  if (length(eligible) == 0) {
+    stop(paste("No threshold gives at least", target,
+               "peaks per year."))
+  }
+  
+  max(eligible)
+}
+
+u3 <- get_threshold(3)
+u4 <- get_threshold(4)
+u5 <- get_threshold(5)
+
+# Create a table of the four threshold lines
+threshold_lines <- tibble(
+  Threshold = c(
+    "95th percentile",
+    "3 peaks/year",
+    "4 peaks/year",
+    "5 peaks/year"
+  ),
+  Value = c(u95, u3, u4, u5)
+)
+
+
+# Identify the peak of each exceedance period above
+# the LOWEST of the four thresholds
+u_min <- min(threshold_lines$Value)
+
+peaks_combined <- river_plot %>%
+  mutate(
+    above = Discharge > u_min,
+    start = above &
+      !dplyr::lag(above, default = FALSE),
+    run = cumsum(start)
+  ) %>%
+  filter(above) %>%
+  group_by(run) %>%
+  slice_max(
+    Discharge,
+    n = 1,
+    with_ties = FALSE
+  ) %>%
+  ungroup()
+
+# Categorise each peak by exactly which thresholds it exceeds
+peaks_combined <- peaks_combined %>%
+  mutate(
+    Peak_category = case_when(
+      Discharge > max(threshold_lines$Value) ~
+        "Above all thresholds",
+      
+      Discharge > u4 & Discharge > u5 & Discharge > u95 ~
+        "Above 95th, 4-peak and 5-peak thresholds",
+      
+      Discharge > u5 & Discharge > u95 ~
+        "Above 95th and 5-peak thresholds",
+      
+      Discharge > u95 ~
+        "Above 95th percentile only",
+      
+      TRUE ~
+        "Other threshold combinations"
+    )
+  )
+
+# Combined hydrograph
+plot_thresholds <- ggplot(
+  river_plot,
+  aes(x = Timestamp, y = Discharge)
+) +
+  
+  geom_line(
+    color = "#5298BC",
+    linewidth = 0.35
+  ) +
+  
+  geom_hline(
+    data = threshold_lines,
+    aes(
+      yintercept = Value,
+      color = Threshold
+    ),
+    linetype = "dashed",
+    linewidth = 0.8
+  ) +
+  
+  geom_point(
+    data = peaks_combined,
+    aes(color = Peak_category),
+    size = 1.6
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "95th percentile" = "pink",
+      "3 peaks/year" = "#AA1945",
+      "4 peaks/year" = "red",
+      "5 peaks/year" = "pink3",
+      "Above all thresholds" = "#AA1945",
+      "Above 95th, 4-peak and 5-peak thresholds" = "red",
+      "Above 95th and 5-peak thresholds" = "pink3",
+      "Above 95th percentile only" = "pink",
+      "Other threshold combinations" = "#555555"
+    )
+  ) +
+  
+  labs(
+    title = "Comparison of Flood Peak Thresholds",
+    subtitle = "95th percentile and 3, 4 and 5 peaks per year",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)"),
+    color = "Threshold / Peak category"
+  ) +
+  
+  theme_minimal(base_size = 12)
 
 #-----------------------------------------------------------------------------------
 # INDEPENDECE 
@@ -505,9 +627,18 @@ events_season_table <- peaks %>%
     `Median time to peak (h)` = median(time_to_peak_h)
   )
 
+events_season_table <- knitr::kable(
+  events_season_table,
+  booktabs = TRUE,
+  digits = 3,
+  caption = "Summary of Max Flow and Time to Peak for each Season"
+)
+
 # Relationship, coloured by season
-Max_vs_time_season <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow, color = season)) +
-  geom_point(size = 2) +
+Max_vs_time_season <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow )) +
+  geom_point(size = 2, aes(colour = season)) +
+  scale_color_manual(values = c("Autumn" = "#AA1945", "Winter" = "#5298BC",
+                                "Spring" = "#BFDC80", "Summer" = "#FEE060")) +
   labs(
     title = "Max flow against time to peak, by season",
     x = "Time to peak (hours)",
@@ -518,7 +649,7 @@ Max_vs_time_season <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow, color 
 
 # Max flow by season
 max_season_plot <- ggplot(peaks, aes(x = season, y = max_flow)) +
-  geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5) +
+  geom_boxplot(fill = season_colours, alpha = 0.7) +
   labs(
     title = "Max flow by season",
     x = "Season",
@@ -527,8 +658,8 @@ max_season_plot <- ggplot(peaks, aes(x = season, y = max_flow)) +
   theme_minimal()
 
 # Time to peak by season
-time_season_plot <- ggplot(peaks, aes(x = season, y = time_to_peak_h)) +
-  geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5) +
+time_season_plot <- peaks %>% group_by(season) %>% ggplot(aes(x = season, y = time_to_peak_h)) +
+  geom_boxplot(fill = season_colours, alpha = 0.7) +
   labs(
     title = "Time to peak by season",
     x = "Season",
@@ -563,4 +694,15 @@ for (u in c(55, 60, 65, 70, 75)) {
   ))
 }
 
-results
+
+results_table <- knitr::kable(
+  results,
+  col.names = c("threshold", "events", "events_per_year" = "Events per Year",
+  "median_max_flow" = "Median Max Flow",
+  "median_time_to_peak_h" = "Median Time to Peak (Hours)", 
+  "spearman_rho" = "Spearman Rho Corelation"),
+  booktabs = T,
+  digits = 3,
+  caption = "Final Uncertanity Table"
+) %>%
+  kable_styling(latex_options = "striped")
