@@ -18,60 +18,6 @@ knitr::opts_chunk$set(echo = TRUE)
 source("master_code.R")
 ```
 
-```{r Loading libraries, include=FALSE}
-# Load required libraries
-library(tidyverse)
-library(knitr)
-library(kableExtra)
-library(ismev)
-library(patchwork)
-```
-
-```{r loading data, include=FALSE}
-# Extend R's default HTTP timeout limit to 300 seconds
-options(timeout = 300)
-
-cache_file <- "river_don_parkhill_flow.rds"
-
-if (file.exists(cache_file)) {
-  # Load from local cache if file already exists
-  river_data <- readRDS(cache_file)
-  
-} else {
-  # If no local cache exists, fetch from SEPA in 1-year chunks
-  start_years <- seq(2016, 2025, by = 1)
-  
-  fetch_chunk <- function(yr) {
-    from_date <- paste0(yr, "-08-31T00:00:00")
-    to_date   <- paste0(yr + 1, "-08-31T00:00:00")
-    
-    url <- paste0(
-      "https://timeseries.sepa.org.uk/KiWIS/KiWIS?",
-      "service=kisters&type=queryServices&datasource=0&",
-      "request=getTimeseriesValues&ts_path=1/234292/Q/15m.Cmd&",
-      "from=", from_date, "&to=", to_date, "&",
-      "metadata=true&returnfields=Timestamp,Value,Quality%20Code&format=csv"
-    )
-    
-    read_delim(
-      url, 
-      delim = ";", 
-      comment = "#",
-      col_names = c("Timestamp", "Discharge", "QualityCode"),
-      show_col_types = FALSE
-    )
-  }
-  
-  river_data <- map_dfr(start_years, fetch_chunk) %>%
-    mutate(Timestamp = as.POSIXct(Timestamp, format = "%Y-%m-%dT%H:%M:%S")) %>%
-    filter(!is.na(Discharge)) %>%
-    distinct(Timestamp, .keep_all = TRUE)
-  
-  # Save to local file so future runs don't need to use the API
-  saveRDS(river_data, cache_file)
-}
-```
-
 # Executive Summary
 
 # Data
@@ -81,31 +27,6 @@ if (file.exists(cache_file)) {
 ## Filtering and Cleaning
 
 ```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE}
-quality_code_table <- tibble(
-  `Code number` = c(50, 100, 140, 150, 200, 254),
-  `Code name` = c(
-    "Good",
-    "Estimated",
-    "Provisional",
-    "Suspect",
-    "Unchecked (imported from legacy database)",
-    "Unchecked"
-  ),
-  `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U")
-)
-
-quality_combined <- quality_code_table %>%
-  left_join(
-    river_data %>%
-      mutate(QualityCode = as.numeric(QualityCode)) %>%
-      count(QualityCode, name = "Count"),
-    by = c("Code number" = "QualityCode")
-  ) %>%
-  mutate(
-    Count = coalesce(Count, 0L),
-    Percentage = sprintf("%.2f%%", Count / sum(Count) * 100)
-  )
-
 quality_combined %>%
   kable(
     caption = "Table 1 — quality codes and their frequency in the data",
@@ -123,21 +44,6 @@ quality_combined %>%
 
 Throughout the report, we add three time variables to support our analysis: the month, the season, and the water year. The water year runs from September to August and is labelled by the year it ends in, which keeps each winter's high flows together in the same year.
 
-```{r, echo=FALSE}
-river_data <- river_data %>%
-  mutate(
-    month      = month(Timestamp, label = TRUE),
-    water_year = if_else(month(Timestamp) >= 9, year(Timestamp) + 1, year(Timestamp)),
-    season     = case_when(
-      month(Timestamp) %in% c(12, 1, 2) ~ "Winter",
-      month(Timestamp) %in% c(3, 4, 5)  ~ "Spring",
-      month(Timestamp) %in% c(6, 7, 8)  ~ "Summer",
-      TRUE                              ~ "Autumn"
-    ),
-    season = factor(season, levels = c("Winter", "Spring", "Summer", "Autumn"))
-  )
-```
-
 ### Main time series and summary table
 
 We first construct the hydrograph for Don at Parkhill over our chosen period.
@@ -147,7 +53,7 @@ ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
   geom_line(color = "#5298BC", linewidth = 0.4) +
   labs(
     title = "Hydrograph: Don at Parkhill (15-min Interval)",
-    subtitle = "August 2016 – August 2026",
+    subtitle = "31 October 2016 – 30 September 2026",
     x = "Date",
     y = expression("Discharge ("*m^3*"/s)")
   ) +
@@ -190,9 +96,9 @@ ggplot(river_data, aes(x = Discharge)) +
   theme_minimal()
 ```
 
-We observe that discharge is low for most of the year, with a smaller number of large peaks. The strong-right skew of the distribution confirms this, with a median discharge of 14.91 $m^3/s$, and a 99th percentile of 130.96 $m^3/s$. 
+We observe that discharge is low for most of the year, with a smaller number of large peaks. The strong-right skew of the distribution confirms this, with a median discharge of 14.91 $m^3/s$, and a 99th percentile of 130.96 $m^3/s$.
 
-### Yearly trends 
+### Yearly trends
 
 From figure ..., we also observe an upward trend in discharge, and larger maximum flows, over the time period.
 
@@ -211,14 +117,6 @@ river_data %>%
     bootstrap_options = c("bordered", "striped", "hover"),
     full_width = FALSE,
     position = "left"
-  )
-
-yearly <- river_data %>%
-  group_by(water_year) %>%
-  summarise(
-    Mean    = mean(Discharge),
-    Median  = median(Discharge),
-    Maximum = max(Discharge)
   )
 ```
 
@@ -241,7 +139,6 @@ ggplot(yearly, aes(x = factor(water_year))) +
   theme_minimal()
 ```
 
-
 ```{r, echo=FALSE}
 ggplot(yearly, aes(x = factor(water_year))) +
   geom_line(aes(y = Mean, colour = "Mean", group = 1), linewidth = 1) +
@@ -257,58 +154,27 @@ ggplot(yearly, aes(x = factor(water_year))) +
   ) +
   theme_minimal()
 ```
+
 Figure ... provides evidence of this observation, the mean discharge trending upwards from the water year ending in 2017 at ..., peaking in 2024 at .... The maximum discharge follows a similar trend, with both falling sharply in 2025 before rising again.
 
 ### Exploring seasonal trends overall
 
 ```{r, echo=FALSE}
-# Mean discharge for each month
-monthly <- river_data %>%
-  mutate(month_num = as.numeric(format(Timestamp, "%m"))) %>%
-  group_by(month_num) %>%
-  summarise(value = mean(Discharge)) %>%
-  mutate(
-    month  = month.abb[month_num],
-    season = case_when(
-      month_num %in% c(9, 10, 11) ~ "Autumn",
-      month_num %in% c(12, 1, 2)  ~ "Winter",
-      month_num %in% c(3, 4, 5)   ~ "Spring",
-      TRUE                        ~ "Summer"
-    ),
-    season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")),
-    month_order = (month_num - 9) %% 12   # Sep = 0, Oct = 1, ..., Aug = 11
-  ) %>%
-  arrange(month_order)
-monthly$id <- 1:nrow(monthly)
-
 # Angle and alignment of each month label
-monthly$angle <- 90 - 360 * (monthly$id - 0.5) / nrow(monthly)
-monthly$hjust <- ifelse(monthly$angle < -90, 1, 0)
-monthly$angle <- ifelse(monthly$angle < -90, monthly$angle + 180, monthly$angle)
-
-# Line under each season and position of its name
-base_data <- monthly %>%
-  group_by(season) %>%
-  summarise(start = min(id), end = max(id)) %>%
-  mutate(title = (start + end) / 2)
-
-# Grid lines every 10 up to 40
-grid_breaks <- c(10, 20, 30, 40)
-y_max <- max(c(monthly$value, 40))
-
 ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
-  geom_blank() +   # sets up the discrete x-axis before the grid labels
+  geom_blank() +
   geom_col(alpha = 0.6, colour = "white", linewidth = 0.3) +
   geom_hline(yintercept = grid_breaks, colour = "grey50", linewidth = 0.3, alpha = 0.5) +
   annotate("text", x = 0.5, y = grid_breaks, label = grid_breaks,
            colour = "grey30", size = 3, fontface = "bold", vjust = -0.3) +
-  scale_fill_manual(values = c("Autumn" = "#AA1945", "Winter" = "#5298BC",
+  scale_fill_manual(name = "Seasons", values = c("Autumn" = "#AA1945", "Winter" = "#5298BC",
                                "Spring" = "#BFDC80", "Summer" = "#FEE060")) +
   ylim(-y_max, y_max * 1.4) +
   coord_polar() +
   theme_minimal() +
   theme(
-    legend.position = "none",
+    legend.position = "right",
+    legend.title = element_text(),
     axis.text = element_blank(),
     axis.title = element_blank(),
     panel.grid = element_blank(),
@@ -317,20 +183,11 @@ ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
   geom_text(aes(x = id, y = value + y_max * 0.05, label = month,
                 hjust = hjust, angle = angle),
             colour = "black", alpha = 0.7, size = 3.5, fontface = "bold",
-            inherit.aes = FALSE) +
-  geom_segment(data = base_data,
-               aes(x = start - 0.4, y = -y_max * 0.05, xend = end + 0.4, yend = -y_max * 0.05),
-               colour = "black", alpha = 0.8, linewidth = 0.6, inherit.aes = FALSE) +
-  geom_text(data = base_data,
-            aes(x = title, y = -y_max * 0.41, label = season),
-            colour = "black", alpha = 0.8, size = 4, fontface = "bold",
             inherit.aes = FALSE)
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-# Months in water year order (September to August)
-wy_months <- month.abb[c(9:12, 1:8)]
-
+# Months in water year order (October to September)
 river_data %>%
   mutate(month = factor(month, levels = wy_months)) %>%
   group_by(month) %>%
@@ -363,8 +220,6 @@ river_data %>%
 ```
 
 ```{r, echo=FALSE}
-high_flow <- quantile(river_data$Discharge, 0.95)
-
 river_data %>%
   filter(Discharge > high_flow) %>%
   mutate(month = factor(month, levels = wy_months)) %>%
@@ -377,21 +232,6 @@ river_data %>%
     y = "Total days above the 95th percentile"
   ) +
   theme_minimal()
-```
-
-
-```{r, echo=FALSE}
-seasonal <- river_data %>%
-  group_by(water_year, season) %>%
-  summarise(
-    Mean    = mean(Discharge),
-    Maximum = max(Discharge),
-    .groups = "drop"
-  ) %>%
-  mutate(season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")))
-
-season_colours <- c("Autumn" = "#AA1945", "Winter" = "#5298BC",
-                    "Spring" = "#BFDC80", "Summer" = "#FEE060")
 ```
 
 ```{r, echo=FALSE}
@@ -408,7 +248,6 @@ ggplot(seasonal, aes(x = factor(water_year), y = Mean, colour = season, group = 
   theme_minimal()
 ```
 
-
 ```{r, echo=FALSE}
 ggplot(seasonal, aes(x = factor(water_year), y = Maximum, colour = season, group = season)) +
   geom_line(linewidth = 1) +
@@ -423,8 +262,6 @@ ggplot(seasonal, aes(x = factor(water_year), y = Maximum, colour = season, group
   theme_minimal()
 ```
 
-
-
 - Other seasonality options.
 
 ```{r, echo=FALSE}
@@ -437,9 +274,9 @@ ggplot(river_data, aes(x = month, y = Discharge)) +
     y = expression("Mean discharge ("*m^3*"/s)")
   ) +
   theme_minimal()
+```
 
-high_flow <- quantile(river_data$Discharge, 0.95)
-
+```{r, echo=FALSE}
 river_data %>%
   filter(Discharge > high_flow) %>%
   count(month) %>%
@@ -469,7 +306,9 @@ river_data %>%
     full_width = FALSE,
     position = "left"
   )
+```
 
+```{r, echo=FALSE}
 ggplot(river_data, aes(x = season, y = Discharge)) +
   geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5, outlier.size = 0.5) +
   scale_y_log10() +
@@ -483,15 +322,15 @@ ggplot(river_data, aes(x = season, y = Discharge)) +
 ```
 
 ## Threshold Selection
-The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak flows for extreme events. The threshold is typically selected from three main methods: 
 
-  1.	3-5 per year method
-  2.	95th Percentile method
-  3.	Mean residual life threshold analysis
-  
+The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak flows for extreme events. The threshold is typically selected from three main methods:
+
+1.  3-5 per year method
+2.  95th Percentile method
+3.  Mean residual life threshold analysis
+
 ```{r plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
-plot_35 / plot_95 / plot_gpd 
+plot_35 / plot_95 / plot_gpd
 ```
 
-The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.  
-
+The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.

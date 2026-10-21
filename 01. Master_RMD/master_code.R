@@ -167,6 +167,9 @@ seasonal <- river_data %>%
   ) %>%
   mutate(season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")))
 
+season_colours <- c("Autumn" = "#AA1945", "Winter" = "#5298BC",
+                    "Spring" = "#BFDC80", "Summer" = "#FEE060")
+
 #-----------------------------------------------------------------------------------
 # THRESHOLD ANALYSIS
 #-----------------------------------------------------------------------------------
