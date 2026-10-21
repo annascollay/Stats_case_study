@@ -1,0 +1,21 @@
+- Remove 31 August?
+- 97.5 percentile worked
+- MRL is a way to check it works
+- Did independence thing, threshold of 65
+- 3 or 5 peaks?
+- Clean peaks, how do we define? Lewis has a definition.
+  - Anna visual
+  - Lewis used assumptions of what a clean peak was. If no other candidate peaks in last 7 days, trough is where rise starts
+  - Anna - lecturer might have used an assumption? Look back to see what it was.
+- Change start date to 1 day later
+- Process of independence check needs to be clarified.
+  - Brief at the beginning and explain after why we picked a threshold.
+  
+TO-DO:
+- 31 August
+  STATUS: Done
+- Look through each others threshold and finalise. U threshold 95th and 3-5 peaks
+- And then decide on iterative process.
+- Clean peaks look through and understand.
+  - Anna to find lecturer assumption on clean peaks. Robson & Reed paper to see how they define it.
+  

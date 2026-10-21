@@ -1,0 +1,20 @@
+- Choosing u
+  - Anna: Pick lower threshold, R&R, raise if necessary
+  - Lines for 3,4,5 peaks.
+  - Make threshold selection cycle concise
+- Assumption for clean peaks and trough
+  - Anna: Use Robson & Reed referencing
+  - Decide on clean peak and trough definition and how algorithm finds that (5 v 7 days)
+- Scope of project -- email lecturer about scope: ZACH
+- Clean up variable names: LEWIS
+
+TO-DO:
+- ANNA:
+  - Take care of threshold
+  - Turn tables into tables
+- ZACH:
+  - Email lecturer
+  - How we've cleaned the data and description
+- LEWIS:
+  - Exploratory analysis
+  - Clean up code variable names
