@@ -464,7 +464,7 @@ summary(peaks$time_to_peak_h)
 
 # Max flow
 Max_flow_plot <- ggplot(peaks, aes(x = max_flow)) +
-  geom_histogram(bins = 15, fill = "steelblue", colour = "white") +
+  geom_histogram(bins = 15, fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Distribution of max flow",
     x = expression("Max flow ("*m^3*"/s)"),
@@ -474,7 +474,7 @@ Max_flow_plot <- ggplot(peaks, aes(x = max_flow)) +
 
 # Time to peak
 Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
-  geom_histogram(bins = 20, fill = "steelblue", colour = "white") +
+  geom_histogram(bins = 20, fill = "#5298BC", colour = "#2A5267") +
   labs(
     title = "Distribution of time to peak",
     x = "Time to peak (hours)",
@@ -483,8 +483,8 @@ Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
   theme_minimal()
 
 Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
-  geom_point(color = "steelblue") +
-  geom_smooth(method = "lm", color = "red") +
+  geom_point(color = "#5298BC") +
+  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.05) +
   labs(
     title = "Max flow against time to peak",
     x = "Time to peak (hours)",
@@ -518,7 +518,7 @@ Max_vs_time_season <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow, color 
 
 # Max flow by season
 max_season_plot <- ggplot(peaks, aes(x = season, y = max_flow)) +
-  geom_boxplot(fill = "steelblue", alpha = 0.5) +
+  geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5) +
   labs(
     title = "Max flow by season",
     x = "Season",
@@ -528,7 +528,7 @@ max_season_plot <- ggplot(peaks, aes(x = season, y = max_flow)) +
 
 # Time to peak by season
 time_season_plot <- ggplot(peaks, aes(x = season, y = time_to_peak_h)) +
-  geom_boxplot(fill = "steelblue", alpha = 0.5) +
+  geom_boxplot(fill = "#5298BC", colour = "#2A5267", alpha = 0.5) +
   labs(
     title = "Time to peak by season",
     x = "Season",
