@@ -330,8 +330,8 @@ plot_35 <- base_plot + geom_point(
     alpha = 0.3
   ) + scale_color_manual(
     values = c(
-      "Within threshold band" = "#AA1945",
-      "Above threshold band" = "#6E0C2A"
+      "Within threshold band" = "#6E0C2A",
+      "Above threshold band" = "#AA1945"
     ),
     name = "Peak classification"
   ) +
@@ -345,7 +345,7 @@ plot_35 <- base_plot + geom_point(
 plot_gpd <- base_plot +
   geom_hline(
     yintercept = u_gpd,
-    color = "#BFDC80",
+    color = "#ACD35A",
     linetype = "dashed"
   ) +
   geom_point(
@@ -359,8 +359,205 @@ plot_gpd <- base_plot +
   )
 
 
+#-----------------------------------------------------------------------------------
+# INDEPENDECE 
+#-----------------------------------------------------------------------------------
+q <- river_data$Discharge
+t <- river_data$Timestamp
+
+independent_peaks <- function(u) {
+  
+  # Step 1: candidate peaks - the highest reading in each period above the threshold
+  candidates <- river_data %>%
+    mutate(row   = row_number(),
+           above = Discharge > u,
+           run   = cumsum(above & !lag(above, default = FALSE))) %>%
+    filter(above) %>%
+    group_by(run) %>%
+    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    pull(row)
+  
+  # Step 2: average time to rise, calculated using at least five clean peaks exceeding the threshold
+  # A clean peak has no other candidate peak in the 7 days before it
+  days_since_last <- as.numeric(difftime(t[candidates], lag(t[candidates]), units = "days"))
+  clean <- candidates[is.na(days_since_last) | days_since_last > 7]
+  if (length(clean) < 5) stop("Fewer than five clean peaks - lower the threshold")
+  
+  # Time to rise = duration between a trough and its corresponding peak
+  # Trough = last point before the peak still within 5% of the rise above the lowest flow in the previous 7 days
+  rise_hours <- sapply(clean, function(p) {
+    window <- which(t >= t[p] - 7 * 24 * 3600 & t <= t[p])
+    low    <- min(q[window])
+    trough <- max(window[q[window] <= low + 0.05 * (q[p] - low)])
+    as.numeric(difftime(t[p], t[trough], units = "hours"))
+  })
+  
+  min_gap_hours <- 3 * mean(rise_hours)
+  
+  # Step 3: check each pair of adjacent peaks against both rules
+  kept <- candidates[1]
+  for (p in candidates[-1]) {
+    last   <- kept[length(kept)]                                  # the first peak of the pair
+    gap    <- as.numeric(difftime(t[p], t[last], units = "hours"))
+    trough <- min(q[last:p])                                      # discharge at the trough between them
+    
+    # Rule 1: at least three times the average time to rise apart
+    # Rule 2: trough at least two-thirds lower than the first peak
+    if (gap >= min_gap_hours & trough <= q[last] / 3) {
+      kept <- c(kept, p)                 # independent: a new event
+    } else if (q[p] > q[last]) {
+      kept[length(kept)] <- p            # same event: keep the larger peak
+    }
+  }
+  
+  cat("Candidate peaks:", length(candidates), "\n")
+  cat("Clean peaks used for time to rise:", length(clean), "\n")
+  cat("Average time to rise (hours):", round(mean(rise_hours), 1), "\n")
+  cat("Independent peaks:", length(kept), "\n")
+  
+  river_data[kept, ]
+}
+
+## Rechecking the threshold
+# Removing dependent peaks lowers the number of peaks per year, 
+#so we recheck which thresholds give 3 to 5 independent peaks per year.
+
+check <- tibble(threshold = seq(50, 200, by = 10)) %>%
+  mutate(peaks_per_year = sapply(threshold, function(u) nrow(independent_peaks(u))) /
+           n_distinct(river_data$water_year))
+check
+
+## Final threshold
+u <- 65   # change to your final threshold
+peaks <- independent_peaks(u)
+
+# Row number of each peak, and of the peak before it
+peak_rows <- match(peaks$Timestamp, t)
+previous  <- c(1, head(peak_rows, -1))
+
+# Start of each rise: same definition as the trough in the time to rise,
+# searching back up to 7 days but never past the previous peak
+start_rows <- mapply(function(p, prev) {
+  window <- which(t >= max(t[p] - 7 * 24 * 3600, t[prev]) & t <= t[p])
+  low    <- min(q[window])
+  max(window[q[window] <= low + 0.05 * (q[p] - low)])
+}, peak_rows, previous)
+
+# The two quantities SEPA asked for
+peaks <- peaks %>%
+  mutate(
+    start_time     = t[start_rows],
+    max_flow       = Discharge,
+    time_to_peak_h = as.numeric(difftime(Timestamp, start_time, units = "hours"))
+  )
+
+peaks %>% select(start_time, Timestamp, max_flow, time_to_peak_h)
+summary(peaks$time_to_peak_h)
 
 
+#---------------------------------------------------------------------------
+# UNCERTANITY ANALYSIS
+#--------------------------------------------------------------------------
+
+# Max flow
+Max_flow_plot <- ggplot(peaks, aes(x = max_flow)) +
+  geom_histogram(bins = 15, fill = "steelblue", colour = "white") +
+  labs(
+    title = "Distribution of max flow",
+    x = expression("Max flow ("*m^3*"/s)"),
+    y = "Number of events"
+  ) +
+  theme_minimal()
+
+# Time to peak
+Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
+  geom_histogram(bins = 20, fill = "steelblue", colour = "white") +
+  labs(
+    title = "Distribution of time to peak",
+    x = "Time to peak (hours)",
+    y = "Number of events"
+  ) +
+  theme_minimal()
+
+Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
+  geom_point(color = "steelblue") +
+  geom_smooth(method = "lm", color = "red") +
+  labs(
+    title = "Max flow against time to peak",
+    x = "Time to peak (hours)",
+    y = expression("Max flow ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+cor_result <- cor.test(peaks$time_to_peak_h, peaks$max_flow, method = "spearman", exact = FALSE)
 
 
+# Analysis of uncertanity
+# Number of events and typical values in each season
+events_season_table <- peaks %>%
+  group_by(season) %>%
+  summarise(
+    Events = n(),
+    `Median max flow` = median(max_flow),
+    `Median time to peak (h)` = median(time_to_peak_h)
+  )
 
+# Relationship, coloured by season
+Max_vs_time_season <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow, color = season)) +
+  geom_point(size = 2) +
+  labs(
+    title = "Max flow against time to peak, by season",
+    x = "Time to peak (hours)",
+    y = expression("Max flow ("*m^3*"/s)"),
+    color = "Season"
+  ) +
+  theme_minimal()
+
+# Max flow by season
+max_season_plot <- ggplot(peaks, aes(x = season, y = max_flow)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.5) +
+  labs(
+    title = "Max flow by season",
+    x = "Season",
+    y = expression("Max flow ("*m^3*"/s)")
+  ) +
+  theme_minimal()
+
+# Time to peak by season
+time_season_plot <- ggplot(peaks, aes(x = season, y = time_to_peak_h)) +
+  geom_boxplot(fill = "steelblue", alpha = 0.5) +
+  labs(
+    title = "Time to peak by season",
+    x = "Season",
+    y = "Time to peak (hours)"
+  ) +
+  theme_minimal()
+
+# Uncertanity final table
+results <- tibble()
+
+for (u in c(55, 60, 65, 70, 75)) {
+  peaks <- independent_peaks(u)
+  
+  # Start of each rise and time to peak (same code as before)
+  peak_rows <- match(peaks$Timestamp, t)
+  previous  <- c(1, head(peak_rows, -1))
+  start_rows <- mapply(function(p, prev) {
+    window <- which(t >= max(t[p] - 7 * 24 * 3600, t[prev]) & t <= t[p])
+    low    <- min(q[window])
+    max(window[q[window] <= low + 0.05 * (q[p] - low)])
+  }, peak_rows, previous)
+  time_to_peak_h <- as.numeric(difftime(peaks$Timestamp, t[start_rows], units = "hours"))
+  
+  # One row of results for this threshold
+  results <- bind_rows(results, tibble(
+    threshold             = u,
+    events                = nrow(peaks),
+    events_per_year       = nrow(peaks) / n_distinct(river_data$water_year),
+    median_max_flow       = median(peaks$Discharge),
+    median_time_to_peak_h = median(time_to_peak_h),
+    spearman_rho          = cor(peaks$Discharge, time_to_peak_h, method = "spearman")
+  ))
+}
+
+results
