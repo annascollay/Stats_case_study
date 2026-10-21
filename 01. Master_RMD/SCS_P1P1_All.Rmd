@@ -347,6 +347,15 @@ plot_thresholds
 
 The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.  
 
+```{r testing threshold, echo=FALSE, message=FALSE, warning=FALSE, fig.pos='h', fig.width=10, fig.height=8}
+
+# Mean residual life plot: look for the lowest threshold above which the line is roughly straight
+mrl.plot(q)
+
+gpd.fitrange(q, 50, 200)
+
+gpd.diag(gpd_fit)
+```
 
 # Independence of Peaks
 

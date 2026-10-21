@@ -223,7 +223,7 @@ count_peaks <- function(p) {
 q <- river_data$Discharge
 
 # Mean residual life plot: look for the lowest threshold above which the line is roughly straight
-mrl.plot(q)
+ mrl.plot(q)
 
 # How many readings are above a candidate threshold (change 100 to the value you read off the MRL plot)
 length(which(q > 80))
