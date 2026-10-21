@@ -333,4 +333,51 @@ The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak fl
 plot_35 / plot_95 / plot_gpd
 ```
 
-The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.
+The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.  
+
+
+# Independence of Peaks
+
+We apply the Robson and Reed (1999) independence rules from the lecture:
+
+1. Two adjacent peaks must be at least three times the average time to rise apart. The time to rise is the time between a trough and its peak, averaged over at least five clean peaks above the threshold.
+2. The flow at the trough between two adjacent peaks must be at least two-thirds lower than the first peak, i.e. below one third of it.
+
+Assumptions:
+- a clean peak means no other candidate peak in the previous 7 days;
+- the trough is where the rise starts (within 5% of the week’s lowest flow).
+
+If two peaks fail either rule, they belong to the same event and only the larger peak is kept.
+
+# Final Threshold Selection
+```{r Independence summary plot}
+summary(peaks$time_to_peak_h)
+```
+
+
+## Uncertanity Analysis
+
+```{r uncertanity analysis}
+
+Max_flow_plot / Time_to_peak_plot
+
+Max_vs_time 
+
+cor_result
+
+```
+```{r }
+
+events_season_table
+
+Max_vs_time_season
+
+max_season_plot / time_season_plot 
+
+```
+
+```{r uncertanity table}
+
+results
+
+```
