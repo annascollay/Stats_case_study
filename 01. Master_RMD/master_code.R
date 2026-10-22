@@ -459,7 +459,10 @@ plot_thresholds <- ggplot(
     aes(color = Peak_category),
     size = 1.6
   ) +
-  
+  annotate("text", x = max(river_data$Timestamp), y = 120, label = "113", colour = "#AA1945") + 
+  annotate("text", x = max(river_data$Timestamp), y = 100, label = "93", colour = "red")+
+  annotate("text", x = max(river_data$Timestamp), y = 85, label = "79", colour = "pink3")+
+  annotate("text", x = max(river_data$Timestamp), y = 65, label = "58", colour = "pink")+
   scale_color_manual(
     values = c(
       "95th percentile" = "pink",

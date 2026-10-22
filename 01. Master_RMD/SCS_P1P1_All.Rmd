@@ -339,13 +339,28 @@ The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak fl
 2.  95th Percentile method
 3.  Mean residual life threshold analysis
 
-```{r plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
-plot_35 / plot_95 / plot_gpd
+The threshold defines what is considered an extreme event, hence to verify we have captured all events, a comparison of methods is crucial. The 3-5 peaks per year method can be implemented both visually and mathematically, manually we could draw count peaks and draw a line, however this is less efficent and accurate. Instead, mathematically we have calculated all of the possible thresholds in which 3-5 extreme events occur, Figure ... below illustrates this with the green region.
+
+```{r 35-plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
+plot_35
+```
+
+The 95th quantile method, creates a threshold line such that 5% of all events are considered extreme events. This is shown on the figure below. 
+
+```{r 95 plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
+
+plot_95
+
+```
+
+```{r comparison plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
 
 plot_thresholds
 ```
 
-The figures above are a comparison of the thresholds selected by each method. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, i.e. $(u = 65)$. This means when the distinct extreme events are selected, all the major peaks are being analysed, and subsequentially the threshold can be raised.  
+The figure above is a comparison of the two methods. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, so that when the distinct extreme events are selected, all the major peaks are being analysed, and subsequently the threshold can be raised. The 95th threshold allows for a significant more amount of peaks to be considered, hence we choose a $u = 79$ as an initial threshold. Robson and Reed (1999) verify this "Setting the abstraction threshold low enough to produce an average of about five peaks a year means that, for analytical purposes, there is the flexibility to raise the threshold to exclude the smaller floods"
+
+The Generalized Pareto Distribution (GPD) is used to analyse the initial threshold ($u = 79$) to see if asymptotic theory holds. From the mrl plot, we can see that at around the $79$ the plot becomes approximately linear for a region. Figure ... assesses the stability of the parameter estimates for different values of the threshold ($50 \le u \le 20$), the 79 to 150 region is approximately stable. Finally, the diagnostic plots verify that the inital $u = 79$ threshold holds for asymptotic theory. 
 
 ```{r testing threshold, echo=FALSE, message=FALSE, warning=FALSE, fig.pos='h', fig.width=10, fig.height=8}
 
@@ -366,7 +381,7 @@ We apply the Robson and Reed (1999) independence rules from the lecture:
 
 Assumptions:
 - a clean peak means no other candidate peak in the previous 7 days;
-- the trough is where the rise starts (within 5% of the week’s lowest flow).
+- the trough is where the rise starts (within 5% of the week's lowest flow).
 
 If two peaks fail either rule, they belong to the same event and only the larger peak is kept.
 
