@@ -421,11 +421,10 @@ Assumptions:
 
 If two peaks fail either rule, they belong to the same event and only the larger peak is kept.
 
-# Final Threshold Selection
-```{r Independence summary plot, echo=FALSE}
-summary(peaks$time_to_peak_h)
+```{r Independence comparision plot (95), echo=FALSE}
+plot_95 / plot_95_ind
 ```
-
+# Final Threshold Selection
 
 ## Uncertanity Analysis
 

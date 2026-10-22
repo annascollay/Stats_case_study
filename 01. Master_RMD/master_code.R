@@ -239,22 +239,6 @@ gpd_fit$mle
 gpd.diag(gpd_fit)
 
 
-# GPD diagnostic threshold
-# 80 was used for the exploratory GPD fit
-u_gpd <- 80
-
-# Identify peaks above 80 m³/s
-peaks_gpd <- river_data %>%
-  arrange(Timestamp) %>%
-  mutate(
-    above = Discharge > u_gpd,
-    start = above & !lag(above, default = FALSE),
-    run = cumsum(start)
-  ) %>%
-  filter(above) %>%
-  group_by(run) %>%
-  slice_max(Discharge, n = 1, with_ties = FALSE) %>%
-  ungroup()
 
 
 #Threshold plots
@@ -278,8 +262,12 @@ plot_95 <- base_plot +
   geom_point(data = peaks_95, color = "#AA1945", size = 1) +
   labs(
     title = "Peaks above the 95th percentile threshold",
-    subtitle = expression("95th percentile threshold: 57.878 "*m^3*"/s")
-  ) +
+    subtitle = paste0(
+      "Threshold: ",
+      round(as.numeric(u95), 3),
+      " m³/s | Number of events: ",
+      nrow(peaks_95)
+    )) +
   theme_minimal()
 
 
@@ -345,22 +333,6 @@ plot_35 <- base_plot + geom_point(
   ) +
   theme_minimal()
 
-# GPD exploratory threshold
-plot_gpd <- base_plot +
-  geom_hline(
-    yintercept = u_gpd,
-    color = "#ACD35A",
-    linetype = "dashed"
-  ) +
-  geom_point(
-    data = peaks_gpd,
-    color = "#AA1945",
-    size = 1.3
-  ) +
-  labs(
-    title = "Peaks using the Extreme-Value Theory (GPD)",
-    subtitle = "Exploratory threshold = 80 m³/s"
-  )
 
 #Graph of all thresholds together
 # Find the threshold closest to 3, 4 and 5 peaks per year
@@ -581,6 +553,39 @@ peaks <- peaks %>%
 
 peaks %>% select(start_time, Timestamp, max_flow, time_to_peak_h)
 summary(peaks$time_to_peak_h)
+
+
+# Post independence plots
+peaks_95_ind <- independent_peaks(as.numeric(u95))
+
+plot_95_ind <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(color = "#2A5267", linewidth = 0.35) +
+  geom_hline(
+    yintercept = as.numeric(u95),
+    linetype = "dashed",
+    color = "#ACD35A"
+  ) +
+  
+  geom_point(
+    data = peaks_95_ind,
+    color = "#AA1945",
+    size = 1.5
+  ) +
+  
+  labs(
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)"),
+    title = "Independent peaks above the 95th percentile",
+    subtitle = paste0(
+      "Threshold: ",
+      round(as.numeric(u95), 3),
+      " m³/s | Independent events: ",
+      nrow(peaks_95_ind)
+    )
+  ) + theme_minimal()
 
 
 #---------------------------------------------------------------------------
