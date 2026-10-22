@@ -8,6 +8,7 @@ output:
 header-includes:
 - \usepackage{float}
 - \usepackage{amsmath}
+- \usepackage{caption}
 - \floatplacement{figure}{H}
 - \floatplacement{table}{H}
 ---
@@ -330,6 +331,7 @@ ggplot(river_data, aes(x = season, y = Discharge)) +
   ) +
   theme_minimal()
 ```
+\newpage
 
 ## Threshold Selection
 
@@ -339,35 +341,69 @@ The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak fl
 2.  95th Percentile method
 3.  Mean residual life threshold analysis
 
-The threshold defines what is considered an extreme event, hence to verify we have captured all events, a comparison of methods is crucial. The 3-5 peaks per year method can be implemented both visually and mathematically, manually we could draw count peaks and draw a line, however this is less efficent and accurate. Instead, mathematically we have calculated all of the possible thresholds in which 3-5 extreme events occur, Figure ... below illustrates this with the green region.
+The threshold defines what is considered an extreme event, hence to verify we have captured all events, a comparison of methods is crucial. The 3-5 peaks per year method can be implemented both visually and mathematically, manually we could count peaks and draw a line, however this is less efficient and accurate. Instead, mathematically we have calculated all of the possible thresholds in which 3-5 extreme events occur, Figure ... below illustrates this with the green region.
 
-```{r 35-plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
-plot_35
+```{r 35-plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=8}
+plot_35 / plot_95
+
+#Threshold word count = 323
 ```
 
-The 95th quantile method, creates a threshold line such that 5% of all events are considered extreme events. This is shown on the figure below. 
+The 95th quantile method, creates a threshold line such that 5% of all events are considered extreme events. This is shown on the figure above. 
 
-```{r 95 plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
-
-plot_95
-
-```
-
-```{r comparison plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
+```{r omparison plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
 
 plot_thresholds
+
 ```
 
-The figure above is a comparison of the two methods. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, so that when the distinct extreme events are selected, all the major peaks are being analysed, and subsequently the threshold can be raised. The 95th threshold allows for a significant more amount of peaks to be considered, hence we choose a $u = 79$ as an initial threshold. Robson and Reed (1999) verify this "Setting the abstraction threshold low enough to produce an average of about five peaks a year means that, for analytical purposes, there is the flexibility to raise the threshold to exclude the smaller floods"
+The figure above is a comparison of the two methods. Prior to independence analysis, a practical approach is to choose an initial threshold that is likely to be too low, so that when the distinct extreme events are selected, all the major peaks are being analysed, and subsequently the threshold can be raised. The 95th threshold allows for a significant more amount of peaks to be considered, hence we choose a $u = 79$ (5 peaks/year) as an initial threshold. Robson and Reed (1999) verify this "Setting the abstraction threshold low enough to produce an average of about five peaks a year means that, for analytical purposes, there is the flexibility to raise the threshold to exclude the smaller floods."
 
-The Generalized Pareto Distribution (GPD) is used to analyse the initial threshold ($u = 79$) to see if asymptotic theory holds. From the mrl plot, we can see that at around the $79$ the plot becomes approximately linear for a region. Figure ... assesses the stability of the parameter estimates for different values of the threshold ($50 \le u \le 20$), the 79 to 150 region is approximately stable. Finally, the diagnostic plots verify that the inital $u = 79$ threshold holds for asymptotic theory. 
+```{r mrl-side-by-side 1, message=FALSE, warning=FALSE, include=FALSE, results='asis'}
 
-```{r testing threshold, echo=FALSE, message=FALSE, warning=FALSE, fig.pos='h', fig.width=10, fig.height=8}
-
-# Mean residual life plot: look for the lowest threshold above which the line is roughly straight
+# Save the plot automatically when knitting
+pdf("mrl_plot.pdf", width = 7, height = 5)
 mrl.plot(q)
+dev.off()
+```
+
+```{r mrl-side-by-side, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+
+# Insert the plot and text side by side
+cat(r"(
+\noindent
+\begin{minipage}[t]{0.40\textwidth}
+\vspace{0pt}
+\small
+The Generalized Pareto Distribution (GPD) is used to
+analyse the initial threshold ($u = 79$) and assess
+whether the asymptotic approximation is reasonable.
+
+From the mean residual life plot, the relationship
+appears approximately linear from around $u = 79$
+over a range of thresholds.
+
+The parameter stability plots provide further
+evidence for threshold selection, while the
+diagnostic plots assess the fitted GPD model.
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.50\textwidth}
+\vspace{-22pt}
+\centering
+\includegraphics[width=\textwidth]{mrl_plot.pdf}
+\end{minipage}
+)")
+```
+
+
+```{r echo=FALSE, fig.width=10, fig.height=10}
 
 gpd.fitrange(q, 50, 200)
+
+```
+
+```{r echo=FALSE}
 
 gpd.diag(gpd_fit)
 ```
