@@ -1,17 +1,25 @@
 # ============================================================
-# Code for Project 1
+# Statistical Case Studies - Project 1 (Part 1)
+# Authors: Anna Scollay, Lewis Seath, Zacharias Onyejiaka
 # ============================================================
 
-# Load required libraries
+# --------------------------------------------------------------
+# Set-up
+# --------------------------------------------------------------
+  
+# Load packages
 library(tidyverse)
 library(knitr)
 library(kableExtra)
 library(ismev)
 
+# --------------------------------------------------------------
+# Section 2 - Data and Exploratory Analysis
+# --------------------------------------------------------------
 
-#-----------------------------------------------------------
-# LOAD THE DATA
-#-----------------------------------------------------------
+# Load data
+# --------------------------------------------------------------
+
 # Extend R's default HTTP timeout limit to 300 seconds
 options(timeout = 300)
 
@@ -55,13 +63,40 @@ if (file.exists(cache_file)) {
   saveRDS(river_data, cache_file)
 }
 
+# Subsection 2.1 - Filtering and Cleaning
+# --------------------------------------------------------------
 
-#-----------------------------------------------------------
-# TIDY THE DATA
-#-----------------------------------------------------------
+# Data Description
 
-# Data segmented by quality code
-# Create the quality code table from SEPA guidance
+# Subsection 2.1 - Filtering and Cleaning
+# --------------------------------------------------------------
+
+# Data Description
+
+# Count the number of missing readings by comparing our river data against a
+# complete 15-minute sequence
+complete_sequence <- seq(min(river_data$Timestamp), max(river_data$Timestamp), by = "15 min")
+number_missing <- sum(!complete_sequence %in% river_data$Timestamp)
+
+# Create data description table
+data_description_table <- tibble(
+  Item = c("Station", "Source", "Measurement", "Resolution",
+           "Period", "Readings", "Missing readings"),
+  Value = c(
+    "Don at Parkhill",
+    "SEPA time series service (KiWIS)",
+    "River discharge (m³/s)",
+    "15 minutes",
+    paste(format(min(river_data$Timestamp), "%d %B %Y"), "–",
+          format(max(river_data$Timestamp), "%d %B %Y")),
+    format(nrow(river_data), big.mark = ","),
+    format(number_missing, big.mark = ",")
+  )
+)
+
+# Data Quality
+
+# Create quality code table from SEPA guidance, recording which codes we use
 quality_code_table <- tibble(
   `Code number` = c(50, 100, 140, 150, 200, 254),
   `Code name` = c(
@@ -72,14 +107,14 @@ quality_code_table <- tibble(
     "Unchecked (imported from legacy database)",
     "Unchecked"
   ),
-  `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U")
+  `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U"),
+  Used = c("used", "used", "not used", "not used", "not used", "not used")
 )
 
+# Join quality code table with the number of readings for each code
 quality_combined <- quality_code_table %>%
   left_join(
-    river_data %>%
-      mutate(QualityCode = as.numeric(QualityCode)) %>%
-      count(QualityCode, name = "Count"),
+    river_data %>% count(QualityCode = as.numeric(QualityCode), name = "Count"),
     by = c("Code number" = "QualityCode")
   ) %>%
   mutate(
@@ -87,40 +122,95 @@ quality_combined <- quality_code_table %>%
     Percentage = sprintf("%.2f%%", Count / sum(Count) * 100)
   )
 
+# Combine into one table, with one row per quality code below the data description
+data_table <- bind_rows(
+  data_description_table,
+  quality_combined %>%
+    transmute(
+      Item  = paste0(`Code number`, " – ", `Code name`, " (", `Abbreviated code name`, ")"),
+      Value = paste0(format(Count, big.mark = ",", trim = TRUE), " readings (",
+                     Percentage, "), ", Used)
+    )
+)
 
-#-----------------------------------------------------------
-# EXPLORATORY ANALYSIS
-#-----------------------------------------------------------
-
-# Time variables added
+# Keep only good (50) and estimated (100) readings, matching the Used column above
 river_data <- river_data %>%
+  filter(as.numeric(QualityCode) %in% c(50, 100))
+
+# Subsection 2.2 - Exploratory Analysis
+# --------------------------------------------------------------
+
+# Subsection 2.2 - Exploratory Analysis
+# --------------------------------------------------------------
+
+# Sort by time and create month, season and water year variables to support our analysis
+river_data <- river_data %>%
+  arrange(Timestamp) %>%
   mutate(
-    month      = month(Timestamp, label = TRUE),
+    month = month(Timestamp, label = TRUE),
     water_year = if_else(month(Timestamp) >= 10, year(Timestamp) + 1, year(Timestamp)),
-    season     = case_when(
+    season = case_when(
       month(Timestamp) %in% c(12, 1, 2) ~ "Winter",
-      month(Timestamp) %in% c(3, 4, 5)  ~ "Spring",
-      month(Timestamp) %in% c(6, 7, 8)  ~ "Summer",
-      TRUE                              ~ "Autumn"
+      month(Timestamp) %in% c(3, 4, 5) ~ "Spring",
+      month(Timestamp) %in% c(6, 7, 8) ~ "Summer",
+      TRUE ~ "Autumn"
     ),
     season = factor(season, levels = c("Winter", "Spring", "Summer", "Autumn"))
   )
 
-# Yearly analysis
-yearly <- river_data %>%
-  group_by(water_year) %>%
+# Shorter names for discharge and time, used in the peak analysis
+q <- river_data$Discharge
+t <- river_data$Timestamp
+
+# Number of water years
+n_years <- n_distinct(river_data$water_year)
+
+# Find where the rise before a peak starts
+# Looks back over the previous 7 days (or back to 'earliest' if given) and returns the
+# last reading within 5% of the rise above the lowest flow in that window
+rise_start_row <- function(p, earliest = t[p] - 7 * 24 * 3600) {
+  window <- which(t >= earliest & t <= t[p])
+  lowest <- min(q[window])
+  max(window[q[window] <= lowest + 0.05 * (q[p] - lowest)])
+}
+
+# Months in water year order (October to September)
+wy_months <- month.abb[c(10:12, 1:9)]
+
+# Colours for each season, used across all seasonal plots
+season_colours <- c("Winter" = "#5298BC", "Spring" = "#BFDC80", "Summer" = "#FEE060",
+                    "Autumn" = "#AA1945")
+
+# High flow definition: the 95th percentile of discharge
+high_flow <- quantile(river_data$Discharge, 0.95)
+
+
+# Flow Record and Distribution
+
+# Summary statistics for the 15-minute discharge readings
+summary_stats <- river_data %>%
   summarise(
-    Mean    = mean(Discharge),
-    Median  = median(Discharge),
-    Maximum = max(Discharge)
-  )
+    `Mean`               = mean(Discharge),
+    `Standard deviation` = sd(Discharge),
+    `Minimum`            = min(Discharge),
+    `25th percentile`    = quantile(Discharge, 0.25),
+    `Median`             = median(Discharge),
+    `75th percentile`    = quantile(Discharge, 0.75),
+    `95th percentile`    = quantile(Discharge, 0.95),
+    `99th percentile`    = quantile(Discharge, 0.99),
+    `Maximum`            = max(Discharge)
+  ) %>%
+  pivot_longer(everything(), names_to = "Statistic", values_to = "Value (m³/s)") %>%
+  mutate(`Value (m³/s)` = sprintf("%.2f", `Value (m³/s)`))
 
 
-# Mean discharge for each month
+# Seasonality of High Flows
+
+# Median discharge for each month, for the polar plot
 monthly <- river_data %>%
   mutate(month_num = as.numeric(format(Timestamp, "%m"))) %>%
   group_by(month_num) %>%
-  summarise(value = mean(Discharge)) %>%
+  summarise(value = median(Discharge)) %>%
   mutate(
     month  = month.abb[month_num],
     season = case_when(
@@ -140,373 +230,156 @@ monthly$angle <- 90 - 360 * (monthly$id - 0.5) / nrow(monthly)
 monthly$hjust <- ifelse(monthly$angle < -90, 1, 0)
 monthly$angle <- ifelse(monthly$angle < -90, monthly$angle + 180, monthly$angle)
 
-# Line under each season and position of its name
-base_data <- monthly %>%
-  group_by(season) %>%
-  summarise(start = min(id), end = max(id)) %>%
-  mutate(title = (start + end) / 2)
-
 # Grid lines every 10 up to 40
 grid_breaks <- c(10, 20, 30, 40)
 y_max <- max(c(monthly$value, 40))
 
-
-# Months in water year order (October to September)
-wy_months <- month.abb[c(10:12, 1:9)]
-
-
-# High flow defintion
-high_flow <- quantile(river_data$Discharge, 0.95)
-
-# Seasonality added
-seasonal <- river_data %>%
-  group_by(water_year, season) %>%
-  summarise(
-    Mean    = mean(Discharge),
-    Maximum = max(Discharge),
-    .groups = "drop"
-  ) %>%
-  mutate(season = factor(season, levels = c("Autumn", "Winter", "Spring", "Summer")))
-
-season_colours <- c("Winter" = "#5298BC", "Spring" = "#BFDC80", "Summer" = "#FEE060", 
-                    "Autumn" = "#AA1945" )
-
-#-----------------------------------------------------------------------------------
-# THRESHOLD ANALYSIS
-#-----------------------------------------------------------------------------------
-# 3-5 per year method
-# Thresholds to try: 0, 1, 2, ... up to the maximum flow
-thresholds <- 0:max(river_data$Discharge)
-
-# Peaks per year for each threshold
-peaks_per_year <- sapply(thresholds, function(u) {
-  above <- river_data$Discharge > u
-  sum(above & !lag(above, default = FALSE))
-}) / n_distinct(river_data$water_year)
-
-# Thresholds giving 3 to 5 peaks per year
-thresholds[peaks_per_year >= 3 & peaks_per_year <= 5]
+# Days spent above the 95th percentile in each month
+days_above <- river_data %>%
+  filter(Discharge > high_flow) %>%
+  mutate(month = factor(month, levels = wy_months)) %>%
+  count(month, season) %>%
+  mutate(days = n / 96)   # 96 readings per day
 
 
-# Percentile method
-# Threshold: the 95th percentile of flow
-u95 <- quantile(river_data$Discharge, 0.95)
-u95
+# Anatomy of a Flood Event
 
-# Peaks: the highest reading in each separate period above the threshold
-peaks_95 <- river_data %>%
-  mutate(above = Discharge > u95,
-         start = above & !lag(above, default = FALSE),   # TRUE when the flow first goes above the threshold
-         run   = cumsum(start)) %>%                       # numbers each period above the threshold
-  filter(above) %>%
-  group_by(run) %>%
+# The largest recorded peak
+flood_peak <- river_data %>% slice_max(Discharge, n = 1, with_ties = FALSE)
+peak_time  <- flood_peak$Timestamp
+peak_flow  <- flood_peak$Discharge
+
+# Start of the rise: the last reading in the week before the peak that is within
+# 5% of that week's lowest flow (the same definition as in the independence analysis)
+rise_start <- river_data %>%
+  filter(Timestamp >= peak_time - 7 * 24 * 3600, Timestamp < peak_time) %>%
+  filter(Discharge <= 1.05 * min(Discharge)) %>%
+  slice_max(Timestamp, n = 1, with_ties = FALSE)
+start_time <- rise_start$Timestamp
+
+# Time to peak in hours
+time_to_peak <- as.numeric(difftime(peak_time, start_time, units = "hours"))
+
+# Readings from two days before the rise to five days after the peak
+flood_event <- river_data %>%
+  filter(Timestamp >= start_time - 2 * 24 * 3600,
+         Timestamp <= peak_time + 5 * 24 * 3600)
+
+
+# Variation in Flood Hydrograph Shape
+
+# The largest peak in each water year
+annual_peaks <- river_data %>%
+  group_by(water_year) %>%
   slice_max(Discharge, n = 1, with_ties = FALSE) %>%
-  ungroup()
+  ungroup() %>%
+  select(water_year, peak_time = Timestamp, peak_flow = Discharge)
 
-# Number of peaks, and average peaks per year
-nrow(peaks_95)
-nrow(peaks_95) / n_distinct(river_data$water_year)
-
-
-# Count the peaks above a given percentile threshold
-count_peaks <- function(p) {
-  u <- quantile(river_data$Discharge, p)
+# Readings from five days before to five days after each annual peak, with time
+# measured from the peak and discharge scaled by the peak flow
+annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
+  peak <- annual_peaks[i, ]
   river_data %>%
-    mutate(above = Discharge > u,
-           start = above & !lag(above, default = FALSE)) %>%
-    summarise(n = sum(start)) %>%
-    pull(n)
-}
-
-
-# mrl
-q <- river_data$Discharge
-
-# Mean residual life plot: look for the lowest threshold above which the line is roughly straight
- mrl.plot(q)
-
-# How many readings are above a candidate threshold (change 100 to the value you read off the MRL plot)
-length(which(q > 80))
-
-# Stability of the parameter estimates across a range of thresholds
-gpd.fitrange(q, 50, 200)
-
-# Fit the GPD at the chosen threshold and check the parameter estimates (scale, shape)
-gpd_fit <- gpd.fit(q, 80, npy = 96 * 365.25)
-gpd_fit$mle
-
-# Diagnostic plots
-gpd.diag(gpd_fit)
-
-
-
-
-#Threshold plots
-
-# Common plot settings
-base_plot <- ggplot(
-  river_data,
-  aes(x = Timestamp, y = Discharge)
-) +
-  geom_line(color = "#5298BC", linewidth = 0.35) +
-  labs(
-    x = "Date",
-    y = expression("Discharge ("*m^3*"/s)")
-  ) +
-  theme_minimal(base_size = 12)
-
-
-# 95th percentile threshold plot
-plot_95 <- base_plot +
-  geom_hline(yintercept = u95, linetype = "dashed", color = "#ACD35A") +
-  geom_point(data = peaks_95, color = "#AA1945", size = 1) +
-  labs(
-    title = "Peaks above the 95th percentile threshold",
-    subtitle = paste0(
-      "Threshold: ",
-      round(as.numeric(u95), 3),
-      " m³/s | Number of events: ",
-      nrow(peaks_95)
-    )) +
-  theme_minimal()
-
-
-# Find all thresholds giving 3-5 peaks per year
-selected_thresholds <- thresholds[
-  peaks_per_year >= 3 & peaks_per_year <= 5
-]
-
-# Identify the peak for each exceedance period at each threshold
-peaks_35_all <- purrr::map_dfr(selected_thresholds, function(u) {
-  
-  river_data %>%
-    arrange(Timestamp) %>%
+    filter(Timestamp >= peak$peak_time - 5 * 24 * 3600,
+           Timestamp <= peak$peak_time + 5 * 24 * 3600) %>%
     mutate(
-      above = Discharge > u,
-      start = above & !lag(above, default = FALSE),
-      run = cumsum(start)
-    ) %>%
-    filter(above) %>%
-    group_by(run) %>%
-    slice_max(Discharge, n = 1, with_ties = FALSE) %>%
-    ungroup() %>%
-    mutate(threshold = u)
-  
+      water_year      = peak$water_year,
+      hours_from_peak = as.numeric(difftime(Timestamp, peak$peak_time, units = "hours")),
+      scaled_flow     = Discharge / peak$peak_flow
+    )
 })
 
-# Categorise the peaks by discharge
-peaks_coloured <- peaks_35_all %>%
-  distinct(Timestamp, Discharge) %>%
-  mutate(
-    Peak_category = if_else(
-      Discharge >= min(selected_thresholds) &
-        Discharge <= max(selected_thresholds),
-      "Within threshold band",
-      "Above threshold band"
-    )
-  )
-
-# Plot all 3-5 thresholds on the hydrograph
-plot_35 <- base_plot + geom_point(
-  data = peaks_coloured,
-  aes(color = Peak_category),
-  size = 1.5
-)  +
-  annotate(
-    "rect",
-    xmin = min(river_data$Timestamp),
-    xmax = max(river_data$Timestamp),
-    ymin = min(selected_thresholds),
-    ymax = max(selected_thresholds),
-    fill = "#BFDC80",
-    alpha = 0.3
-  ) + scale_color_manual(
-    values = c(
-      "Within threshold band" = "#6E0C2A",
-      "Above threshold band" = "#AA1945"
-    ),
-    name = "Peak classification"
-  ) +
-  labs(
-    title = "Peaks using the 3-5 peaks per year method",
-    subtitle = paste0(
-      "Threshold band: ",
-      min(selected_thresholds),
-      "-",
-      max(selected_thresholds),
-      " m³/s | Number of events: ",
-      nrow(peaks_35_all)
-    )
-  ) +
-  theme_minimal()
-
-
-#Graph of all thresholds together
-# Find the threshold closest to 3, 4 and 5 peaks per year
-# Use the highest threshold meeting or exceeding each target rate
-get_threshold <- function(target) {
-  eligible <- thresholds[peaks_per_year >= target]
-  
-  if (length(eligible) == 0) {
-    stop(paste("No threshold gives at least", target,
-               "peaks per year."))
-  }
-  
-  max(eligible)
-}
-
-u3 <- get_threshold(3)
-u4 <- get_threshold(4)
-u5 <- get_threshold(5)
-
-# Create a table of the four threshold lines
-threshold_lines <- tibble(
-  Threshold = c(
-    "95th percentile",
-    "3 peaks/year",
-    "4 peaks/year",
-    "5 peaks/year"
-  ),
-  Value = c(u95, u3, u4, u5)
-)
-
-
-# Identify the peak of each exceedance period above
-# the LOWEST of the four thresholds
-u_min <- min(threshold_lines$Value)
-
-peaks_combined <- river_data %>%
-  mutate(
-    above = Discharge > u_min,
-    start = above &
-      !dplyr::lag(above, default = FALSE),
-    run = cumsum(start)
-  ) %>%
-  filter(above) %>%
-  group_by(run) %>%
-  slice_max(
-    Discharge,
-    n = 1,
-    with_ties = FALSE
-  ) %>%
-  ungroup()
-
-# Categorise each peak by exactly which thresholds it exceeds
-peaks_combined <- peaks_combined %>%
-  mutate(
-    Peak_category = case_when(
-      Discharge > max(threshold_lines$Value) ~
-        "Above all thresholds",
-      
-      Discharge > u4 & Discharge > u5 & Discharge > u95 ~
-        "Above 95th, 4-peak and 5-peak thresholds",
-      
-      Discharge > u5 & Discharge > u95 ~
-        "Above 95th and 5-peak thresholds",
-      
-      Discharge > u95 ~
-        "Above 95th percentile only",
-      
-      TRUE ~
-        "Other threshold combinations"
-    )
-  )
-
-# Combined hydrograph
-plot_thresholds <- ggplot(
-  river_data,
-  aes(x = Timestamp, y = Discharge)
-) +
-  
-  geom_line(
-    color = "#5298BC",
-    linewidth = 0.35
-  ) +
-  
-  geom_hline(
-    data = threshold_lines,
-    aes(
-      yintercept = Value,
-      color = Threshold
-    ),
-    linetype = "dashed",
-    linewidth = 0.8
-  ) +
-  
-  geom_point(
-    data = peaks_combined,
-    aes(color = Peak_category),
-    size = 1.6
-  ) +
-  annotate("text", x = max(river_data$Timestamp), y = 120, label = "113", colour = "#AA1945") + 
-  annotate("text", x = max(river_data$Timestamp), y = 100, label = "93", colour = "red")+
-  annotate("text", x = max(river_data$Timestamp), y = 85, label = "79", colour = "pink3")+
-  annotate("text", x = max(river_data$Timestamp), y = 65, label = "58", colour = "pink")+
-  scale_color_manual(
-    values = c(
-      "95th percentile" = "pink",
-      "3 peaks/year" = "#AA1945",
-      "4 peaks/year" = "red",
-      "5 peaks/year" = "pink3",
-      "Above all thresholds" = "#AA1945",
-      "Above 95th, 4-peak and 5-peak thresholds" = "red",
-      "Above 95th and 5-peak thresholds" = "pink3",
-      "Above 95th percentile only" = "pink",
-      "Other threshold combinations" = "#555555"
-    )
-  ) +
-  
-  labs(
-    title = "Comparison of Flood Peak Thresholds",
-    subtitle = "95th percentile and 3, 4 and 5 peaks per year",
-    x = "Date",
-    y = expression("Discharge ("*m^3*"/s)"),
-    color = "Threshold / Peak category"
-  ) +
-  
-  theme_minimal(base_size = 12)
-
 #-----------------------------------------------------------------------------------
-# INDEPENDECE 
+# THRESHOLD SELECTION AND INDEPENDENCE
 #-----------------------------------------------------------------------------------
-q <- river_data$Discharge
-t <- river_data$Timestamp
 
-independent_peaks <- function(u) {
-  
-  # Step 1: candidate peaks - the highest reading in each period above the threshold
-  candidates <- river_data %>%
+# Candidate peaks: the highest reading in each separate period above threshold u,
+# returned as row numbers of river_data
+candidate_peaks <- function(u) {
+  river_data %>%
     mutate(row   = row_number(),
            above = Discharge > u,
            run   = cumsum(above & !lag(above, default = FALSE))) %>%
     filter(above) %>%
     group_by(run) %>%
     slice_max(Discharge, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
     pull(row)
+}
+
+
+# Initial Threshold
+# --------------------------------------------------------------
+
+# Candidate peaks per year at every whole-number threshold, before independence
+crossing_thresholds <- 0:floor(max(q))
+crossings_per_year <- sapply(crossing_thresholds, function(u) {
+  above <- q > u
+  sum(above & !lag(above, default = FALSE))
+}) / n_years
+
+# Highest threshold giving at least a target number of candidate peaks per year
+crossing_threshold <- function(target) {
+  max(crossing_thresholds[crossings_per_year >= target])
+}
+
+# The four candidate thresholds
+threshold_lines <- tibble(
+  Method = c("95th percentile", "5 peaks/year", "4 peaks/year", "3 peaks/year"),
+  Value  = c(as.numeric(quantile(q, 0.95)),
+             crossing_threshold(5), crossing_threshold(4), crossing_threshold(3))
+)
+
+# Initial threshold: the 95th percentile, the lowest of the four
+u_initial <- crossing_threshold(5)
+
+# Hydrograph with the four candidate thresholds
+threshold_plot <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "#5298BC", linewidth = 0.35) +
+  geom_hline(data = threshold_lines, aes(yintercept = Value, colour = Method),
+             linetype = "dashed", linewidth = 0.7) +
+  geom_text(data = threshold_lines,
+            aes(x = max(river_data$Timestamp), y = Value, label = round(Value), colour = Method),
+            hjust = 1, vjust = -0.4, size = 3.5, show.legend = FALSE) +
+  scale_colour_manual(values = c("95th percentile" = "#7FA83A",
+                                 "5 peaks/year"    = "#E58FA6",
+                                 "4 peaks/year"    = "#D0436A",
+                                 "3 peaks/year"    = "#AA1945")) +
+  labs(
+    title = "Candidate thresholds",
+    subtitle = "Peaks per year counted before independence",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)"),
+    colour = "Threshold"
+  ) +
+  theme_minimal()
+
+
+# Independence of Peaks
+# --------------------------------------------------------------
+
+# Apply the Robson and Reed (1999) independence rules to the candidate peaks above u
+independent_peaks <- function(u) {
   
-  # Step 2: average time to rise, calculated using at least five clean peaks exceeding the threshold
-  # A clean peak has no other candidate peak in the 7 days before it
+  candidates <- candidate_peaks(u)
+  
+  # Clean peaks: no other candidate peak in the previous 7 days
   days_since_last <- as.numeric(difftime(t[candidates], lag(t[candidates]), units = "days"))
   clean <- candidates[is.na(days_since_last) | days_since_last > 7]
-  if (length(clean) < 5) stop("Fewer than five clean peaks - lower the threshold")
+  if (length(clean) < 5) stop("Fewer than five clean peaks above ", u)
   
-  # Time to rise = duration between a trough and its corresponding peak
-  # Trough = last point before the peak still within 5% of the rise above the lowest flow in the previous 7 days
+  # Average time to rise over the clean peaks
   rise_hours <- sapply(clean, function(p) {
-    window <- which(t >= t[p] - 7 * 24 * 3600 & t <= t[p])
-    low    <- min(q[window])
-    trough <- max(window[q[window] <= low + 0.05 * (q[p] - low)])
-    as.numeric(difftime(t[p], t[trough], units = "hours"))
+    as.numeric(difftime(t[p], t[rise_start_row(p)], units = "hours"))
   })
-  
   min_gap_hours <- 3 * mean(rise_hours)
   
-  # Step 3: check each pair of adjacent peaks against both rules
+  # Check each candidate against the last peak kept
   kept <- candidates[1]
   for (p in candidates[-1]) {
     last   <- kept[length(kept)]                                  # the first peak of the pair
     gap    <- as.numeric(difftime(t[p], t[last], units = "hours"))
-    trough <- min(q[last:p])                                      # discharge at the trough between them
+    trough <- min(q[last:p])                                      # flow at the trough between them
     
     # Rule 1: at least three times the average time to rise apart
     # Rule 2: trough at least two-thirds lower than the first peak
@@ -517,183 +390,84 @@ independent_peaks <- function(u) {
     }
   }
   
-  cat("Candidate peaks:", length(candidates), "\n")
-  cat("Clean peaks used for time to rise:", length(clean), "\n")
-  cat("Average time to rise (hours):", round(mean(rise_hours), 1), "\n")
-  cat("Independent peaks:", length(kept), "\n")
-  
-  river_data[kept, ]
+  # Return the independent peaks, recording the average time to rise
+  peaks_u <- river_data[kept, ]
+  attr(peaks_u, "mean_rise_hours") <- mean(rise_hours)
+  peaks_u
 }
 
-## Rechecking the threshold
-# Removing dependent peaks lowers the number of peaks per year, 
-#so we recheck which thresholds give 3 to 5 independent peaks per year.
+# Candidate and independent peaks at the initial threshold
+candidates_initial <- river_data[candidate_peaks(u_initial), ]
+peaks_initial      <- independent_peaks(u_initial)
+mean_rise_hours    <- attr(peaks_initial, "mean_rise_hours")
+min_gap_hours      <- 3 * mean_rise_hours
 
-check <- tibble(threshold = seq(50, 200, by = 10)) %>%
-  mutate(peaks_per_year = sapply(threshold, function(u) nrow(independent_peaks(u))) /
-           n_distinct(river_data$water_year))
-check
-
-
-
-# Post independence plots
-# Common plot settings
-base_plot_ind <- ggplot(
-  river_data,
-  aes(x = Timestamp, y = Discharge)
-) +
-  geom_line(color = "#2A5267", linewidth = 0.35) +
-  labs(
-    x = "Date",
-    y = expression("Discharge ("*m^3*"/s)")
-  ) +
-  theme_minimal(base_size = 12)
-
-
-# 95th percentile plot
-peaks_95_ind <- independent_peaks(as.numeric(u95))
-
-plot_95_ind <- base_plot_ind  +
-  geom_hline(
-    yintercept = as.numeric(u95),
-    linetype = "dashed",
-    color = "#ACD35A"
-  ) +
-  
-  geom_point(
-    data = peaks_95_ind,
-    color = "#AA1945",
-    size = 1.5
-  ) +
-  
-  labs(
-    title = "Independent peaks above the 95th percentile",
-    subtitle = paste0(
-      "Threshold: ",
-      round(as.numeric(u95), 3),
-      " m³/s | Independent events: ",
-      nrow(peaks_95_ind)
-    )
-  )
-
-
-# 3-5 peaks method
-# Number of water years
-n_years <- n_distinct(river_data$water_year)
-
-# Test thresholds between 50 and 200 m³/s
-thresholds_ind <- seq(50, 200, by = 5)
-
-# Calculate independent peaks per year at each threshold
-independent_rates <- purrr::map_dfr(
-  thresholds_ind,
-  function(u) {
-    
-    peaks <- tryCatch(
-      independent_peaks(u),
-      error = function(e) NULL
-    )
-    
-    tibble(
-      threshold = u,
-      peaks_per_year = if (is.null(peaks)) {
-        NA_real_
-      } else {
-        nrow(peaks) / n_years
-      }
-    )
-  }
-)
-
-# Select thresholds giving 3-5 independent peaks/year
-selected_thresholds_ind <- independent_rates %>%
-  dplyr::filter(
-    !is.na(peaks_per_year),
-    peaks_per_year >= 3,
-    peaks_per_year <= 5
-  ) %>%
-  dplyr::pull(threshold)
-
-# Check qualifying thresholds
-print(selected_thresholds_ind)
-
-if (length(selected_thresholds_ind) == 0) {
-  stop("No thresholds give 3-5 independent peaks per year.")
+# Hydrograph with a set of peaks marked
+plot_peaks <- function(peak_data, u, title) {
+  ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+    geom_line(colour = "#5298BC", linewidth = 0.35) +
+    geom_hline(yintercept = u, linetype = "dashed", colour = "#7FA83A") +
+    geom_point(data = peak_data, colour = "#AA1945", size = 1.2) +
+    labs(
+      title = title,
+      subtitle = paste0(nrow(peak_data), " peaks above ", round(u, 1), " m³/s"),
+      x = "Date",
+      y = expression("Discharge ("*m^3*"/s)")
+    ) +
+    theme_minimal()
 }
 
-peaks_35_ind <- purrr::map_dfr(
-  selected_thresholds_ind,
-  function(u) {
-    
-    independent_peaks(u) %>%
-      mutate(threshold = u)
-  }
-)
+# Before and after independence plots, shown side by side in the report
+plot_before <- plot_peaks(candidates_initial, u_initial, "Before independence")
+plot_after  <- plot_peaks(peaks_initial, u_initial, "After independence")
 
-# Remove duplicate peaks and categorise by discharge
-peaks_coloured_ind <- peaks_35_ind %>%
-  distinct(Timestamp, Discharge) %>%
-  mutate(
-    Peak_category = if_else(
-      Discharge >= min(selected_thresholds_ind) &
-        Discharge <= max(selected_thresholds_ind),
-      "Within threshold band",
-      "Above threshold band"
-    )
-  )
 
-# Plot
-plot_35_ind <- base_plot_ind +
-  annotate(
-    "rect",
-    xmin = min(river_data$Timestamp),
-    xmax = max(river_data$Timestamp),
-    ymin = min(selected_thresholds_ind),
-    ymax = max(selected_thresholds_ind),
-    fill = "#BFDC80",
-    alpha = 0.3
-  ) +
-  geom_point(
-    data = peaks_coloured_ind,
-    aes(color = Peak_category),
-    size = 1.5
-  ) +
-  scale_color_manual(
-    values = c(
-      "Within threshold band" = "#6E0C2A",
-      "Above threshold band" = "#AA1945"
-    ),
-    name = "Peak classification"
-  ) +
+# Final Threshold
+# --------------------------------------------------------------
+
+# Independent peaks per year across a range of thresholds
+independent_rates <- tibble(threshold = 50:120) %>%
+  mutate(peaks_per_year = sapply(threshold, function(u) {
+    peaks_u <- tryCatch(independent_peaks(u), error = function(e) NULL)
+    if (is.null(peaks_u)) NA_real_ else nrow(peaks_u) / n_years
+  })) %>%
+  filter(!is.na(peaks_per_year))
+
+# Thresholds giving 3 to 5 independent peaks per year
+thresholds_3to5 <- independent_rates %>%
+  filter(peaks_per_year >= 3, peaks_per_year <= 5) %>%
+  pull(threshold)
+
+# Final threshold, chosen from the range above using the GPD checks
+u_final <- 65
+
+# Independent peaks per year against threshold, with the 3-5 band and final threshold
+rates_plot <- ggplot(independent_rates, aes(x = threshold, y = peaks_per_year)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = 3, ymax = 5,
+           fill = "#BFDC80", alpha = 0.3) +
+  geom_line(colour = "#5298BC") +
+  geom_point(colour = "#5298BC", size = 1) +
+  geom_vline(xintercept = u_final, linetype = "dashed", colour = "#AA1945") +
   labs(
-    title = "Independent peaks using the 3-5 peaks/year method",
-    subtitle = paste0(
-      "Threshold band: ",
-      min(selected_thresholds_ind),
-      "-",
-      max(selected_thresholds_ind),
-      " m³/s | Independent events: ",
-      nrow(peaks_35_ind)
-    )
-  )
+    title = "Independent peaks per year by threshold",
+    subtitle = "Shaded band: 3 to 5 peaks per year | Dashed line: chosen threshold",
+    x = expression("Threshold ("*m^3*"/s)"),
+    y = "Independent peaks per year"
+  ) +
+  theme_minimal()
 
+# Independent peaks at the final threshold
+peaks <- independent_peaks(u_final)
 
+# GPD fitted to the excesses of the independent peak flows above the final threshold
+gpd_fit <- gpd.fit(peaks$Discharge, u_final, npy = nrow(peaks) / n_years, show = FALSE)
 
-## Final threshold
-u <- 65   # change to your final threshold
-peaks <- independent_peaks(u)
-
-# Row number of each peak, and of the peak before it
-peak_rows <- match(peaks$Timestamp, t)
-previous  <- c(1, head(peak_rows, -1))
-
-# Start of each rise: same definition as the trough in the time to rise,
-# searching back up to 7 days but never past the previous peak
-start_rows <- mapply(function(p, prev) {
-  window <- which(t >= max(t[p] - 7 * 24 * 3600, t[prev]) & t <= t[p])
-  low    <- min(q[window])
-  max(window[q[window] <= low + 0.05 * (q[p] - low)])
-}, peak_rows, previous)
+# Start of each rise: searching back up to 7 days, but never past the previous peak
+peak_rows     <- match(peaks$Timestamp, t)
+previous_rows <- c(1, head(peak_rows, -1))
+start_rows    <- mapply(function(p, prev) {
+  rise_start_row(p, earliest = max(t[p] - 7 * 24 * 3600, t[prev]))
+}, peak_rows, previous_rows)
 
 # The two quantities SEPA asked for
 peaks <- peaks %>%
@@ -702,9 +476,6 @@ peaks <- peaks %>%
     max_flow       = Discharge,
     time_to_peak_h = as.numeric(difftime(Timestamp, start_time, units = "hours"))
   )
-
-peaks %>% select(start_time, Timestamp, max_flow, time_to_peak_h)
-summary(peaks$time_to_peak_h)
 
 
 
@@ -799,26 +570,26 @@ time_season_plot <- peaks %>% group_by(season) %>% ggplot(aes(x = season, y = ti
 results <- tibble()
 
 for (u in c(55, 60, 65, 70, 75)) {
-  peaks <- independent_peaks(u)
+  peaks_test <- independent_peaks(u)
   
   # Start of each rise and time to peak (same code as before)
-  peak_rows <- match(peaks$Timestamp, t)
+  peak_rows <- match(peaks_test$Timestamp, t)
   previous  <- c(1, head(peak_rows, -1))
   start_rows <- mapply(function(p, prev) {
     window <- which(t >= max(t[p] - 7 * 24 * 3600, t[prev]) & t <= t[p])
     low    <- min(q[window])
     max(window[q[window] <= low + 0.05 * (q[p] - low)])
   }, peak_rows, previous)
-  time_to_peak_h <- as.numeric(difftime(peaks$Timestamp, t[start_rows], units = "hours"))
+  time_to_peak_h <- as.numeric(difftime(peaks_test$Timestamp, t[start_rows], units = "hours"))
   
   # One row of results for this threshold
   results <- bind_rows(results, tibble(
     threshold             = u,
-    events                = nrow(peaks),
-    events_per_year       = nrow(peaks) / n_distinct(river_data$water_year),
-    median_max_flow       = median(peaks$Discharge),
+    events                = nrow(peaks_test),
+    events_per_year       = nrow(peaks_test) / n_distinct(river_data$water_year),
+    median_max_flow       = median(peaks_test$Discharge),
     median_time_to_peak_h = median(time_to_peak_h),
-    spearman_rho          = cor(peaks$Discharge, time_to_peak_h, method = "spearman")
+    spearman_rho          = cor(peaks_test$Discharge, time_to_peak_h, method = "spearman")
   ))
 }
 
@@ -826,9 +597,9 @@ for (u in c(55, 60, 65, 70, 75)) {
 results_table <- knitr::kable(
   results,
   col.names = c("threshold", "events", "events_per_year" = "Events per Year",
-  "median_max_flow" = "Median Max Flow",
-  "median_time_to_peak_h" = "Median Time to Peak (Hours)", 
-  "spearman_rho" = "Spearman Rho Corelation"),
+                "median_max_flow" = "Median Max Flow",
+                "median_time_to_peak_h" = "Median Time to Peak (Hours)", 
+                "spearman_rho" = "Spearman Rho Corelation"),
   booktabs = T,
   digits = 3,
   caption = "Final Uncertanity Table"
