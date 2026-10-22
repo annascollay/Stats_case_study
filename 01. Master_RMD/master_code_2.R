@@ -133,6 +133,36 @@ data_table <- bind_rows(
     )
 )
 
+# Filter for Quality Codes 50 and 100, joining with quality_code_table labels
+qc_plot_data <- river_data %>%
+  mutate(QualityCode = as.numeric(QualityCode)) %>%
+  filter(QualityCode %in% c(50, 100)) %>%
+  left_join(
+    quality_code_table %>% select(`Code number`, `Code name`),
+    by = c("QualityCode" = "Code number")
+  ) %>%
+  mutate(
+    Quality_Label = factor(
+      paste0("Code ", QualityCode, " (", `Code name`, ")"),
+      levels = c("Code 50 (Good)", "Code 100 (Estimated)")
+    )
+  )
+
+# Generate discharge by quality code box-plot
+qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, fill = Quality_Label)) +
+  geom_boxplot(alpha = 0.7, outlier.size = 1, outlier.alpha = 0.3) +
+  scale_fill_manual(values = c("Code 50 (Good)" = "#2B5C8F", 
+                               "Code 100 (Estimated)" = "#D95F02")) +
+  labs(
+    title = "Discharge distribution by quality code",
+    x = NULL,
+    y = expression("Discharge (" * m^3 * "/s)")
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none"
+  )
+
 # Keep only good (50) and estimated (100) readings, matching the Used column above
 river_data <- river_data %>%
   filter(as.numeric(QualityCode) %in% c(50, 100))
