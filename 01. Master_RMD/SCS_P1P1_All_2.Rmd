@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 	warning = FALSE
 )
 
-source("master_code.R")
+source("master_code_2.R")
 ```
 
 ```{r loading packages for plotting, message=FALSE, warning=FALSE, include=FALSE}
