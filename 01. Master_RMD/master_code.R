@@ -329,7 +329,14 @@ plot_35 <- base_plot + geom_point(
   ) +
   labs(
     title = "Peaks using the 3-5 peaks per year method",
-    subtitle = "All qualifying thresholds (73-113 m³/s)"
+    subtitle = paste0(
+      "Threshold band: ",
+      min(selected_thresholds),
+      "-",
+      max(selected_thresholds),
+      " m³/s | Number of events: ",
+      nrow(peaks_35_all)
+    )
   ) +
   theme_minimal()
 
@@ -527,6 +534,151 @@ check <- tibble(threshold = seq(50, 200, by = 10)) %>%
            n_distinct(river_data$water_year))
 check
 
+
+
+# Post independence plots
+# Common plot settings
+base_plot_ind <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(color = "#2A5267", linewidth = 0.35) +
+  labs(
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal(base_size = 12)
+
+
+# 95th percentile plot
+peaks_95_ind <- independent_peaks(as.numeric(u95))
+
+plot_95_ind <- base_plot_ind  +
+  geom_hline(
+    yintercept = as.numeric(u95),
+    linetype = "dashed",
+    color = "#ACD35A"
+  ) +
+  
+  geom_point(
+    data = peaks_95_ind,
+    color = "#AA1945",
+    size = 1.5
+  ) +
+  
+  labs(
+    title = "Independent peaks above the 95th percentile",
+    subtitle = paste0(
+      "Threshold: ",
+      round(as.numeric(u95), 3),
+      " m³/s | Independent events: ",
+      nrow(peaks_95_ind)
+    )
+  )
+
+
+# 3-5 peaks method
+# Number of water years
+n_years <- n_distinct(river_data$water_year)
+
+# Test thresholds between 50 and 200 m³/s
+thresholds_ind <- seq(50, 200, by = 5)
+
+# Calculate independent peaks per year at each threshold
+independent_rates <- purrr::map_dfr(
+  thresholds_ind,
+  function(u) {
+    
+    peaks <- tryCatch(
+      independent_peaks(u),
+      error = function(e) NULL
+    )
+    
+    tibble(
+      threshold = u,
+      peaks_per_year = if (is.null(peaks)) {
+        NA_real_
+      } else {
+        nrow(peaks) / n_years
+      }
+    )
+  }
+)
+
+# Select thresholds giving 3-5 independent peaks/year
+selected_thresholds_ind <- independent_rates %>%
+  dplyr::filter(
+    !is.na(peaks_per_year),
+    peaks_per_year >= 3,
+    peaks_per_year <= 5
+  ) %>%
+  dplyr::pull(threshold)
+
+# Check qualifying thresholds
+print(selected_thresholds_ind)
+
+if (length(selected_thresholds_ind) == 0) {
+  stop("No thresholds give 3-5 independent peaks per year.")
+}
+
+peaks_35_ind <- purrr::map_dfr(
+  selected_thresholds_ind,
+  function(u) {
+    
+    independent_peaks(u) %>%
+      mutate(threshold = u)
+  }
+)
+
+# Remove duplicate peaks and categorise by discharge
+peaks_coloured_ind <- peaks_35_ind %>%
+  distinct(Timestamp, Discharge) %>%
+  mutate(
+    Peak_category = if_else(
+      Discharge >= min(selected_thresholds_ind) &
+        Discharge <= max(selected_thresholds_ind),
+      "Within threshold band",
+      "Above threshold band"
+    )
+  )
+
+# Plot
+plot_35_ind <- base_plot_ind +
+  annotate(
+    "rect",
+    xmin = min(river_data$Timestamp),
+    xmax = max(river_data$Timestamp),
+    ymin = min(selected_thresholds_ind),
+    ymax = max(selected_thresholds_ind),
+    fill = "#BFDC80",
+    alpha = 0.3
+  ) +
+  geom_point(
+    data = peaks_coloured_ind,
+    aes(color = Peak_category),
+    size = 1.5
+  ) +
+  scale_color_manual(
+    values = c(
+      "Within threshold band" = "#6E0C2A",
+      "Above threshold band" = "#AA1945"
+    ),
+    name = "Peak classification"
+  ) +
+  labs(
+    title = "Independent peaks using the 3-5 peaks/year method",
+    subtitle = paste0(
+      "Threshold band: ",
+      min(selected_thresholds_ind),
+      "-",
+      max(selected_thresholds_ind),
+      " m³/s | Independent events: ",
+      nrow(peaks_35_ind)
+    )
+  )
+
+
+
 ## Final threshold
 u <- 65   # change to your final threshold
 peaks <- independent_peaks(u)
@@ -554,38 +706,6 @@ peaks <- peaks %>%
 peaks %>% select(start_time, Timestamp, max_flow, time_to_peak_h)
 summary(peaks$time_to_peak_h)
 
-
-# Post independence plots
-peaks_95_ind <- independent_peaks(as.numeric(u95))
-
-plot_95_ind <- ggplot(
-  river_data,
-  aes(x = Timestamp, y = Discharge)
-) +
-  geom_line(color = "#2A5267", linewidth = 0.35) +
-  geom_hline(
-    yintercept = as.numeric(u95),
-    linetype = "dashed",
-    color = "#ACD35A"
-  ) +
-  
-  geom_point(
-    data = peaks_95_ind,
-    color = "#AA1945",
-    size = 1.5
-  ) +
-  
-  labs(
-    x = "Date",
-    y = expression("Discharge ("*m^3*"/s)"),
-    title = "Independent peaks above the 95th percentile",
-    subtitle = paste0(
-      "Threshold: ",
-      round(as.numeric(u95), 3),
-      " m³/s | Independent events: ",
-      nrow(peaks_95_ind)
-    )
-  ) + theme_minimal()
 
 
 #---------------------------------------------------------------------------

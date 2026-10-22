@@ -343,7 +343,7 @@ The Peaks-Over-Threshold (POT) uses a threshold to extracts the distinct peak fl
 
 The threshold defines what is considered an extreme event, hence to verify we have captured all events, a comparison of methods is crucial. The 3-5 peaks per year method can be implemented both visually and mathematically, manually we could count peaks and draw a line, however this is less efficient and accurate. Instead, mathematically we have calculated all of the possible thresholds in which 3-5 extreme events occur, Figure ... below illustrates this with the green region.
 
-```{r 35-plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=8}
+```{r 35-plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=8,  fig.cap= "Hydrographs showing Threshold for each Method"}
 plot_35 / plot_95
 
 #Threshold word count = 323
@@ -351,7 +351,7 @@ plot_35 / plot_95
 
 The 95th quantile method, creates a threshold line such that 5% of all events are considered extreme events. This is shown on the figure above. 
 
-```{r omparison plots, echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
+```{r omparison plots, fig.cap= "A Comparision of Threshold Methods", echo=FALSE, fig.pos='h', fig.width=10, fig.height=10}
 
 plot_thresholds
 
@@ -392,18 +392,19 @@ diagnostic plots assess the fitted GPD model.
 \vspace{-22pt}
 \centering
 \includegraphics[width=\textwidth]{mrl_plot.pdf}
+\captionof{figure}{MRL Plot}
 \end{minipage}
 )")
 ```
 
 
-```{r echo=FALSE, fig.width=10, fig.height=10}
+```{r echo=FALSE, fig.height=6, fig.cap= "GPD Stability Analysis Plots"}
 
 gpd.fitrange(q, 50, 200)
 
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.cap= "GPD Diagnostic Plots"}
 
 gpd.diag(gpd_fit)
 ```
@@ -421,9 +422,10 @@ Assumptions:
 
 If two peaks fail either rule, they belong to the same event and only the larger peak is kept.
 
-```{r Independence comparision plot (95), echo=FALSE}
-plot_95 / plot_95_ind
+```{r Independence comparision plot (95), fig.cap="A Comparision of Threshold Methods Prior and Post Independence", echo=FALSE, fig.height=12, fig.width=16}
+(plot_95 + plot_35) / (plot_95_ind + plot_35_ind)
 ```
+
 # Final Threshold Selection
 
 ## Uncertanity Analysis
