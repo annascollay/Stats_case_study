@@ -1,4 +1,6 @@
 Threshold selection 3-5 peaks vs 95th percentile
   - 95th percentile threshold lower but somehow there are >1,100 fewer events?
 
-Height of diagnostic plots
+Seasonality of high flows -- put legend on the right
+
+Application of independence rules, specifically trough rule
