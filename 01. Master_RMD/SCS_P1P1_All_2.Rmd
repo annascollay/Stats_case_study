@@ -187,9 +187,9 @@ The left panel of Figure 4 shows the two quantities for the largest observed eve
 
 Since high flows are rare, concentrated between October and February, and vary in shape between events, we need a threshold that extracts them. We will then separate peaks into independent events, before investigating how max flow and time to peak vary across events and between seasons.
 
-## Threshold Selection and Independence
+# Threshold Selection and Independence
 
-### Initial Threshold
+## Initial Threshold
 
 The Peaks Over Threshold (POT) approach extracts flood events as the peaks of flow above a threshold $u$. Two common rules for choosing $u$ are the 95th percentile of flow and a threshold giving 3 to 5 peaks per year. Figure X shows both on the hydrograph, where the 95th percentile is `r round(quantile(q, 0.95), 1)` m³/s, and counting each period above the threshold as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` m³/s. At this stage, however, a single flood can cross the threshold several times, so these counts overstate the number of distinct events. Robson and Reed (1999) note that a threshold giving around five peaks a year leaves the flexibility to raise it later to exclude smaller floods, and the lecture notes that the threshold may need to change once independence has been applied. Since the 95th percentile gives `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)`, well above this range, we take the threshold giving 5 peaks per year $u$ = `r u_initial` $m^3/s$, as our initial threshold.
 
@@ -197,7 +197,7 @@ The Peaks Over Threshold (POT) approach extracts flood events as the peaks of fl
 threshold_plot
 ```
 
-### Independence of Peaks
+## Independence of Peaks
 
 To make sure each peak represents a separate flood, we apply the independence rules of Robson and Reed (1999). Two adjacent peaks are only treated as separate events if:
 
@@ -215,7 +215,7 @@ At the initial threshold, the average time to rise is `r round(mean_rise_hours, 
 grid.arrange(plot_before, plot_after, ncol = 2)
 ```
 
-### Final Threshold
+## Final Threshold
 
 Since separating events lowers the number of peaks per year, we recheck the threshold using independent peaks only. Our initial threshold gives `r round(nrow(peaks_initial) / n_years, 1)` independent peaks per year, while Figure X shows that thresholds between `r min(thresholds_3to5)` and `r max(thresholds_3to5)` m³/s give 3 to 5.
 
@@ -231,13 +231,13 @@ mrl.plot(peaks$Discharge, umin = u_final,
 gpd.fitrange(peaks$Discharge, umin = u_final, umax = 120, nint = 12)
 ```
 
-Since the lecture notes that the threshold may need to change once independence has been applied, we lower it to a final threshold of $u = `r u_final`$ m³/s, [which ...], giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit\$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure X show ...]
+Since the lecture notes that the threshold may need to change once independence has been applied, we lower it to a final threshold of $u = `r u_final`$ $\text{m}^3$/s, [which ...], giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi = `r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure X show ...]
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=8, fig.height=7, fig.cap="Diagnostic plots for the GPD fitted at the final threshold."}
 gpd.diag(gpd_fit)
 ```
 
-## Uncertanity Analysis
+# Uncertainty Analysis
 
 ```{r uncertanity analysis, echo=FALSE}
 

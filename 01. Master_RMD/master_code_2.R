@@ -108,7 +108,7 @@ quality_code_table <- tibble(
     "Unchecked"
   ),
   `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U"),
-  Used = c("used", "used", "not used", "not used", "not used", "not used")
+  Used = c("retained", "retained", "excluded", "excluded", "excluded", "excluded")
 )
 
 # Join quality code table with the number of readings for each code
@@ -166,9 +166,6 @@ qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, fill = Qua
 # Keep only good (50) and estimated (100) readings, matching the Used column above
 river_data <- river_data %>%
   filter(as.numeric(QualityCode) %in% c(50, 100))
-
-# Subsection 2.2 - Exploratory Analysis
-# --------------------------------------------------------------
 
 # Subsection 2.2 - Exploratory Analysis
 # --------------------------------------------------------------
@@ -320,16 +317,16 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
 })
 
 #-----------------------------------------------------------------------------------
-# THRESHOLD SELECTION AND INDEPENDENCE
+# Section 3 - Threshold Selection and Independence
 #-----------------------------------------------------------------------------------
 
 # Candidate peaks: the highest reading in each separate period above threshold u,
 # returned as row numbers of river_data
 candidate_peaks <- function(u) {
   river_data %>%
-    mutate(row   = row_number(),
+    mutate(row = row_number(),
            above = Discharge > u,
-           run   = cumsum(above & !lag(above, default = FALSE))) %>%
+           run = cumsum(above & !lag(above, default = FALSE))) %>%
     filter(above) %>%
     group_by(run) %>%
     slice_max(Discharge, n = 1, with_ties = FALSE) %>%
@@ -338,7 +335,7 @@ candidate_peaks <- function(u) {
 }
 
 
-# Initial Threshold
+# Subsection 3.1 - Initial Threshold
 # --------------------------------------------------------------
 
 # Candidate peaks per year at every whole-number threshold, before independence
@@ -385,7 +382,7 @@ threshold_plot <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
   theme_minimal()
 
 
-# Independence of Peaks
+# Subsection 3.2 - Independence of Peaks
 # --------------------------------------------------------------
 
 # Apply the Robson and Reed (1999) independence rules to the candidate peaks above u
@@ -407,8 +404,8 @@ independent_peaks <- function(u) {
   # Check each candidate against the last peak kept
   kept <- candidates[1]
   for (p in candidates[-1]) {
-    last   <- kept[length(kept)]                                  # the first peak of the pair
-    gap    <- as.numeric(difftime(t[p], t[last], units = "hours"))
+    last <- kept[length(kept)]                                  # the first peak of the pair
+    gap <- as.numeric(difftime(t[p], t[last], units = "hours"))
     trough <- min(q[last:p])                                      # flow at the trough between them
     
     # Rule 1: at least three times the average time to rise apart
@@ -428,9 +425,9 @@ independent_peaks <- function(u) {
 
 # Candidate and independent peaks at the initial threshold
 candidates_initial <- river_data[candidate_peaks(u_initial), ]
-peaks_initial      <- independent_peaks(u_initial)
-mean_rise_hours    <- attr(peaks_initial, "mean_rise_hours")
-min_gap_hours      <- 3 * mean_rise_hours
+peaks_initial <- independent_peaks(u_initial)
+mean_rise_hours <- attr(peaks_initial, "mean_rise_hours")
+min_gap_hours <- 3 * mean_rise_hours
 
 # Hydrograph with a set of peaks marked
 plot_peaks <- function(peak_data, u, title) {
@@ -449,10 +446,10 @@ plot_peaks <- function(peak_data, u, title) {
 
 # Before and after independence plots, shown side by side in the report
 plot_before <- plot_peaks(candidates_initial, u_initial, "Before independence")
-plot_after  <- plot_peaks(peaks_initial, u_initial, "After independence")
+plot_after <- plot_peaks(peaks_initial, u_initial, "After independence")
 
 
-# Final Threshold
+# Subsection 3.3 - Final Threshold
 # --------------------------------------------------------------
 
 # Independent peaks per year across a range of thresholds
@@ -493,24 +490,22 @@ peaks <- independent_peaks(u_final)
 gpd_fit <- gpd.fit(peaks$Discharge, u_final, npy = nrow(peaks) / n_years, show = FALSE)
 
 # Start of each rise: searching back up to 7 days, but never past the previous peak
-peak_rows     <- match(peaks$Timestamp, t)
+peak_rows <- match(peaks$Timestamp, t)
 previous_rows <- c(1, head(peak_rows, -1))
-start_rows    <- mapply(function(p, prev) {
+start_rows <- mapply(function(p, prev) {
   rise_start_row(p, earliest = max(t[p] - 7 * 24 * 3600, t[prev]))
 }, peak_rows, previous_rows)
 
 # The two quantities SEPA asked for
 peaks <- peaks %>%
   mutate(
-    start_time     = t[start_rows],
-    max_flow       = Discharge,
+    start_time = t[start_rows],
+    max_flow = Discharge,
     time_to_peak_h = as.numeric(difftime(Timestamp, start_time, units = "hours"))
   )
 
-
-
 #---------------------------------------------------------------------------
-# UNCERTANITY ANALYSIS
+# Section 4 - Uncertainty Analysis
 #--------------------------------------------------------------------------
 
 # Max flow
