@@ -159,10 +159,17 @@ qc_plot_data <- river_data %>%
   )
 
 # Generate discharge by quality code box-plot
-qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, fill = Quality_Label)) +
+qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, 
+                                    fill = Quality_Label, colour = Quality_Label)) +
   geom_boxplot(alpha = 0.7, outlier.size = 1, outlier.alpha = 0.3) +
-  scale_fill_manual(values = c("Code 50 (Good)" = "#2B5C8F", 
-                               "Code 100 (Estimated)" = "#D95F02")) +
+  scale_fill_manual(values = c(
+    "Code 50 (Good)" = "#5298BC",
+    "Code 100 (Estimated)" = "#D0436A"
+  )) +
+  scale_colour_manual(values = c(
+    "Code 50 (Good)" = "#2A5267",
+    "Code 100 (Estimated)" = "#AA1945"
+  )) +
   labs(
     title = "Discharge distribution by quality code",
     x = NULL,
@@ -304,7 +311,7 @@ days_above <- river_data %>%
 #Plot of the distubtion of mean discharges by month
 mean_dis_plot <- ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
   geom_blank() +
-  geom_col(alpha = 0.6, colour = "white", linewidth = 0.3) +
+  geom_col(alpha = 0.6, colour = "black", linewidth = 0.3) +
   geom_hline(yintercept = grid_breaks, colour = "grey50", linewidth = 0.3, alpha = 0.5) +
   annotate("text", x = 0.5, y = grid_breaks, label = grid_breaks,
            colour = "grey30", size = 3, fontface = "bold", vjust = -0.3) +
@@ -326,7 +333,7 @@ mean_dis_plot <- ggplot(monthly, aes(x = as.factor(id), y = value, fill = season
 
 # Plot showing time above the 95th percentile by month
 time_above_95_plot <- ggplot(days_above, aes(x = month, y = days, fill = season)) +
-  geom_col(alpha = 0.6, colour = "white") +
+  geom_col(alpha = 0.6, colour = "black") +
   scale_fill_manual(values = season_colours) +
   labs(
     title = "Time spent above the 95th percentile, by month",
@@ -404,11 +411,23 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
 })
 
 # Plot visualising largest peaks by water year
+year_colours <- c(
+  "2017" = "#6BBED1",
+  "2018" = "#347F89",
+  "2019" = "#82B7E0",
+  "2020" = "#4285C5",
+  "2021" = "#5298BC",
+  "2022" = "#4169E1",
+  "2023" = "#2764A5",
+  "2024" = "#2445A2",
+  "2025" = "#174B67",
+  "2026" = "#142D59"
+)
 peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
                                                       colour = factor(water_year), group = water_year)) +
   geom_line(linewidth = 0.6) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-  scale_colour_viridis_d() +
+  scale_colour_manual(values = year_colours) +
   labs(
     title = "Largest peak in each water year",
     subtitle = "Aligned at the peak and scaled by peak flow",
