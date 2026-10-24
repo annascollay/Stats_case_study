@@ -15,7 +15,7 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-	echo = TRUE,
+	echo = FALSE,
 	message = FALSE,
 	warning = FALSE
 )
@@ -41,7 +41,7 @@ These findings suggest that assuming a fixed hydrograph shape may overlook impor
 
 ## Data Description and Quality
 
-```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE,}
+```{r tidying-the-data, echo=FALSE, message=FALSE, warning=FALSE}
 tidy_data_table
 ```
 
@@ -83,7 +83,7 @@ mean_dis_plot
 time_above_95_plot
 ```
 
-Median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is concentrated even more tightly to between October and February (Figure 3).
+Median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is concentrated even more tightly to between October and February (Figure 4).
 
 ### Flood Event Hydrographs
 
@@ -96,7 +96,7 @@ This introduces a key assumption that we will use throughout the report:
 
 - Start of the rise: the last reading before the peak with flow at most $q_{\min} + 0.05\,(q_{\text{peak}} - q_{\min})$, where $q_{\min}$ is the lowest flow in the previous 7 days.
 
-Figure 4 shows the maximum flow and time to peak for the largest observed event, and that the largest peak in each water year varies considerably in shape, so treating the hydrograph shape as fixed ignores an important source of uncertainty. Smaller peaks also cluster around each largest peak, so independent events must be separated.
+Figure 5 shows the maximum flow and time to peak for the largest observed event, and that the largest peak in each water year varies considerably in shape, so treating the hydrograph shape as fixed ignores an important source of uncertainty. Smaller peaks also cluster around each largest peak, so independent events must be separated.
 
 # Threshold Selection and Independence
 
@@ -146,14 +146,14 @@ Since the lecture notes that the threshold may need to change once independence 
 gpd.diag(gpd_fit)
 ```
 
-# Uncertainty Analysis
+# Uncertainty Analysis (290 words)
 The final threshold of $u = 65$ $m^3/s$ identifies 44 independent flood events over the ten water years, across which maximum flow and time to peak both varied considerably (Figures 11 and 12). Maximum flow had a median of `r round(max_flow_q[2], 2)` $m^3/s$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $m^3/s$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This suggests that extreme flood hydrographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
 
-```{r distrubtion_analysis, echo=FALSE, fig.cap="The Distrubtion of the two parameters", fig.height=4, fig.width=12, fig.align='center'}
+```{r distrubtion_analysis, echo=FALSE, fig.cap="The Distribution of the two parameters", fig.height=4, fig.width=12, fig.align='center'}
 (Max_flow_plot + Time_to_peak_plot)
 ```
 
-```{r uncertanity_analysis, echo=FALSE, fig.cap="An analysis of uncertainty in the two parameters", out.width="85%", fig.align='center'}
+```{r uncertainty_analysis, echo=FALSE, fig.cap="Max flow against time to peak, with a smoothed trend", out.width="85%", fig.align='center'}
 Max_vs_time
 ```
 
@@ -163,25 +163,26 @@ Since both distributions are skewed and we are interested in any monotonic relat
 cor_result_table
 ```
 
-Grouping events by season, autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that autumn floods tend to take longer to reach their peak (Table 3, Figure 13). Given the small number of events in each season, however, this difference should be treated with caution, while spring (6 events) and summer (1 event) had too few events for meaningful comparison.
+Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that autumn floods tend to take longer to peak (Table 3, Figure 13). With so few events per season, however, this difference should be treated with caution, and spring (6) and summer (1) had too few events to compare.
 
 ```{r season_table, echo=FALSE}
 events_season_table
 ```
-```{r season comparisin, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparision of the uncertanity in the parameters by season"}
+```{r season comparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertanity in the parameters by season"}
 (max_season_plot + time_season_plot ) / Max_vs_time_season
 ```
 ```{r uncertanity table, echo=FALSE, fig.align='center'}
 results_table
 ```
-We also assessed the sensitivity of these results to the choice of threshold (Table 4). Across thresholds of $60 - 75 \text{m}^3$/s, median time to peak remained between 43 and 47.25 hours, while Spearman's correlation ranged from 0.184 to 0.287, suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold. 
+
+Repeating the analysis at thresholds of 60-75 $m^3/s$, median time to peak remained between 43 and 47.25 hours and Spearman's correlation between 0.184 and 0.287 (Table 4), suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold.
 
 # References {-}
 
-Wilson, A. (2026) *Statistical Case Studies Lecture Slides*. University of Edinburgh.
-
-Scottish Environment Protection Agency (2026) *SEPA Time Series Data Service*. Available at: https://timeseriesdoc.sepa.org.uk/ (Accessed: 11 October 2026).
+Coles, S. (2001) *An Introduction to Statistical Modeling of Extreme Values*. Springer.
 
 Robson, A. and Reed, D. (1999) *Flood Estimation Handbook, Volume 3: Statistical Procedures for Flood Frequency Estimation*. Institute of Hydrology.
 
-Coles, S. (2001) *An Introduction to Statistical Modeling of Extreme Values*. Springer.
+Scottish Environment Protection Agency (2026) *SEPA Time Series Data Service*. Available at: https://timeseriesdoc.sepa.org.uk/ (Accessed: 11 October 2026).
+
+Wilson, A. (2026) *Statistical Case Studies Lecture Slides*. University of Edinburgh.
