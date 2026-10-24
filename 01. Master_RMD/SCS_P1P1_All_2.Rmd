@@ -1,7 +1,7 @@
 ---
 title: "Statistical Case Studies - Project 1 (Part 1)"
 author: "Anna Scollay, Lewis Seath, Zacharias Onyejiaka"
-date: "2026-10-12"
+date: "2026-10-24"
 output:
   pdf_document: default
   html_document: default
@@ -31,34 +31,29 @@ library(gridExtra)
 ```
 
 # Executive Summary
-Current flood risk models generally assume that the shape of a flood event is fixed, varying only on its maximum river flow. This project investigates for the River Don at Parkhill, whether this approach effectively captures the uncertainty in events by considering both the maximum flow and the time taken for a flood to reach its peak. 
+Current flood risk models generally assume that the shape of a flood is fixed, varying only in its maximum river flow. This project investigates whether this approach captures the uncertainty in flood events on the River Don at Parkhill, by considering both the maximum flow and the time a flood takes to reach its peak.
 
-We considered ten years of river discharge data and identified 44 independent extreme flow events. Throughout this, both parameters varied considerably, with typical values of 105.83 m³/s and 44.13 hours respectively.  Generally,  flood events were concentrated in autumn and winter, with autumn events on average taking longer to reach their peak. We found weak evidence of a relationship between maximum flow and time to peak, suggesting that larger floods do not necessarily develop more slowly.
+Using ten years of river discharge data, we identified 44 independent extreme flow events, across which both quantities varied considerably, with median values of around 106 m³/s and 44 hours respectively. Flood events were concentrated in autumn and winter, with autumn events typically taking longer to reach their peak, and we found only weak evidence of a relationship between maximum flow and time to peak, suggesting that larger floods do not necessarily develop more slowly.
 
-These findings suggest that assuming a fixed flood hydrograph shape may overlook important uncertainty. SEPA should therefore consider incorporating variation in time to peak alongside maximum flow when developing future flood risk modelling guidance.
+These findings suggest that assuming a fixed hydrograph shape may overlook important uncertainty, so SEPA should consider incorporating variation in time to peak alongside maximum flow in future flood risk modelling guidance.
 
 # Data and Exploratory Analysis
 
 ## Data Description and Quality
 
-```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE}
+```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE,}
 tidy_data_table
 ```
 
-The subsequent analysis is based on 350,592 discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, recorded at consecutive 15-minute intervals between 1 October 2016 and 30 September 2026, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill is the lowest gauging station on the Don. It has a catchment area of 1,273 km$^2$, and applies one peak flow rating curve for all flow measurements.
+The subsequent analysis is based on 350,592 discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, recorded every 15-minutes between 1 October 2016 and 30 September 2026, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill is the lowest gauging station on the Don, with a catchment area of 1,273 km$^2$, and applies a single peak flow rating curve to all measurements.
 
-The data-set is complete. The "Quality codes" section of Table 1 shows the SEPA-defined quality codes assigned to each reading.
-
-- Unchecked Readings ($n=162$): Excluded. Restricted to recent entries (29 Sep 2026, 16:15 onward) and sporadic 2017–2018 bursts ($\le 45$ min). Because only two coincided with extreme flows, their removal ensures complete data-set verification with negligible analytical impact.
-- Estimated Readings ($n=14,915$): Retained. Defined by SEPA as acceptable extrapolations of the peak flow rating curve when stage levels exceed the 3.7 m physical gauging limit while remaining within numerical boundaries. As a result, the datasets maximum discharges are Estimated, while Good readings hard-cap at the 3.7 m gauging limit (Figure 1). These are retained to preserve peak flow extremes.
+The dataset is complete, and each reading carries a SEPA quality code (Table 1). We excluded the 162 Unchecked readings, since only two coincided with extreme flows, and retained the 14,915 Estimated readings, which extrapolate the rating curve above the 3.7 m gauging limit and therefore contain the largest recorded flows (Figure 1).
 
 ```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Discharge distribution for quality codes 50 & 100."}
 qc_plot
 ```
 
 ## Exploratory Analysis
-
-Before selecting a threshold, we explore the full dataset to understand how flow on the Don behaves, focusing on the rarity and seasonality of high flows, and on how individual flood events differ from one other.
 
 ### Hydrograph and Distribution
 
@@ -93,7 +88,7 @@ flood_anatomy_plot
 peak_wateryear_plot
 ```
 
-This introduces the two quantities we are investigating, max flow and time to peak, and a key assumption we use throughout the report:
+This introduces a key assumption that we will use throughout the report:
 
 - Start of the rise: the last reading before the peak with flow at most $q_{\min} + 0.05\,(q_{\text{peak}} - q_{\min})$, where $q_{\min}$ is the lowest flow in the previous 7 days.
 

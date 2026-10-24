@@ -134,7 +134,11 @@ data_table <- bind_rows(
 )
 
 # Create a table describing the data
-tidy_data_table <- kable(data_table, col.names = c("", ""), caption = "Data used in this analysis, and the quality codes assigned to each reading") %>%
+tidy_data_table <- kable(
+  data_table,
+  col.names = c("", ""),
+  caption = "Data used in this analysis, and the SEPA quality codes assigned to each reading."
+) %>%
   kable_styling(
     bootstrap_options = c("bordered", "striped", "hover"),
     font_size = 9,
@@ -142,7 +146,12 @@ tidy_data_table <- kable(data_table, col.names = c("", ""), caption = "Data used
     position = "left"
   ) %>%
   pack_rows("Data description", 1, 7) %>%
-  pack_rows("Quality codes", 8, nrow(data_table))
+  pack_rows("Quality codes", 8, nrow(data_table)) %>%
+  footnote(
+    general = "Unchecked readings (n = 162) occur from 29 September 2026, 16:15 onward and in short bursts of at most 45 minutes in 2017–2018. Estimated readings (n = 14,915) are SEPA-accepted extrapolations of the peak flow rating curve where the stage exceeds the 3.7 m gauging limit, above which Good readings are capped.",
+    general_title = "",
+    footnote_as_chunk = TRUE
+  )
 # Filter for Quality Codes 50 and 100, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
