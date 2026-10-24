@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.22)  24 OCT 2026 15:48
-=======
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.18)  24 OCT 2026 14:27
->>>>>>> 1251aedb03d0e65b5b6e42a7968b3ab616abe1e8
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.22)  24 OCT 2026 17:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -477,7 +473,7 @@ File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
 File: bkm-pdftex.def 2026-05-21 v1.32 bookmark driver for pdfTeX (HO)
 \BKM@id=\count339
 ))
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 100.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 107.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (./SCS_P1P1_All_2.aux
@@ -487,24 +483,24 @@ LaTeX Warning: Label `tab:setup' multiply defined.
 )
 \openout1 = `SCS_P1P1_All_2.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 100.
-LaTeX Font Info:    ... okay on input line 100.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 107.
+LaTeX Font Info:    ... okay on input line 107.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -550,161 +546,157 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: threeparttable package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package hyperref Info: Link coloring OFF on input line 100.
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 113.
+Package hyperref Info: Link coloring OFF on input line 107.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 120.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-Overfull \hbox (841.79352pt too wide) in alignment at lines 132--156
-[] [] 
- []
-
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 160.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 160.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 160.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 160.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 160.
+(Font)              <10> on input line 165.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 160.
+(Font)              <7> on input line 165.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 160.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 160.
+(Font)              <5> on input line 165.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 160.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 165.
 (/Users/lewisseath/Library/TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
-{/Users/lewisseath/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-<SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf, id=22, 722.7pt x 433.62pt>
+{/Users/lewisseath/Library/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}]
+<SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf, id=24, 722.7pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf  used on input line 176.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf  used on input line 192.
 (pdftex.def)             Requested size: 722.69823pt x 433.61894pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf, id=23, 722.7pt x 289.08pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf, id=25, 722.7pt x 289.08pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf  used on input line 187.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf  used on input line 203.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
-[2{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc} <./SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf, id=41, 722.7pt x 289.08pt>
+[2 <./SCS_P1P1_All_2_files/figure-latex/dischargeqc-1.pdf>]
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf, id=42, 722.7pt x 289.08pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 193.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf  used on input line 209.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf, id=42, 433.62pt x 433.62pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf, id=43, 433.62pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf  used on input line 211.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf  used on input line 226.
 (pdftex.def)             Requested size: 234.8775pt x 234.87912pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf, id=43, 433.62pt x 433.62pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf, id=44, 433.62pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf  used on input line 211.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf  used on input line 226.
 (pdftex.def)             Requested size: 234.8775pt x 234.87912pt.
 
-Overfull \hbox (2.2222pt too wide) in paragraph at lines 211--211
+Overfull \hbox (2.2222pt too wide) in paragraph at lines 226--226
 [][] [] 
  []
 
 [3 <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-1-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-2-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf, id=64, 433.62pt x 361.35pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf, id=65, 433.62pt x 361.35pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf  used on input line 221.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf  used on input line 237.
 (pdftex.def)             Requested size: 234.8775pt x 195.7326pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf, id=65, 433.62pt x 361.35pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf, id=66, 433.62pt x 361.35pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf  used on input line 221.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf  used on input line 237.
 (pdftex.def)             Requested size: 234.8775pt x 195.7326pt.
 
-Overfull \hbox (2.2222pt too wide) in paragraph at lines 221--221
+Overfull \hbox (2.2222pt too wide) in paragraph at lines 237--237
 [][] [] 
  []
 
 [4 <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-3-2.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-4-2.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf, id=103, 722.7pt x 289.08pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf, id=104, 722.7pt x 289.08pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 273.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 279.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [5{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-5-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf, id=120, 867.24pt x 361.35pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf, id=121, 867.24pt x 361.35pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 315.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 321.
 (pdftex.def)             Requested size: 867.2379pt x 361.34912pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf, id=121, 578.16pt x 252.945pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf, id=122, 578.16pt x 252.945pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 329.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 335.
 (pdftex.def)             Requested size: 578.15858pt x 252.94438pt.
 [6 <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-6-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf, id=136, 433.62pt x 433.62pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf, id=135, 433.62pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 349.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 355.
 (pdftex.def)             Requested size: 234.8775pt x 234.87912pt.
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf, id=137, 433.62pt x 433.62pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf, id=136, 433.62pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 349.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 355.
 (pdftex.def)             Requested size: 234.8775pt x 234.87912pt.
 
-Overfull \hbox (2.2222pt too wide) in paragraph at lines 349--349
+Overfull \hbox (2.2222pt too wide) in paragraph at lines 355--355
 [][] [] 
  []
 
 [7{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-7-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-8-2.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf, id=167, 650.43pt x 433.62pt>
+<SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf, id=166, 650.43pt x 433.62pt>
 File: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 361.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 367.
 (pdftex.def)             Requested size: 375.80544pt x 250.54037pt.
-<SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf, id=168, 867.24pt x 289.08pt>
+<SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf, id=167, 867.24pt x 289.08pt>
 File: SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf  used on input line 381.
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf  used on input line 387.
 (pdftex.def)             Requested size: 867.2379pt x 289.07928pt.
 
-Overfull \hbox (397.48288pt too wide) in paragraph at lines 381--382
+Overfull \hbox (397.48288pt too wide) in paragraph at lines 387--388
  [][] 
  []
 
 [8 <./SCS_P1P1_All_2_files/figure-latex/unnamed-chunk-9-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/uncertanity_analysis-1.pdf, id=181, 469.755pt x 325.215pt>
-File: SCS_P1P1_All_2_files/figure-latex/uncertanity_analysis-1.pdf Graphic file (type pdf)
-<use SCS_P1P1_All_2_files/figure-latex/uncertanity_analysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/uncertanity_analysis-1.pdf  used on input line 390.
+<SCS_P1P1_All_2_files/figure-latex/uncertainty_analysis-1.pdf, id=180, 469.755pt x 325.215pt>
+File: SCS_P1P1_All_2_files/figure-latex/uncertainty_analysis-1.pdf Graphic file (type pdf)
+<use SCS_P1P1_All_2_files/figure-latex/uncertainty_analysis-1.pdf>
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/uncertainty_analysis-1.pdf  used on input line 396.
 (pdftex.def)             Requested size: 399.29463pt x 276.43405pt.
-[9 <./SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/uncertanity_analysis-1.pdf>]
-<SCS_P1P1_All_2_files/figure-latex/season comparisin-1.pdf, id=201, 867.24pt x 578.16pt>
-File: SCS_P1P1_All_2_files/figure-latex/season comparisin-1.pdf Graphic file (type pdf)
-<use SCS_P1P1_All_2_files/figure-latex/season comparisin-1.pdf>
-Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/season comparisin-1.pdf  used on input line 447.
+[9 <./SCS_P1P1_All_2_files/figure-latex/distrubtion_analysis-1.pdf> <./SCS_P1P1_All_2_files/figure-latex/uncertainty_analysis-1.pdf>]
+<SCS_P1P1_All_2_files/figure-latex/season comparison-1.pdf, id=200, 867.24pt x 578.16pt>
+File: SCS_P1P1_All_2_files/figure-latex/season comparison-1.pdf Graphic file (type pdf)
+<use SCS_P1P1_All_2_files/figure-latex/season comparison-1.pdf>
+Package pdftex.def Info: SCS_P1P1_All_2_files/figure-latex/season comparison-1.pdf  used on input line 456.
 (pdftex.def)             Requested size: 867.2379pt x 578.15858pt.
 
-Overfull \hbox (66.24596pt too wide) in alignment at lines 451--462
+Overfull \hbox (66.24596pt too wide) in alignment at lines 460--471
  [] [] [] [] [] [] 
  []
 
-[10 <./SCS_P1P1_All_2_files/figure-latex/season comparisin-1.pdf>] [11] (./SCS_P1P1_All_2.aux)
+[10 <./SCS_P1P1_All_2_files/figure-latex/season comparison-1.pdf>] [11] (./SCS_P1P1_All_2.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
@@ -714,24 +706,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 14487 strings out of 469040
- 238482 string characters out of 5455973
- 660534 words of memory out of 5000000
- 43326 multiletter control sequences out of 15000+600000
- 675308 words of font info for 71 fonts, out of 8000000 for 9000
+ 14490 strings out of 469040
+ 238516 string characters out of 5455973
+ 660692 words of memory out of 5000000
+ 43328 multiletter control sequences out of 15000+600000
+ 679571 words of font info for 72 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
-<<<<<<< HEAD
- 88i,10n,93p,524b,558s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb>
-Output written on SCS_P1P1_All_2.pdf (11 pages, 3133132 bytes).
-=======
- 88i,10n,93p,524b,512s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb>
-Output written on SCS_P1P1_All_2.pdf (10 pages, 3132779 bytes).
->>>>>>> 1251aedb03d0e65b5b6e42a7968b3ab616abe1e8
+ 88i,10n,93p,524b,570s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb>
+Output written on SCS_P1P1_All_2.pdf (11 pages, 3154395 bytes).
 PDF statistics:
- 345 PDF objects out of 1000 (max. 8388607)
- 267 compressed objects within 3 object streams
+ 352 PDF objects out of 1000 (max. 8388607)
+ 272 compressed objects within 3 object streams
  44 named destinations out of 1000 (max. 500000)
  185 words of extra memory for PDF output out of 10000 (max. 10000000)
 
