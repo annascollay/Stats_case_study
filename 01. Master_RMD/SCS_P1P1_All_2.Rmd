@@ -31,6 +31,11 @@ library(gridExtra)
 ```
 
 # Executive Summary
+Current flood risk models generally assume that the shape of a flood events is fixed, varying only on its maximum river flow. This project investigates for the River Don at Parkhill, whether this approach effectively captures the uncertainty in events by considering both the maximum flow and the time taken for a flood to reach its peak. 
+
+We considered ten years of river discharge data and identified 44 independent extreme flow events. Throughout this, both parameters varied considerably, with typical values of 105.83 m³/s and 44.13 hours respectively.  Generally,  flood events were concentrated in autumn and winter, with autumn events on average taking longer to reach their peak. We found weak evidence of a relationship between maximum flow and time to peak, suggesting that larger floods do not necessarily develop more slowly.
+
+These findings suggest that assuming a fixed flood hydrograph shape may overlook important uncertainty. SEPA should therefore consider incorporating variation in time to peak alongside maximum flow when developing future flood risk modelling guidance.
 
 # Data and Exploratory Analysis
 
@@ -263,7 +268,7 @@ events_season_table
 
 
 
-```{r season comparisin, echo=FALSE, fig.height=8, fig.width=12}
+```{r season comparisin, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparision of the uncertanity in the parameters by season"}
 
 (max_season_plot + time_season_plot ) / Max_vs_time_season
 
