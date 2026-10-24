@@ -370,7 +370,7 @@ flood_event <- river_data %>%
 #Plot showing the anatomy of a flood year
 flood_anatomy_plot <- ggplot(flood_event, aes(x = Timestamp, y = Discharge)) +
   geom_line(colour = "#5298BC", linewidth = 0.6) +
-  geom_vline(xintercept = c(start_time, peak_time), linetype = "dashed", colour = "grey50") +
+  geom_vline(xintercept = c(start_time, peak_time), linetype = "dashed", colour = "gray60") +
   geom_point(data = flood_peak, colour = "#AA1945", size = 2.5) +
   annotate("segment", x = start_time, xend = peak_time,
            y = peak_flow * 1.1, yend = peak_flow * 1.1,
@@ -426,7 +426,7 @@ year_colours <- c(
 peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
                                                       colour = factor(water_year), group = water_year)) +
   geom_line(linewidth = 0.7) +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945") +
   scale_colour_manual(values = year_colours) +
   labs(
     title = "Largest peak in each water year",
