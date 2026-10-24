@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.22)  24 OCT 2026 15:48
+=======
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.18)  24 OCT 2026 14:27
+>>>>>>> 1251aedb03d0e65b5b6e42a7968b3ab616abe1e8
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -716,9 +720,15 @@ Here is how much of TeX's memory you used:
  43326 multiletter control sequences out of 15000+600000
  675308 words of font info for 71 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
+<<<<<<< HEAD
  88i,10n,93p,524b,558s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb>
 Output written on SCS_P1P1_All_2.pdf (11 pages, 3133132 bytes).
+=======
+ 88i,10n,93p,524b,512s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy7.pfb>
+Output written on SCS_P1P1_All_2.pdf (10 pages, 3132779 bytes).
+>>>>>>> 1251aedb03d0e65b5b6e42a7968b3ab616abe1e8
 PDF statistics:
  345 PDF objects out of 1000 (max. 8388607)
  267 compressed objects within 3 object streams
