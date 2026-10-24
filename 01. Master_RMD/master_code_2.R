@@ -530,7 +530,7 @@ Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
 
 Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
   geom_point(color = "#5298BC") +
-  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.05) +
+  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.5) +
   labs(
     title = "Max flow against time to peak",
     x = "Time to peak (hours)",
@@ -539,6 +539,22 @@ Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
   theme_minimal()
 
 cor_result <- cor.test(peaks$time_to_peak_h, peaks$max_flow, method = "spearman", exact = FALSE)
+
+
+# Correlation table
+cor_table <- tibble(
+  Test = "Spearman's rank correlation",
+  Rho = unname(cor_result$estimate),
+  `P-value` = cor_result$p.value,
+  `S statistic` = unname(cor_result$statistic)
+)
+
+cor_result_table <- knitr::kable(
+  cor_table,
+  digits = 3,
+  booktabs = TRUE,
+  caption = "Spearman's Rank Correlation Between Peak Discharge and Time to Peak"
+)
 
 
 # Analysis of uncertanity

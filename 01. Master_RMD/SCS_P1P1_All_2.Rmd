@@ -53,7 +53,7 @@ The subsequent analysis is based on 350,592 discharge readings ($m^3/s$) from th
 The data-set is complete. The "Quality codes" section of Table 1 shows the SEPA-defined quality codes assigned to each reading.
 
 - Unchecked Readings ($n=162$): Excluded. Restricted to recent entries (29 Sep 2026, 16:15 onward) and sporadic 2017–2018 bursts ($\le 45$ min). Because only two coincided with extreme flows, their removal ensures complete data-set verification with negligible analytical impact.
-- Estimated Readings ($n=14,915$): Retained. Defined by SEPA as acceptable extrapolations of the peak flow rating curve when stage levels exceed the 3.7 m physical gauging limit while remaining within numerical boundaries. As a result, the dataset’s maximum discharges are Estimated, while Good readings hard-cap at the 3.7 m gauging limit (Figure \@ref(fig:dischargeqc)). These are retained to preserve peak flow extremes.
+- Estimated Readings ($n=14,915$): Retained. Defined by SEPA as acceptable extrapolations of the peak flow rating curve when stage levels exceed the 3.7 m physical gauging limit while remaining within numerical boundaries. As a result, the datasets maximum discharges are Estimated, while Good readings hard-cap at the 3.7 m gauging limit (Figure \@ref(fig:dischargeqc)). These are retained to preserve peak flow extremes.
 
 ```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Discharge distribution for quality codes 50 & 100."}
 qc_plot
@@ -99,7 +99,7 @@ grid.arrange(
 )
 ```
 
-From Figure 1, we observe that the discharge is low for most of the year, with a smaller number of large peaks, the largest reaching 418.68 $m^3/s$ on 19th November 2022. The distribution in Figure 2 is strongly right-skewed, with a median of 14.73 $m^3/s$ compared to a 99th percentile of 130.97 $m^3/s$, which initialises our view that extreme flows behave very differently from typical flows and need to be analysed seperately.
+From Figure 1, we observe that the discharge is low for most of the year, with a smaller number of large peaks, the largest reaching 418.68 $m^3/s$ on 19th November 2022. The distribution in Figure 2 is strongly right-skewed, with a median of 14.73 $m^3/s$ compared to a 99th percentile of 130.97 $m^3/s$, which initialises our view that extreme flows behave very differently from typical flows and need to be analysed separately.
 
 ### Seasonality of High Flows
 
@@ -238,33 +238,44 @@ gpd.diag(gpd_fit)
 ```
 
 # Uncertainty Analysis
+The final threshold of $u = 65 \text{m}^3$/s, identifies 44 independent flood events over the ten water years. Throughout this period, maximum flow and time to peak varied considerably between events, with medians of $105.83 \text{m}^3$/s and 44.13 hours respectively. The distributions and scatterplot (Figure 11) illustrate variability in both quantities, suggesting that extreme flood hyrdographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
 
-```{r uncertanity analysis, echo=FALSE}
+```{r uncertanity_analysis, echo=FALSE, fig.cap="An analysis of uncertainty in the two parameters", message=FALSE, warning=FALSE}
 
-Max_flow_plot / Time_to_peak_plot
+(Max_flow_plot + Time_to_peak_plot) / Max_vs_time
+```
 
-Max_vs_time 
+To investigate their relationship, we calculated Spearman's rank correlation coefficient, obtaining $\rho = 0.287$ $(p = 0.059)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level. Thus, indicating larger flood peaks do not necessarily correspond to a longer time to peak. 
 
-cor_result
+```{r cor_analysis, echo=FALSE}
+
+cor_result_table
 
 ```
 
-```{r echo=FALSE}
+Further seasonal analysis revealed more differences (Table 3). Autumn effects had a median maximum flow of $117.19 \text{m}^3$/s and time to peak of 59 hours, in comparison winter had $108.95 \text{m}^3$/s and 35.5 hours. The limited number in spring (6 events) and summer (1 event) restricts them from meaningful season analysis.
+
+```{r season_table, echo=FALSE}
 
 events_season_table
 
-Max_vs_time_season
+```
 
-max_season_plot / time_season_plot 
+
+
+```{r season comparisin, echo=FALSE, fig.height=8, fig.width=12}
+
+(max_season_plot + time_season_plot ) / Max_vs_time_season
+
 
 ```
 
-```{r uncertanity table, echo=FALSE}
+```{r uncertanity table, echo=FALSE, fig.align='center'}
 
 results_table
 
 ```
 
-```{r}
+We also assessed the sensitivity to threshold selection. Across the thresholds of $60 -75 \text{m}^3$/s, median time to peak remained between 43 and 47.25 hours, while Spearman's correlation ranged from 0.184 to 0.287. This suggests that the observed variability in time to peak was not solely a consequence of the chosen threshold. 
 
-```
+Overall, these findings support incorporating uncertainty in hydrograph timing as well as a maximum flow into flood inundation modelling, rather than assuming a fixed hydrograph shape.
