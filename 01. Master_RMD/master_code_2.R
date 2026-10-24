@@ -653,7 +653,7 @@ Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
 
 Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
   geom_point(color = "#5298BC") +
-  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.5) +
+  geom_smooth(method = "loess", color = "#AA1945", fill = "#FBB1BA", alpha = 0.5) +
   labs(
     title = "Max flow against time to peak",
     x = "Time to peak (hours)",
