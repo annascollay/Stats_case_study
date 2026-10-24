@@ -133,6 +133,16 @@ data_table <- bind_rows(
     )
 )
 
+# Create a table describing the data
+tidy_data_table <- kable(data_table, col.names = c("", ""), caption = "Data used in this analysis, and the quality codes assigned to each reading") %>%
+  kable_styling(
+    bootstrap_options = c("bordered", "striped", "hover"),
+    font_size = 9,
+    full_width = FALSE,
+    position = "left"
+  ) %>%
+  pack_rows("Data description", 1, 7) %>%
+  pack_rows("Quality codes", 8, nrow(data_table))
 # Filter for Quality Codes 50 and 100, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
@@ -211,6 +221,16 @@ season_colours <- c("Winter" = "#5298BC", "Spring" = "#BFDC80", "Summer" = "#FEE
 # High flow definition: the 95th percentile of discharge
 high_flow <- quantile(river_data$Discharge, 0.95)
 
+# Hydrograph
+hydrograph <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "#5298BC", linewidth = 0.4) +
+  labs(
+    title = "Hydrograph: Don at Parkhill (15-min Interval)",
+    subtitle = "1 October 2016 - 30 September 2026",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
 
 # Flow Record and Distribution
 
@@ -230,6 +250,19 @@ summary_stats <- river_data %>%
   pivot_longer(everything(), names_to = "Statistic", values_to = "Value (m³/s)") %>%
   mutate(`Value (m³/s)` = sprintf("%.2f", `Value (m³/s)`))
 
+# Distrubtion of the data
+distribution_plot <- ggplot(river_data, aes(x = Discharge)) +
+  geom_histogram(bins = 60, fill = "#5298BC", colour = "white") +
+  geom_vline(xintercept = quantile(river_data$Discharge, c(0.5, 0.95, 0.99)),
+             linetype = "dashed", colour = "#AA1945") +
+  scale_x_log10() +
+  labs(
+    title = "Distribution of 15-minute discharge",
+    subtitle = "Dashed lines: median, 95th and 99th percentiles (log scale)",
+    x = expression("Discharge ("*m^3*"/s)"),
+    y = "Number of readings"
+  ) +
+  theme_minimal()
 
 # Seasonality of High Flows
 
@@ -268,6 +301,41 @@ days_above <- river_data %>%
   count(month, season) %>%
   mutate(days = n / 96)   # 96 readings per day
 
+#Plot of the distubtion of mean discharges by month
+mean_dis_plot <- ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
+  geom_blank() +
+  geom_col(alpha = 0.6, colour = "white", linewidth = 0.3) +
+  geom_hline(yintercept = grid_breaks, colour = "grey50", linewidth = 0.3, alpha = 0.5) +
+  annotate("text", x = 0.5, y = grid_breaks, label = grid_breaks,
+           colour = "grey30", size = 3, fontface = "bold", vjust = -0.3) +
+  scale_fill_manual(name = "Seasons", values = season_colours) +
+  ylim(-y_max, y_max * 1.4) +
+  coord_polar() +
+  labs(title = "Median discharge by month") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  ) +
+  geom_text(aes(x = id, y = value + y_max * 0.05, label = month,
+                hjust = hjust, angle = angle),
+            colour = "black", alpha = 0.7, size = 3.5, fontface = "bold",
+            inherit.aes = FALSE)
+
+# Plot showing time above the 95th percentile by month
+time_above_95_plot <- ggplot(days_above, aes(x = month, y = days, fill = season)) +
+  geom_col(alpha = 0.6, colour = "white") +
+  scale_fill_manual(values = season_colours) +
+  labs(
+    title = "Time spent above the 95th percentile, by month",
+    x = "Month",
+    y = "Total days above the 95th percentile"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
 
 # Anatomy of a Flood Event
 
@@ -292,6 +360,25 @@ flood_event <- river_data %>%
   filter(Timestamp >= start_time - 2 * 24 * 3600,
          Timestamp <= peak_time + 5 * 24 * 3600)
 
+#Plot showing the anatomy of a flood year
+flood_anatomy_plot <- ggplot(flood_event, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "#5298BC", linewidth = 0.6) +
+  geom_vline(xintercept = c(start_time, peak_time), linetype = "dashed", colour = "grey50") +
+  geom_point(data = flood_peak, colour = "#AA1945", size = 2.5) +
+  annotate("segment", x = start_time, xend = peak_time,
+           y = peak_flow * 1.1, yend = peak_flow * 1.1,
+           arrow = arrow(ends = "both", length = unit(0.15, "cm"))) +
+  annotate("text", x = start_time + (peak_time - start_time) / 2, y = peak_flow * 1.16,
+           label = paste("Time to peak:", round(time_to_peak), "hours"), size = 3.5) +
+  annotate("text", x = peak_time, y = peak_flow, hjust = -0.1,
+           label = paste("Max flow:", round(peak_flow, 1), "m³/s"), size = 3.5) +
+  labs(
+    title = "Anatomy of a flood event",
+    subtitle = format(peak_time, "Peak on %d %B %Y"),
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
 
 # Variation in Flood Hydrograph Shape
 
@@ -316,6 +403,20 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
     )
 })
 
+# Plot visualising largest peaks by water year
+peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
+                                                      colour = factor(water_year), group = water_year)) +
+  geom_line(linewidth = 0.6) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  scale_colour_viridis_d() +
+  labs(
+    title = "Largest peak in each water year",
+    subtitle = "Aligned at the peak and scaled by peak flow",
+    x = "Hours from peak",
+    y = "Discharge as a proportion of peak flow",
+    colour = "Water year"
+  ) +
+  theme_minimal()
 #-----------------------------------------------------------------------------------
 # Section 3 - Threshold Selection and Independence
 #-----------------------------------------------------------------------------------
