@@ -108,7 +108,7 @@ quality_code_table <- tibble(
     "Unchecked"
   ),
   `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U"),
-  Used = c("used", "used", "not used", "not used", "not used", "not used")
+  Used = c("retained", "retained", "excluded", "excluded", "excluded", "excluded")
 )
 
 # Join quality code table with the number of readings for each code
@@ -133,6 +133,16 @@ data_table <- bind_rows(
     )
 )
 
+# Create a table describing the data
+tidy_data_table <- kable(data_table, col.names = c("", ""), caption = "Data used in this analysis, and the quality codes assigned to each reading") %>%
+  kable_styling(
+    bootstrap_options = c("bordered", "striped", "hover"),
+    font_size = 9,
+    full_width = FALSE,
+    position = "left"
+  ) %>%
+  pack_rows("Data description", 1, 7) %>%
+  pack_rows("Quality codes", 8, nrow(data_table))
 # Filter for Quality Codes 50 and 100, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
@@ -149,10 +159,17 @@ qc_plot_data <- river_data %>%
   )
 
 # Generate discharge by quality code box-plot
-qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, fill = Quality_Label)) +
+qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, 
+                                    fill = Quality_Label, colour = Quality_Label)) +
   geom_boxplot(alpha = 0.7, outlier.size = 1, outlier.alpha = 0.3) +
-  scale_fill_manual(values = c("Code 50 (Good)" = "#2B5C8F", 
-                               "Code 100 (Estimated)" = "#D95F02")) +
+  scale_fill_manual(values = c(
+    "Code 50 (Good)" = "#5298BC",
+    "Code 100 (Estimated)" = "#D0436A"
+  )) +
+  scale_colour_manual(values = c(
+    "Code 50 (Good)" = "#2A5267",
+    "Code 100 (Estimated)" = "#AA1945"
+  )) +
   labs(
     title = "Discharge distribution by quality code",
     x = NULL,
@@ -166,9 +183,6 @@ qc_plot <- ggplot(qc_plot_data, aes(x = Quality_Label, y = Discharge, fill = Qua
 # Keep only good (50) and estimated (100) readings, matching the Used column above
 river_data <- river_data %>%
   filter(as.numeric(QualityCode) %in% c(50, 100))
-
-# Subsection 2.2 - Exploratory Analysis
-# --------------------------------------------------------------
 
 # Subsection 2.2 - Exploratory Analysis
 # --------------------------------------------------------------
@@ -214,6 +228,16 @@ season_colours <- c("Winter" = "#5298BC", "Spring" = "#BFDC80", "Summer" = "#FEE
 # High flow definition: the 95th percentile of discharge
 high_flow <- quantile(river_data$Discharge, 0.95)
 
+# Hydrograph
+hydrograph <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "#5298BC", linewidth = 0.4) +
+  labs(
+    title = "Hydrograph: Don at Parkhill (15-min Interval)",
+    subtitle = "1 October 2016 - 30 September 2026",
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
 
 # Flow Record and Distribution
 
@@ -233,6 +257,19 @@ summary_stats <- river_data %>%
   pivot_longer(everything(), names_to = "Statistic", values_to = "Value (m³/s)") %>%
   mutate(`Value (m³/s)` = sprintf("%.2f", `Value (m³/s)`))
 
+# Distrubtion of the data
+distribution_plot <- ggplot(river_data, aes(x = Discharge)) +
+  geom_histogram(bins = 60, fill = "#5298BC", colour = "white") +
+  geom_vline(xintercept = quantile(river_data$Discharge, c(0.5, 0.95, 0.99)),
+             linetype = "dashed", colour = "#AA1945") +
+  scale_x_log10() +
+  labs(
+    title = "Distribution of 15-minute discharge",
+    subtitle = "Dashed lines: median, 95th and 99th percentiles (log scale)",
+    x = expression("Discharge ("*m^3*"/s)"),
+    y = "Number of readings"
+  ) +
+  theme_minimal()
 
 # Seasonality of High Flows
 
@@ -271,6 +308,41 @@ days_above <- river_data %>%
   count(month, season) %>%
   mutate(days = n / 96)   # 96 readings per day
 
+#Plot of the distubtion of mean discharges by month
+mean_dis_plot <- ggplot(monthly, aes(x = as.factor(id), y = value, fill = season)) +
+  geom_blank() +
+  geom_col(alpha = 0.6, colour = "black", linewidth = 0.3) +
+  geom_hline(yintercept = grid_breaks, colour = "grey50", linewidth = 0.3, alpha = 0.5) +
+  annotate("text", x = 0.5, y = grid_breaks, label = grid_breaks,
+           colour = "grey30", size = 3, fontface = "bold", vjust = -0.3) +
+  scale_fill_manual(name = "Seasons", values = season_colours) +
+  ylim(-y_max, y_max * 1.4) +
+  coord_polar() +
+  labs(title = "Median discharge by month") +
+  theme_minimal() +
+  theme(
+    legend.position = "right",
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    panel.grid = element_blank()
+  ) +
+  geom_text(aes(x = id, y = value + y_max * 0.05, label = month,
+                hjust = hjust, angle = angle),
+            colour = "black", alpha = 0.7, size = 3.5, fontface = "bold",
+            inherit.aes = FALSE)
+
+# Plot showing time above the 95th percentile by month
+time_above_95_plot <- ggplot(days_above, aes(x = month, y = days, fill = season)) +
+  geom_col(alpha = 0.6, colour = "black") +
+  scale_fill_manual(values = season_colours) +
+  labs(
+    title = "Time spent above the 95th percentile, by month",
+    x = "Month",
+    y = "Total days above the 95th percentile"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
 
 # Anatomy of a Flood Event
 
@@ -295,6 +367,25 @@ flood_event <- river_data %>%
   filter(Timestamp >= start_time - 2 * 24 * 3600,
          Timestamp <= peak_time + 5 * 24 * 3600)
 
+#Plot showing the anatomy of a flood year
+flood_anatomy_plot <- ggplot(flood_event, aes(x = Timestamp, y = Discharge)) +
+  geom_line(colour = "#5298BC", linewidth = 0.6) +
+  geom_vline(xintercept = c(start_time, peak_time), linetype = "dashed", colour = "gray60") +
+  geom_point(data = flood_peak, colour = "#AA1945", size = 2.5) +
+  annotate("segment", x = start_time, xend = peak_time,
+           y = peak_flow * 1.1, yend = peak_flow * 1.1,
+           arrow = arrow(ends = "both", length = unit(0.15, "cm"))) +
+  annotate("text", x = start_time + (peak_time - start_time) / 2, y = peak_flow * 1.16,
+           label = paste("Time to peak:", round(time_to_peak), "hours"), size = 3.5) +
+  annotate("text", x = peak_time, y = peak_flow, hjust = -0.1,
+           label = paste("Max flow:", round(peak_flow, 1), "m³/s"), size = 3.5) +
+  labs(
+    title = "Anatomy of a flood event",
+    subtitle = format(peak_time, "Peak on %d %B %Y"),
+    x = "Date",
+    y = expression("Discharge ("*m^3*"/s)")
+  ) +
+  theme_minimal()
 
 # Variation in Flood Hydrograph Shape
 
@@ -319,17 +410,46 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
     )
 })
 
+# Plot visualising largest peaks by water year
+year_colours <- c(
+  "2017" = "#6BBED1",
+  "2018" = "#347F89",
+  "2019" = "#82B7E0",
+  "2020" = "#4285C5",
+  "2021" = "#5298BC",
+  "2022" = "#4169E1",
+  "2023" = "#2764A5",
+  "2024" = "#2445A2",
+  "2025" = "#174B67",
+  "2026" = "#142D59"
+)
+peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
+                                                      colour = factor(water_year), group = water_year)) +
+  geom_line(linewidth = 0.7) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945") +
+  scale_colour_manual(values = year_colours) +
+  labs(
+    title = "Largest peak in each water year",
+    subtitle = "Aligned at the peak and scaled by peak flow",
+    x = "Hours from peak",
+    y = "Discharge as a proportion of peak flow",
+    colour = "Water year"
+  ) +
+  guides(colour = guide_legend(
+    override.aes = list(linewidth = 1.5)
+  ))+
+  theme_minimal()
 #-----------------------------------------------------------------------------------
-# THRESHOLD SELECTION AND INDEPENDENCE
+# Section 3 - Threshold Selection and Independence
 #-----------------------------------------------------------------------------------
 
 # Candidate peaks: the highest reading in each separate period above threshold u,
 # returned as row numbers of river_data
 candidate_peaks <- function(u) {
   river_data %>%
-    mutate(row   = row_number(),
+    mutate(row = row_number(),
            above = Discharge > u,
-           run   = cumsum(above & !lag(above, default = FALSE))) %>%
+           run = cumsum(above & !lag(above, default = FALSE))) %>%
     filter(above) %>%
     group_by(run) %>%
     slice_max(Discharge, n = 1, with_ties = FALSE) %>%
@@ -338,7 +458,7 @@ candidate_peaks <- function(u) {
 }
 
 
-# Initial Threshold
+# Subsection 3.1 - Initial Threshold
 # --------------------------------------------------------------
 
 # Candidate peaks per year at every whole-number threshold, before independence
@@ -385,7 +505,7 @@ threshold_plot <- ggplot(river_data, aes(x = Timestamp, y = Discharge)) +
   theme_minimal()
 
 
-# Independence of Peaks
+# Subsection 3.2 - Independence of Peaks
 # --------------------------------------------------------------
 
 # Apply the Robson and Reed (1999) independence rules to the candidate peaks above u
@@ -407,8 +527,8 @@ independent_peaks <- function(u) {
   # Check each candidate against the last peak kept
   kept <- candidates[1]
   for (p in candidates[-1]) {
-    last   <- kept[length(kept)]                                  # the first peak of the pair
-    gap    <- as.numeric(difftime(t[p], t[last], units = "hours"))
+    last <- kept[length(kept)]                                  # the first peak of the pair
+    gap <- as.numeric(difftime(t[p], t[last], units = "hours"))
     trough <- min(q[last:p])                                      # flow at the trough between them
     
     # Rule 1: at least three times the average time to rise apart
@@ -428,9 +548,9 @@ independent_peaks <- function(u) {
 
 # Candidate and independent peaks at the initial threshold
 candidates_initial <- river_data[candidate_peaks(u_initial), ]
-peaks_initial      <- independent_peaks(u_initial)
-mean_rise_hours    <- attr(peaks_initial, "mean_rise_hours")
-min_gap_hours      <- 3 * mean_rise_hours
+peaks_initial <- independent_peaks(u_initial)
+mean_rise_hours <- attr(peaks_initial, "mean_rise_hours")
+min_gap_hours <- 3 * mean_rise_hours
 
 # Hydrograph with a set of peaks marked
 plot_peaks <- function(peak_data, u, title) {
@@ -449,10 +569,10 @@ plot_peaks <- function(peak_data, u, title) {
 
 # Before and after independence plots, shown side by side in the report
 plot_before <- plot_peaks(candidates_initial, u_initial, "Before independence")
-plot_after  <- plot_peaks(peaks_initial, u_initial, "After independence")
+plot_after <- plot_peaks(peaks_initial, u_initial, "After independence")
 
 
-# Final Threshold
+# Subsection 3.3 - Final Threshold
 # --------------------------------------------------------------
 
 # Independent peaks per year across a range of thresholds
@@ -493,24 +613,22 @@ peaks <- independent_peaks(u_final)
 gpd_fit <- gpd.fit(peaks$Discharge, u_final, npy = nrow(peaks) / n_years, show = FALSE)
 
 # Start of each rise: searching back up to 7 days, but never past the previous peak
-peak_rows     <- match(peaks$Timestamp, t)
+peak_rows <- match(peaks$Timestamp, t)
 previous_rows <- c(1, head(peak_rows, -1))
-start_rows    <- mapply(function(p, prev) {
+start_rows <- mapply(function(p, prev) {
   rise_start_row(p, earliest = max(t[p] - 7 * 24 * 3600, t[prev]))
 }, peak_rows, previous_rows)
 
 # The two quantities SEPA asked for
 peaks <- peaks %>%
   mutate(
-    start_time     = t[start_rows],
-    max_flow       = Discharge,
+    start_time = t[start_rows],
+    max_flow = Discharge,
     time_to_peak_h = as.numeric(difftime(Timestamp, start_time, units = "hours"))
   )
 
-
-
 #---------------------------------------------------------------------------
-# UNCERTANITY ANALYSIS
+# Section 4 - Uncertainty Analysis
 #--------------------------------------------------------------------------
 
 # Max flow
@@ -535,7 +653,7 @@ Time_to_peak_plot <- ggplot(peaks, aes(x = time_to_peak_h)) +
 
 Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
   geom_point(color = "#5298BC") +
-  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.05) +
+  geom_smooth(method = "lm", color = "#AA1945", fill = "#FBB1BA", alpha = 0.5) +
   labs(
     title = "Max flow against time to peak",
     x = "Time to peak (hours)",
@@ -544,6 +662,22 @@ Max_vs_time <- ggplot(peaks, aes(x = time_to_peak_h, y = max_flow)) +
   theme_minimal()
 
 cor_result <- cor.test(peaks$time_to_peak_h, peaks$max_flow, method = "spearman", exact = FALSE)
+
+
+# Correlation table
+cor_table <- tibble(
+  Test = "Spearman's rank correlation",
+  Rho = unname(cor_result$estimate),
+  `P-value` = cor_result$p.value,
+  `S statistic` = unname(cor_result$statistic)
+)
+
+cor_result_table <- knitr::kable(
+  cor_table,
+  digits = 3,
+  booktabs = TRUE,
+  caption = "Spearman's Rank Correlation Between Peak Discharge and Time to Peak"
+)
 
 
 # Analysis of uncertanity
