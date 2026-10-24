@@ -45,9 +45,13 @@ These findings suggest that assuming a fixed hydrograph shape may overlook impor
 tidy_data_table
 ```
 
-The subsequent analysis is based on 350,592 discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, recorded every 15-minutes between 1 October 2016 and 30 September 2026, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill is the lowest gauging station on the Don, with a catchment area of 1,273 km$^2$, and applies a single peak flow rating curve to all measurements.
+The subsequent analysis uses 350,592 discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, recorded every 15-minutes between 1 October 2016 and 30 September 2026, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, has a catchment area of 1,273 km$^2$ and applies a single peak flow rating curve to all measurements.
 
-The dataset is complete, and each reading carries a SEPA quality code (Table 1). We excluded the 162 Unchecked readings, since only two coincided with extreme flows, and retained the 14,915 Estimated readings, which extrapolate the rating curve above the 3.7 m gauging limit and therefore contain the largest recorded flows (Figure 1).
+The dataset is complete, with each reading assigned a SEPA quality code (Table 1).
+
+- Estimated ($n=14,915$): Retained. SEPA defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit, at which Good readings are capped (Figure 1), so they contain the largest flows and preserve the extremes.
+
+- Unchecked ($n=162$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and in sporadic 2017–2018 bursts of at most 45 minutes, and only two coincided with extreme flows, so removing them leaves a fully verified dataset with negligible impact.
 
 ```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Discharge distribution for quality codes 50 & 100."}
 qc_plot
@@ -70,7 +74,7 @@ grid.arrange(
 )
 ```
 
-From Figure 2, we observe that the discharge is low for most of the year, with a smaller number of large peaks, the largest reaching 418.68 $m^3/s$ on 19th November 2022. The distribution in Figure 3 is strongly right-skewed, with a median of 14.73 $m^3/s$ compared to a 99th percentile of 130.97 $m^3/s$, which initialises our view that extreme flows behave very differently from typical flows and need to be analysed separately.
+From Figure 2 shows that discharge is low for most of the year, with a small number of large peaks, the largest reaching 418.68 $m^3/s$ on 19 November 2022. The distribution is strongly right-skewed (Figure 3), with a median of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$, suggesting that extreme flows behave very differently from typical flows and need to be analysed separately.
 
 ### Seasonality of High Flows
 
@@ -79,7 +83,7 @@ mean_dis_plot
 time_above_95_plot
 ```
 
-We observe that median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is even more concentrated to between October and February.
+Median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is concentrated even more tightly to between October and February (Figure 3).
 
 ### Flood Event Hydrographs
 
@@ -92,17 +96,13 @@ This introduces a key assumption that we will use throughout the report:
 
 - Start of the rise: the last reading before the peak with flow at most $q_{\min} + 0.05\,(q_{\text{peak}} - q_{\min})$, where $q_{\min}$ is the lowest flow in the previous 7 days.
 
-The left panel of Figure 4 shows the two quantities for the largest observed event, and in the right panel we observe that the largest peak in each water year varies considerably in shape, which suggests that the current approaches to flood inundation modelling of treating the hydrograph shape as fixed ignores an important source of uncertainty. Additionally, we observe the number of peaks clustered around each largest peak, highlighting the importance of considering independent events.
-
-### Summary
-
-Since high flows are rare, concentrated between October and February, and vary in shape between events, we need a threshold that extracts them. We will then separate peaks into independent events, before investigating how max flow and time to peak vary across events and between seasons.
+Figure 4 shows the maximum flow and time to peak for the largest observed event, and that the largest peak in each water year varies considerably in shape, so treating the hydrograph shape as fixed ignores an important source of uncertainty. Smaller peaks also cluster around each largest peak, so independent events must be separated.
 
 # Threshold Selection and Independence
 
 ## Initial Threshold
 
-The Peaks Over Threshold (POT) approach extracts flood events as the peaks of flow above a threshold $u$. Two common rules for choosing $u$ are the 95th percentile of flow and a threshold giving 3 to 5 peaks per year. Figure 6 shows both on the hydrograph, where the 95th percentile is `r round(quantile(q, 0.95), 1)` m³/s, and counting each period above the threshold as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` m³/s. At this stage, however, a single flood can cross the threshold several times, so these counts overstate the number of distinct events. Robson and Reed (1999) note that a threshold giving around five peaks a year leaves the flexibility to raise it later to exclude smaller floods, and the lecture notes that the threshold may need to change once independence has been applied. Since the 95th percentile gives `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)`, well above this range, we take the threshold giving 5 peaks per year $u$ = `r u_initial` $m^3/s$, as our initial threshold.
+The previous section confirmed the need to extract high flows, and to do so we use the Peaks Over Threshold (POT). This extracts flood events as the peaks of flow above a threshold $u$, and two common rules for choosing $u$ are the 95th percentile of flow and a threshold giving 3 to 5 peaks per year. Figure 6 shows both on the hydrograph, where the 95th percentile is `r round(quantile(q, 0.95), 1)` m³/s, and counting each period above the threshold as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` m³/s. At this stage, however, a single flood can cross the threshold several times, so these counts overstate the number of distinct events. Robson and Reed (1999) note that a threshold giving around five peaks a year leaves the flexibility to raise it later to exclude smaller floods, and the lecture notes that the threshold may need to change once independence has been applied. Since the 95th percentile gives `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)`, well above this range, we take the threshold giving 5 peaks per year $u$ = `r u_initial` $m^3/s$, as our initial threshold.
 
 ```{r echo=FALSE, fig.width=10, fig.height=4, fig.cap="Hydrograph with the candidate thresholds. Peaks per year are counted before applying the independence rules."}
 threshold_plot
