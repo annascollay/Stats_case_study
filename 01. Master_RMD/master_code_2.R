@@ -84,7 +84,7 @@ data_description_table <- tibble(
            "Period", "Readings", "Missing readings"),
   Value = c(
     "Don at Parkhill",
-    "SEPA time series service (KiWIS)",
+    "SEPA time series data service",
     "River discharge (m³/s)",
     "15 minutes",
     paste(format(min(river_data$Timestamp), "%d %B %Y"), "–",
@@ -679,6 +679,11 @@ cor_result_table <- knitr::kable(
   caption = "Spearman's Rank Correlation Between Peak Discharge and Time to Peak"
 )
 
+# Spread of each quantity: quartiles (25%, median, 75%) and range, so we can
+# report how much each quantity varies, not just its typical value
+max_flow_q <- quantile(peaks$max_flow, c(0.25, 0.5, 0.75))
+ttp_q <- quantile(peaks$time_to_peak_h, c(0.25, 0.5, 0.75))
+ttp_range <- range(peaks$time_to_peak_h)
 
 # Analysis of uncertanity
 # Number of events and typical values in each season
