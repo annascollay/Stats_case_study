@@ -425,7 +425,7 @@ year_colours <- c(
 )
 peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
                                                       colour = factor(water_year), group = water_year)) +
-  geom_line(linewidth = 0.6) +
+  geom_line(linewidth = 0.7) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
   scale_colour_manual(values = year_colours) +
   labs(
@@ -435,6 +435,9 @@ peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = s
     y = "Discharge as a proportion of peak flow",
     colour = "Water year"
   ) +
+  guides(colour = guide_legend(
+    override.aes = list(linewidth = 1.5)
+  ))+
   theme_minimal()
 #-----------------------------------------------------------------------------------
 # Section 3 - Threshold Selection and Independence
