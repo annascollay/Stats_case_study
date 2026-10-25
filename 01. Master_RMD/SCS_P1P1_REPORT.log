@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.22)  25 OCT 2026 13:27
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.22)  25 OCT 2026 14:58
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -650,69 +650,69 @@ Overfull \hbox (2.43333pt too wide) in paragraph at lines 265--265
 <SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf, id=119, 722.7pt x 289.08pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 307.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf  used on input line 308.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [5{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-4-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-4-2.pdf>]
 <SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf, id=137, 867.24pt x 361.35pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 349.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 334.
 (pdftex.def)             Requested size: 867.2379pt x 361.34912pt.
-[6 <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf, id=152, 578.16pt x 252.945pt>
+<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf, id=138, 578.16pt x 252.945pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 363.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf  used on input line 348.
 (pdftex.def)             Requested size: 578.15858pt x 252.94438pt.
-<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf, id=153, 433.62pt x 433.62pt>
+[6 <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-5-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf>]
+<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf, id=157, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 383.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf  used on input line 363.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
-<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf, id=154, 433.62pt x 433.62pt>
+<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf, id=158, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 383.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf  used on input line 363.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
 
-Overfull \hbox (2.43333pt too wide) in paragraph at lines 383--383
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 363--363
 [][] [] 
  []
 
-[7{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-6-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf, id=177, 650.43pt x 433.62pt>
+<SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf, id=159, 650.43pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 395.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf  used on input line 374.
 (pdftex.def)             Requested size: 364.19667pt x 242.8057pt.
-[8 <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf, id=200, 867.24pt x 289.08pt>
+[7{/Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-7-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-8-2.pdf>]
+<SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf, id=187, 867.24pt x 289.08pt>
 File: SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf  used on input line 416.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf  used on input line 395.
 (pdftex.def)             Requested size: 867.2379pt x 289.07928pt.
 
-Overfull \hbox (411.99379pt too wide) in paragraph at lines 416--417
+Overfull \hbox (411.99379pt too wide) in paragraph at lines 395--396
  [][] 
  []
 
-<SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf, id=201, 469.755pt x 325.215pt>
+[8 <./SCS_P1P1_REPORT_files/figure-latex/unnamed-chunk-9-1.pdf>]
+<SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf, id=199, 469.755pt x 325.215pt>
 File: SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf  used on input line 425.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf  used on input line 404.
 (pdftex.def)             Requested size: 386.96027pt x 267.8938pt.
-[9 <./SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf, id=212, 867.24pt x 578.16pt>
+[9 <./SCS_P1P1_REPORT_files/figure-latex/distrubtion_analysis-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf>]
+<SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf, id=219, 867.24pt x 578.16pt>
 File: SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf  used on input line 484.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf  used on input line 463.
 (pdftex.def)             Requested size: 867.2379pt x 578.15858pt.
-[10 <./SCS_P1P1_REPORT_files/figure-latex/uncertainty_analysis-1.pdf>]
-Overfull \hbox (124.83627pt too wide) in alignment at lines 488--499
+
+Overfull \hbox (124.83627pt too wide) in alignment at lines 467--478
  [] [] [] [] [] [] 
  []
 
-[11 <./SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf>] (./SCS_P1P1_REPORT.aux)
+[10 <./SCS_P1P1_REPORT_files/figure-latex/season comparison-1.pdf>] [11] (./SCS_P1P1_REPORT.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
@@ -722,18 +722,18 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 14505 strings out of 469040
- 239049 string characters out of 5455973
- 655927 words of memory out of 5000000
- 43340 multiletter control sequences out of 15000+600000
+ 14501 strings out of 469040
+ 238975 string characters out of 5455973
+ 656926 words of memory out of 5000000
+ 43338 multiletter control sequences out of 15000+600000
  685678 words of font info for 75 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 88i,10n,93p,521b,518s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 88i,10n,93p,521b,606s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/lewisseath/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb>
-Output written on SCS_P1P1_REPORT.pdf (12 pages, 3170685 bytes).
+Output written on SCS_P1P1_REPORT.pdf (12 pages, 3169534 bytes).
 PDF statistics:
- 371 PDF objects out of 1000 (max. 8388607)
- 288 compressed objects within 3 object streams
- 45 named destinations out of 1000 (max. 500000)
+ 369 PDF objects out of 1000 (max. 8388607)
+ 286 compressed objects within 3 object streams
+ 43 named destinations out of 1000 (max. 500000)
  190 words of extra memory for PDF output out of 10000 (max. 10000000)
 
