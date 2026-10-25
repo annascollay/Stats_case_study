@@ -118,11 +118,7 @@ grid.arrange(
 )
 ```
 
-<<<<<<< HEAD
-Discharge is low for most of the year with a few large peaks (Figure 2), the largest reaching 418.68 $m^3/s$ on 19 November 2022, and its distribution is strongly right-skewed (Figure 3), with a median of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$, suggesting extreme flows behave differently from typical flows and need seperate analysis.
-=======
-From Figure \@ref(fig:hydrographdis) shows that discharge is low for most of the year, with a small number of large peaks, the largest reaching 418.68 $m^3/s$ on 19 November 2022. The distribution is strongly right-skewed (Figure \@ref(fig:dis15log)), with a median of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$, suggesting that extreme flows behave very differently from typical flows and need to be analysed separately.
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+Discharge is low for most of the year with a few large peaks (Figure \@ref(fig:hydrographdis)), the largest reaching 418.68 $m^3/s$ on 19 November 2022, and its distribution is strongly right-skewed (Figure \@ref(fig:dis15log)), with a median of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$, suggesting extreme flows behave differently from typical flows and need seperate analysis.
 
 ### Seasonality of High Flows
 
@@ -140,25 +136,13 @@ flood_anatomy_plot
 peak_wateryear_plot
 ```
 
-<<<<<<< HEAD
-Figure 4 shows the maximum flow and time to peak of the largest event, and that water-year maxima vary considerably in shape, so treating hydrograph shape as fixed ignores an important source of uncertainty, while the smaller peaks clustering around each maximum mean independent events must be separated.
-=======
-This introduces a key assumption that we will use throughout the report:
-
-- Start of the rise: the last reading before the peak with flow at most $q_{\min} + 0.05\,(q_{\text{peak}} - q_{\min})$, where $q_{\min}$ is the lowest flow in the previous 7 days.
-
-Figure \@ref(fig:meandistimeabove) shows the maximum flow and time to peak for the largest observed event, and that the largest peak in each water year varies considerably in shape, so treating the hydrograph shape as fixed ignores an important source of uncertainty. Smaller peaks also cluster around each largest peak, so independent events must be separated.
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+Figure \@ref(fig:meandistimeabove) shows the maximum flow and time to peak of the largest event, and that water-year maxima vary considerably in shape, so treating hydrograph shape as fixed ignores an important source of uncertainty, while the smaller peaks clustering around each maximum mean independent events must be separated.
 
 # Threshold Selection and Independence
 
 ## Initial Threshold
 
-<<<<<<< HEAD
-We have confirmed the need to extract high flows, and we use Peaks Over Threshold (POT), which takes flood events as peaks of flow above a threshold $u$, usually chosen as the 95th percentile of flow or the level giving 3 to 5 peaks per year. Figure 6 shows both on the hydrograph: the 95th percentile is `r round(quantile(q, 0.95), 1)` $m^3/s$, while counting each exceedance period as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` $m^3/s$, though this overstates the number of distinct events, as one flood can cross the threshold several times. The two rules disagree here, as the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, so we follow the peaks-per-year rule, which controls the number of events directly rather than the proportion of time above the threshold, and take $u$ = `r u_initial` $m^3/s$, giving 5 peaks per year, as our initial threshold. We choose the top of the range vecayse Robson and Reed (1999) note this leaves the flexibility to raise it later to exclude smaller floods, and the lecture notes suggest the threshold may need revising once independence is applied.
-=======
-The previous section confirmed the need to extract high flows, and to do so we use the Peaks Over Threshold (POT). This extracts flood events as the peaks of flow above a threshold $u$, and two common rules for choosing $u$ are the 95th percentile of flow and a threshold giving 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) shows both on the hydrograph, where the 95th percentile is `r round(quantile(q, 0.95), 1)` m³/s, and counting each period above the threshold as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` m³/s. At this stage, however, a single flood can cross the threshold several times, so these counts overstate the number of distinct events. Robson and Reed (1999) note that a threshold giving around five peaks a year leaves the flexibility to raise it later to exclude smaller floods, and the lecture notes that the threshold may need to change once independence has been applied. Since the 95th percentile gives `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)`, well above this range, we take the threshold giving 5 peaks per year $u$ = `r u_initial` $m^3/s$, as our initial threshold.
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+We have confirmed the need to extract high flows, and we use Peaks Over Threshold (POT), which takes flood events as peaks of flow above a threshold $u$, usually chosen as the 95th percentile of flow or the level giving 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) shows both on the hydrograph: the 95th percentile is `r round(quantile(q, 0.95), 1)` $m^3/s$, while counting each exceedance period as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` $m^3/s$, though this overstates the number of distinct events, as one flood can cross the threshold several times. The two rules disagree here, as the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, so we follow the peaks-per-year rule, which controls the number of events directly rather than the proportion of time above the threshold, and take $u$ = `r u_initial` $m^3/s$, giving 5 peaks per year, as our initial threshold. We choose the top of the range because Robson and Reed (1999) note this leaves the flexibility to raise it later to exclude smaller floods, and the threshold may need revising once independence is applied.
 
 ```{r candidatethresholds, echo=FALSE, fig.width=10, fig.height=4, fig.cap="Hydrograph with the candidate thresholds. Peaks per year are counted before applying the independence rules."}
 threshold_plot
@@ -168,19 +152,7 @@ threshold_plot
 
 We apply the independence rules of Robson and Reed (1999). If either rule fails, we treat the peaks as one event and keep the larger peak. In applying these rules, we use assumptions ... and ....
 
-<<<<<<< HEAD
-This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure 7).
-=======
-1.  they are at least three times the average time to rise apart, where the time to rise is the time between a trough and its peak, averaged over at least five clean peaks above the threshold; and
-2.  the flow at the trough between them is at least two-thirds lower than the first peak, i.e. below a third of it.
-
-If either rule fails, we treat the peaks as one event and keep the larger peak. In applying these rules, we use the following assumptions:
-
-- Clean peak: a peak with no other candidate peak in the previous 7 days.
-- Trough: the start of the rise defined in the exploratory analysis, which we use to calculate the time to rise.
-
-At the initial threshold, the average time to rise is `r round(mean_rise_hours, 1)` hours, so peaks must be at least `r round(min_gap_hours, 1)` hours apart. This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure \@ref(fig:peaksaboveinitial)).
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure \@ref(fig:peaksaboveinitial)).
 
 ```{r peaksaboveinitial, echo=FALSE, fig.width=12, fig.height=5, fig.cap="Peaks above the initial threshold before (left) and after (right) applying the independence rules."}
 grid.arrange(plot_before, plot_after, ncol = 2)
@@ -188,17 +160,13 @@ grid.arrange(plot_before, plot_after, ncol = 2)
 
 ## Final Threshold
 
-<<<<<<< HEAD
-Since separating events lowers the number of peaks, we recheck the threshold on independent peaks only. The initial threshold gives `r round(nrow(peaks_initial) / n_years, 1)` independent peaks per year, while thresholds between `r min(thresholds_3to5)` and `r max(thresholds_3to5)` $m^3/s$ give 3 to 5 (Figure 8).
-=======
-Since separating events lowers the number of peaks per year, we recheck the threshold using independent peaks only. Our initial threshold gives `r round(nrow(peaks_initial) / n_years, 1)` independent peaks per year, while Figure \@ref(fig:indpeaksperyear) shows that thresholds between `r min(thresholds_3to5)` and `r max(thresholds_3to5)` m³/s give 3 to 5.
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+Since separating events lowers the number of peaks, we recheck the threshold on independent peaks only. The initial threshold gives `r round(nrow(peaks_initial) / n_years, 1)` independent peaks per year, while thresholds between `r min(thresholds_3to5)` and `r max(thresholds_3to5)` $m^3/s$ give 3 to 5 (Figure \@ref(fig:indpeaksperyear)).
 
 ```{r indpeaksperyear, echo=FALSE, fig.width=8, fig.height=3.5, fig.cap="Independent peaks per year at each threshold."}
 rates_plot
 ```
 
-To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$, with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale $\sigma - \xi u$ stay roughly constant (Coles, 2001). From Figure 9, the mean residual life plot is approximately linear above ... $m^3/s$ and the parameter estimates are stable from ... $m^3/s$.
+To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$, with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale $\sigma - \xi u$ stay roughly constant (Coles, 2001). From Figure \@ref(fig:meanresstab), the mean residual life plot is approximately linear above ... $m^3/s$ and the parameter estimates are stable from ... $m^3/s$.
 
 ```{r meanresstab, echo=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=6, fig.cap="Mean residual life plot (left) and parameter stability plots (right) for the independent peaks at the final threshold."}
 mrl.plot(peaks$Discharge, umin = u_final,
@@ -206,24 +174,13 @@ mrl.plot(peaks$Discharge, umin = u_final,
 gpd.fitrange(peaks$Discharge, umin = u_final, umax = 120, nint = 12)
 ```
 
-<<<<<<< HEAD
-We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi = `r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure 9 show ...]
-
-```{r echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
-gpd.diag(gpd_fit)
-```
-
-# Uncertainty Analysis
-The final threshold of $u = 65$ $m^3/s$ identifies 44 independent flood events over the ten water years, across which maximum flow and time to peak both varied considerably (Figures 11 and 12). Maximum flow had a median of `r round(max_flow_q[2], 2)` $m^3/s$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $m^3/s$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This suggests that extreme flood hydrographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
-=======
-Since the lecture notes that the threshold may need to change once independence has been applied, we lower it to a final threshold of $u = `r u_final`$ $\text{m}^3$/s, [which ...], giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit\$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:meanresstab) show ...]
+We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi = `r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
 
 ```{r diagnostic, echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
 gpd.diag(gpd_fit)
 ```
 
-# Uncertainty Analysis (290 words)
->>>>>>> 6a28396423dffa666b6dffafe34d70c956ebd00c
+# Uncertainty Analysis
 
 The final threshold of $u = 65$ $m^3/s$ identifies 44 independent flood events over the ten water years, across which maximum flow and time to peak both varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis). Maximum flow had a median of `r round(max_flow_q[2], 2)` $m^3/s$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $m^3/s$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This suggests that extreme flood hydrographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
 
