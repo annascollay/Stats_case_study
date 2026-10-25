@@ -1,6 +1,25 @@
-Threshold selection 3-5 peaks vs 95th percentile
-  - 95th percentile threshold lower but somehow there are >1,100 fewer events?
+Start of the rise is last reading before the peak with flow at most q_min +
+0.05(q_peak - q_min) where q_min is the lowest flow in prev 7 days.
+  - Where does this come from, and why not just use q_min?
+  ANSWER: Robson and Reed used this to objectively define exact start time of a
+  flood event. Discharge often hovers around q_min before the rise really starts,
+  introducing timing errors. The timestamp where river's discharge crosses
+  above q_start is locked in as the official event start time.
+  - Justification of 7 day look-back period?
+  ANSWER: Aligns well with the synoptic cycles of typical UK flood-generating
+  storms (roughly 3-7 days).
+  
+How do we define a "clean peak" exactly?
+  - We currently define a clean peak as a peak with no other "candidate peak"
+  in the previous 7 days.
+  ANSWER: We've switched to a +- 7 days absolute maximum definition for clean
+  peaks, reliably isolating major flood peaks for the calculation of average
+  time to rise.
 
-Seasonality of high flows -- put legend on the right
+Adjust Mean Excess and threshold MRL plots on pg. 8. Justify choice of u=65.
 
-Application of independence rules, specifically trough rule
+Justify Spearman's Rank Correlation use. Explain briefly where we got it from
+and what it's useful for.
+
+Fix appearance of Table 4 in uncertainty analysis section (too wide not
+centred).

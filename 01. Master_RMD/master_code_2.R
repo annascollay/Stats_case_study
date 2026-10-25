@@ -514,9 +514,11 @@ independent_peaks <- function(u) {
   
   candidates <- candidate_peaks(u)
   
-  # Clean peaks: no other candidate peak in the previous 7 days
-  days_since_last <- as.numeric(difftime(t[candidates], lag(t[candidates]), units = "days"))
-  clean <- candidates[is.na(days_since_last) | days_since_last > 7]
+  # Clean peaks: absolute maximum of candidate peaks within a +/- 7-day window
+  clean <- candidates[sapply(candidates, function(p) {
+    window_mask <- abs(as.numeric(difftime(t[candidates], t[p], units = "days"))) <= 7
+    q[p] == max(q[candidates[window_mask]])
+  })]
   if (length(clean) < 5) stop("Fewer than five clean peaks above ", u)
   
   # Average time to rise over the clean peaks
@@ -774,4 +776,6 @@ results_table <- knitr::kable(
   digits = 3,
   caption = "Final Uncertanity Table"
 ) %>%
-  kable_styling(latex_options = "striped")
+  kable_styling(
+    latex_options = c("striped", "scale_down", "hold_position"),
+    font_size = 9)

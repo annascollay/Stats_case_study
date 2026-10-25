@@ -1,7 +1,6 @@
 ---
 output:
-  pdf_document:
-    latex_engine: pdflatex
+  bookdown::pdf_document2:
     toc: false
     number_sections: true
 
@@ -57,10 +56,10 @@ October 2026
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-	echo = TRUE,
+  echo = TRUE,
 	message = FALSE,
 	warning = FALSE
-)
+  )
 
 source("master_code_2.R")
 ```
@@ -83,13 +82,13 @@ These findings suggest that assuming a fixed hydrograph shape may overlook impor
 
 ## Data Description and Quality
 
-```{r tidying the data, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Data used in this analysis, and the quality codes assigned to each reading"}}
+```{r tab:tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
 tidy_data_table
 ```
 
 The subsequent analysis uses discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, applies a single peak flow rating curve to all measurements.
 
-Each reading is assigned a SEPA quality code (Table \@ref(fig:tidying the data)).
+Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
 - Estimated ($n=14,915$): Retained. SEPA defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit, at which Good readings are capped (Figure \@ref(fig:dischargeqc)), so they contain the largest flows and preserve the extremes.
 
@@ -100,8 +99,6 @@ qc_plot
 ```
 
 ## Exploratory Analysis
-
-[Assumptions]
 
 ### Hydrograph and Distribution
 
@@ -118,7 +115,7 @@ grid.arrange(
 )
 ```
 
-Discharge is low for most of the year with a few large peaks (Figure \@ref(fig:hydrographdis)), the largest reaching 418.68 $m^3/s$ on 19 November 2022, and its distribution is strongly right-skewed (Figure \@ref(fig:dis15log)), with a median of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$, suggesting extreme flows behave differently from typical flows and need seperate analysis.
+Discharge distribution is strongly right-skewed (Figure \@ref(fig:dis15log)), with a median reading of 14.73 $m^3/s$ against a 99th percentile of 130.97 $m^3/s$ and a maximum of 418.68 $m^3/s$, suggesting extreme flows behave differently from typical flows and need separate analysis.
 
 ### Seasonality of High Flows
 
@@ -127,7 +124,7 @@ mean_dis_plot
 time_above_95_plot
 ```
 
-Median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is concentrated even more tightly to between October and February (Figure \@ref(fig:dis15log)).
+Median discharge is highest from December to February and lowest from July to September, while time spent above the 95th percentile is concentrated even more tightly to between October and February (Figure \@ref(fig:meandistimeabove)).
 
 ### Flood Event Hydrographs
 
@@ -136,9 +133,14 @@ flood_anatomy_plot
 peak_wateryear_plot
 ```
 
-Figure \@ref(fig:meandistimeabove) shows the maximum flow and time to peak of the largest event, and that water-year maxima vary considerably in shape, so treating hydrograph shape as fixed ignores an important source of uncertainty, while the smaller peaks clustering around each maximum mean independent events must be separated.
+Figure \@ref(fig:anatomylargest) shows the maximum flow and time to peak of the largest event, and that water-year maxima vary considerably in shape, so treating hydrograph shape as fixed ignores an important source of uncertainty, while the smaller peaks clustering around each maximum mean independent events must be separated.
 
 # Threshold Selection and Independence
+
+## Robson & Reed (1999) independence rule assumptions {#robson-reed-assumptions}
+
+- A *clean peak* is the highest candidate discharge within a 14-day symmetrical window ($\pm 7$ days), reliably isolating major flood peaks.
+- Start of the rise ($t_{\text{rise}}$): $$t_{\text{rise}} = \max \left\{ t \in [t_{\text{peak}} - 7\text{ days}, \, t_{\text{peak}}) \mid q(t) \le 1.05 \cdot q_{\min} \right\}$$ where $q_{\min} = \min_{t \in [t_{\text{peak}} - 7\text{ days}, \, t_{\text{peak}})} q(t)$ is the lowest discharge recorded in the 7 days before the peak. Selecting $t_{\text{rise}}$ using this condition reliably captures the exact moment discharge begins climbing towards the peak. The 7-day look-back period aligns well with the synoptic cycles of typical flood-generating storms (3-7 days).
 
 ## Initial Threshold
 
@@ -150,7 +152,7 @@ threshold_plot
 
 ## Independence of Peaks
 
-We apply the independence rules of Robson and Reed (1999). If either rule fails, we treat the peaks as one event and keep the larger peak. In applying these rules, we use assumptions ... and ....
+We implement our [assumptions](#robson-reed-assumptions) to apply the Robson and Reed (1999) independence rules. If either rule fails, we treat the peaks as one event and keep the larger peak.
 
 This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure \@ref(fig:peaksaboveinitial)).
 
@@ -174,7 +176,7 @@ mrl.plot(peaks$Discharge, umin = u_final,
 gpd.fitrange(peaks$Discharge, umin = u_final, umax = 120, nint = 12)
 ```
 
-We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi = `r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
+We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
 
 ```{r diagnostic, echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
 gpd.diag(gpd_fit)
@@ -184,7 +186,7 @@ gpd.diag(gpd_fit)
 
 The final threshold of $u = 65$ $m^3/s$ identifies 44 independent flood events over the ten water years, across which maximum flow and time to peak both varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis). Maximum flow had a median of `r round(max_flow_q[2], 2)` $m^3/s$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $m^3/s$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This suggests that extreme flood hydrographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
 
-```{r distrubtionanalysis, echo=FALSE, fig.cap="The Distribution of the two parameters", fig.height=4, fig.width=10, fig.align='center'}
+```{r distributionanalysis, echo=FALSE, fig.cap="The Distribution of the two parameters", fig.width=12}
 (Max_flow_plot + Time_to_peak_plot)
 ```
 
@@ -194,25 +196,25 @@ Max_vs_time
 
 Since both distributions are skewed and we are interested in any monotonic relationship, we used Spearman's rank correlation, obtaining $\rho = 0.287$ $(p = 0.059)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level, suggesting that larger floods do not necessarily take longer to reach their peak.
 
-```{r coranalysistable, echo=FALSE}
+```{r tab:coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
 cor_result_table
 ```
 
-Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that autumn floods tend to take longer to peak (Table \@ref(fig:seasontable), Figure \@ref(fig:season comparison)). With so few events per season, however, this difference should be treated with caution, and spring (6) and summer (1) had too few events to compare.
-
-```{r seasontable, echo=FALSE}
+```{r tab:seasontable, echo=FALSE, tab.cap="Summary of max flow and time to peak for each season"}
 events_season_table
 ```
 
-```{r season comparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertanity in the parameters by season"}
+Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that autumn floods tend to take longer to peak (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). With so few events per season, however, this difference should be treated with caution, and spring (6) and summer (1) had too few events to compare.
+
+```{r seasoncomparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertainty in the parameters by season"}
 max_season_plot + time_season_plot 
 ```
 
-```{r uncertanity table, echo=FALSE, fig.align='center'}
+```{r tab:uncertaintytable, echo=FALSE, tab.cap="Final uncertainty table"}
 results_table
 ```
 
-Repeating the analysis at thresholds of 60-75 $m^3/s$, median time to peak remained between 43 and 47.25 hours and Spearman's correlation between 0.184 and 0.287 (Table \@ref(fig:uncertainty table), suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold.
+Repeating the analysis at thresholds of 60-75 $m^3/s$, median time to peak remained between 43 and 47.25 hours and Spearman's correlation between 0.184 and 0.287 (Table \@ref(tab:uncertaintytable), suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold.
 
 # References {.unnumbered}
 
