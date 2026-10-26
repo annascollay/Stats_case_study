@@ -216,11 +216,11 @@ n_years <- n_distinct(river_data$water_year)
 
 # Find where the rise before a peak starts
 # Looks back over the previous 7 days (or back to 'earliest' if given) and returns the
-# last reading within 5% of the rise above the lowest flow in that window
+# last reading within 5% of the lowest flow in that window
 rise_start_row <- function(p, earliest = t[p] - 7 * 24 * 3600) {
   window <- which(t >= earliest & t <= t[p])
   lowest <- min(q[window])
-  max(window[q[window] <= lowest + 0.05 * (q[p] - lowest)])
+  max(window[q[window] <= 1.05 * lowest])
 }
 
 # Months in water year order (October to September)
@@ -356,13 +356,10 @@ flood_peak <- river_data %>% slice_max(Discharge, n = 1, with_ties = FALSE)
 peak_time  <- flood_peak$Timestamp
 peak_flow  <- flood_peak$Discharge
 
-# Start of the rise: the last reading in the week before the peak that is within
-# 5% of that week's lowest flow (the same definition as in the independence analysis)
-rise_start <- river_data %>%
-  filter(Timestamp >= peak_time - 7 * 24 * 3600, Timestamp < peak_time) %>%
-  filter(Discharge <= 1.05 * min(Discharge)) %>%
-  slice_max(Timestamp, n = 1, with_ties = FALSE)
-start_time <- rise_start$Timestamp
+# Start of the rise: using the standardized rise_start_row function
+peak_row_single <- match(peak_time, t)
+start_row_single <- rise_start_row(peak_row_single)
+start_time <- t[start_row_single]
 
 # Time to peak in hours
 time_to_peak <- as.numeric(difftime(peak_time, start_time, units = "hours"))
@@ -619,6 +616,13 @@ peaks <- independent_peaks(u_final)
 # GPD fitted to the excesses of the independent peak flows above the final threshold
 gpd_fit <- gpd.fit(peaks$Discharge, u_final, npy = nrow(peaks) / n_years, show = FALSE)
 
+# MRL plot
+mrl.plot(peaks$Discharge, umin = 20,
+         umax = sort(peaks$Discharge, decreasing = TRUE)[5])
+
+# Parameter stability plots
+gpd.fitrange(peaks$Discharge, umin = 20, umax = 120, nint = 12)
+
 # Start of each rise: searching back up to 7 days, but never past the previous peak
 peak_rows <- match(peaks$Timestamp, t)
 previous_rows <- c(1, head(peak_rows, -1))
@@ -744,20 +748,20 @@ time_season_plot <- peaks %>% group_by(season) %>% ggplot(aes(x = season, y = ti
   ) +
   theme_minimal()
 
-# Uncertanity final table
+# Uncertainty final table
 results <- tibble()
 
 for (u in c(55, 60, 65, 70, 75)) {
   peaks_test <- independent_peaks(u)
   
-  # Start of each rise and time to peak (same code as before)
+  # Start of each rise and time to peak using the standardized rise_start_row function
   peak_rows <- match(peaks_test$Timestamp, t)
   previous  <- c(1, head(peak_rows, -1))
   start_rows <- mapply(function(p, prev) {
-    window <- which(t >= max(t[p] - 7 * 24 * 3600, t[prev]) & t <= t[p])
-    low    <- min(q[window])
-    max(window[q[window] <= low + 0.05 * (q[p] - low)])
+    rise_start_row(p, earliest = max(t[p] - 7 * 24 * 3600, t[prev]))
   }, peak_rows, previous)
+  
+  # Calculate time_to_peak_h locally
   time_to_peak_h <- as.numeric(difftime(peaks_test$Timestamp, t[start_rows], units = "hours"))
   
   # One row of results for this threshold
