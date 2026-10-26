@@ -177,12 +177,12 @@ Since event separation reduces peak counts, we re-evaluate the threshold using i
 rates_plot
 ```
 
-To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$ with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale, $\sigma - \xi u$, stay roughly constant [@coles2001]. From Figure \@ref(fig:meanresstab), the mean residual life plot is approximately linear above ... $m^3/s$ and the parameter estimates are stable from ... $m^3/s$.
+To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$ with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale, $\sigma - \xi u$, stay roughly constant [@coles2001]. From Figure @ref(fig:meanresstab), the mean residual life plot is approximately linear above X $m^3/s$ and the parameter estimates are stable from Y $m^3/s$. Combined with the 3 to 5 peaks per year range, this supports a threshold of $u$ = r u_final $m^3/s$.
 
-```{r meanresstab, echo=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=6, fig.cap="Mean residual life plot (left) and parameter stability plots (right) for the independent peaks at the final threshold."}
-mrl.plot(peaks$Discharge, umin = 20,
-         umax = sort(peaks$Discharge, decreasing = TRUE)[5])
-gpd.fitrange(peaks$Discharge, umin = 20, umax = 120, nint = 12)
+```{r meanresstab, echo=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=6, fig.cap="Mean residual life plot (left) and parameter stability plots (right) for independent peaks above 50 $m^3/s$."}
+mrl.plot(peaks_base$Discharge, umin = 50,
+         umax = sort(peaks_base$Discharge, decreasing = TRUE)[5])
+gpd.fitrange(peaks_base$Discharge, umin = 50, umax = 120, nint = 12)
 ```
 
 We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
