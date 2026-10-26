@@ -8,6 +8,13 @@ documentclass: article
 classoption: a4paper
 fontsize: 11pt
 geometry: margin=2.5cm
+bibliography: references.bib
+link-citations: true
+linkcolor: blue
+citecolor: blue
+urlcolor: blue
+nocite: |
+  @*
 
 header-includes:
   - \usepackage{graphicx}
@@ -32,7 +39,8 @@ header-includes:
 \vspace{3cm}
 
 {\LARGE\bfseries
-Statistical Case Studies -- Project 1 (Part 1)\par}
+Project 1, part 1: Uncertainty in river flow hydrographs for flood
+inundation modelling\par}
 
 \vfill
 
@@ -82,7 +90,7 @@ Upon initial investigation, the evidence to suggest a relationship between maxim
 
 ## Data Description and Quality
 
-```{r tab:tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
+```{r tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
 tidy_data_table
 ```
 
@@ -144,7 +152,7 @@ Figure \@ref(fig:anatomylargest) shows the maximum flow and time to peak of the 
 
 ## Initial Threshold
 
-We have confirmed the need to extract high flows, and we use Peaks Over Threshold (POT), which takes flood events as peaks of flow above a threshold $u$, usually chosen as the 95th percentile of flow or the level giving 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) shows both on the hydrograph: the 95th percentile is `r round(quantile(q, 0.95), 1)` $m^3/s$, while counting each exceedance period as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` $m^3/s$, though this overstates the number of distinct events, as one flood can cross the threshold several times. The two rules disagree here, as the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, so we follow the peaks-per-year rule, which controls the number of events directly rather than the proportion of time above the threshold, and take $u$ = `r u_initial` $m^3/s$, giving 5 peaks per year, as our initial threshold. We choose the top of the range because Robson and Reed (1999) note this leaves the flexibility to raise it later to exclude smaller floods, and the threshold may need revising once independence is applied.
+We have confirmed the need to extract high flows, and we use Peaks Over Threshold (POT), which takes flood events as peaks of flow above a threshold $u$, usually chosen as the 95th percentile of flow or the level giving 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) shows both on the hydrograph: the 95th percentile is `r round(quantile(q, 0.95), 1)` $m^3/s$, while counting each exceedance period as a peak gives at least 5, 4 and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)` and `r crossing_threshold(3)` $m^3/s$, though this overstates the number of distinct events, as one flood can cross the threshold several times. The two rules disagree here, as the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, so we follow the peaks-per-year rule, which controls the number of events directly rather than the proportion of time above the threshold, and take $u$ = `r u_initial` $m^3/s$, giving 5 peaks per year, as our initial threshold. We choose the top of the range because @robson1999 note this leaves the flexibility to raise it later to exclude smaller floods, and the threshold may need revising once independence is applied.
 
 ```{r candidatethresholds, echo=FALSE, fig.width=10, fig.height=4, fig.cap="Hydrograph with the candidate thresholds. Peaks per year are counted before applying the independence rules."}
 threshold_plot
@@ -152,7 +160,7 @@ threshold_plot
 
 ## Independence of Peaks
 
-We implement our [assumptions](#robson-reed-assumptions) to apply the Robson and Reed (1999) independence rules. If either rule fails, we treat the peaks as one event and keep the larger peak.
+We implement our [assumptions](#robson-reed-assumptions) to apply the @robson1999 independence rules. If either rule fails, we treat the peaks as one event and keep the larger peak.
 
 This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure \@ref(fig:peaksaboveinitial)).
 
@@ -168,7 +176,7 @@ Since separating events lowers the number of peaks, we recheck the threshold on 
 rates_plot
 ```
 
-To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$, with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale $\sigma - \xi u$ stay roughly constant (Coles, 2001). From Figure \@ref(fig:meanresstab), the mean residual life plot is approximately linear above ... $m^3/s$ and the parameter estimates are stable from ... $m^3/s$.
+To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$ with scale $\sigma$ and shape $\xi$. So that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale $\sigma - \xi u$ stay roughly constant [@coles2001]. From Figure \@ref(fig:meanresstab), the mean residual life plot is approximately linear above ... $m^3/s$ and the parameter estimates are stable from ... $m^3/s$.
 
 ```{r meanresstab, echo=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=6, fig.cap="Mean residual life plot (left) and parameter stability plots (right) for the independent peaks at the final threshold."}
 mrl.plot(peaks$Discharge, umin = u_final,
@@ -196,11 +204,11 @@ Max_vs_time
 
 Since both distributions are skewed and we are interested in any monotonic relationship, we used Spearman's rank correlation, obtaining $\rho = 0.287$ $(p = 0.059)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level, suggesting that larger floods do not necessarily take longer to reach their peak.
 
-```{r tab:coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
+```{r coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
 cor_result_table
 ```
 
-```{r tab:seasontable, echo=FALSE, tab.cap="Summary of max flow and time to peak for each season"}
+```{r seasontable, echo=FALSE, tab.cap="Summary of max flow and time to peak for each season"}
 events_season_table
 ```
 
@@ -210,18 +218,13 @@ Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) ha
 max_season_plot + time_season_plot 
 ```
 
-```{r tab:uncertaintytable, echo=FALSE, tab.cap="Final uncertainty table"}
+```{r uncertaintytable, echo=FALSE, tab.cap="Final uncertainty table"}
 results_table
 ```
 
 Repeating the analysis at thresholds of 60-75 $m^3/s$, median time to peak remained between 43 and 47.25 hours and Spearman's correlation between 0.184 and 0.287 (Table \@ref(tab:uncertaintytable), suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold.
 
-# References {.unnumbered}
+# References {-}
 
-Coles, S. (2001) *An Introduction to Statistical Modeling of Extreme Values*. Springer.
-
-Robson, A. and Reed, D. (1999) *Flood Estimation Handbook, Volume 3: Statistical Procedures for Flood Frequency Estimation*. Institute of Hydrology.
-
-Scottish Environment Protection Agency (2026) *SEPA Time Series Data Service*. Available at: <https://timeseriesdoc.sepa.org.uk/> (Accessed: 11 October 2026).
-
-Wilson, A. (2026) *Statistical Case Studies Lecture Slides*. University of Edinburgh.
+::: {#refs}
+:::

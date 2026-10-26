@@ -137,7 +137,9 @@ data_table <- bind_rows(
 )
 
 # Create a table describing the data
-tidy_data_table <- kable(data_table, col.names = c("", ""), caption = "Data used in this analysis, and the quality codes assigned to each reading") %>%
+tidy_data_table <- kable(data_table, col.names = c("", ""), 
+                         caption = "Data used in this analysis, and the quality codes assigned to each reading",
+                         label = "tidyingthedata") %>%
   kable_styling(
     bootstrap_options = c("bordered", "striped", "hover"),
     font_size = 9,
@@ -681,7 +683,8 @@ cor_result_table <- knitr::kable(
   cor_table,
   digits = 3,
   booktabs = TRUE,
-  caption = "Spearman's Rank Correlation Between Peak Discharge and Time to Peak"
+  caption = "Spearman's Rank Correlation Between Peak Discharge and Time to Peak",
+  label = "coranalysistable"
 )
 
 # Spread of each quantity: quartiles (25%, median, 75%) and range, so we can
@@ -704,7 +707,8 @@ events_season_table <- knitr::kable(
   events_season_table,
   booktabs = TRUE,
   digits = 3,
-  caption = "Summary of Max Flow and Time to Peak for each Season"
+  caption = "Summary of Max Flow and Time to Peak for each Season",
+  label = "seasontable"
 )
 
 # Relationship, coloured by season
@@ -776,7 +780,8 @@ results_table <- knitr::kable(
                 "spearman_rho" = "Spearman Rho Corelation"),
   booktabs = T,
   digits = 3,
-  caption = "Final Uncertanity Table"
+  caption = "Final Uncertanity Table",
+  label = "uncertaintytable"
 ) %>%
   kable_styling(
     latex_options = c("striped", "scale_down", "hold_position"),
