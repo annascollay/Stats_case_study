@@ -81,13 +81,15 @@ number_missing <- sum(!complete_sequence %in% river_data$Timestamp)
 # Create data description table
 data_description_table <- tibble(
   Item = c("Station", "Source", "Measurement", "Catchment area",
-           "Resolution", "Period", "Readings", "Missing readings"),
+           "Resolution", "Station type", "Period", "Readings",
+           "Missing readings"),
   Value = c(
     "Don at Parkhill",
     "SEPA time series data service",
     "River discharge ($m^3/s$)",
     "1,273 $km^2$",
     "15 minutes",
+    "Velocity-area",
     paste(format(min(river_data$Timestamp), "%d %B %Y"), "–",
           format(max(river_data$Timestamp), "%d %B %Y")),
     format(nrow(river_data), big.mark = ","),

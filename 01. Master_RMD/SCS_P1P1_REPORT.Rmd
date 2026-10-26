@@ -72,11 +72,11 @@ library(gridExtra)
 
 # Executive Summary
 
-Current flood risk models generally assume that the shape of a flood is fixed, varying only in its maximum river flow. This project investigates whether this approach captures the uncertainty in flood events on the River Don at Parkhill, by considering both the maximum flow and the time a flood takes to reach its peak.
+Current flood inundation models treat the shape of the hydrograph as fixed, varying only the maximum flow. This project aims to develop better methods for modelling uncertainty in river flow hydrographs, and this report explores the uncertainty in the maximum flow of a hydrograph peak and the time between the start of the peak and the maximum flow.
 
-Using ten years of river discharge data, we identified 44 independent extreme flow events, across which both quantities varied considerably, with median values of around 106 m³/s and 44 hours respectively. Flood events were concentrated in autumn and winter, with autumn events typically taking longer to reach their peak, and we found only weak evidence of a relationship between maximum flow and time to peak, suggesting that larger floods do not necessarily develop more slowly.
+Using ten years of river discharge data from the River Don at Parkhill velocity-area gauging station, we identified 44 independent extreme flow events, across which both quantities varied considerably, with median values of c.106 $m^3/s$ and c.44 hours respectively. Flood events were concentrated in Autumn and Winter, with Autumn events typically showing longer times to peak.
 
-These findings suggest that assuming a fixed hydrograph shape may overlook important uncertainty, so SEPA should consider incorporating variation in time to peak alongside maximum flow in future flood risk modelling guidance.
+Upon initial investigation, the evidence to suggest a relationship between maximum flow and time to peak was weak. Thus, assuming a fixed hydrograph shape may overlook important uncertainty, and SEPA should consider incorporating variation in time to peak alongside maximum flow in future flood risk modelling guidance.
 
 # Data and Exploratory Analysis
 
@@ -86,7 +86,7 @@ These findings suggest that assuming a fixed hydrograph shape may overlook impor
 tidy_data_table
 ```
 
-The subsequent analysis uses discharge readings ($m^3/s$) from the River Don at Parkhill velocity-area gauging station, covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, applies a single peak flow rating curve to all measurements.
+The subsequent analysis uses discharge readings ($m^3/s$) covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, applies a single peak flow rating curve to all measurements.
 
 Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
@@ -176,7 +176,7 @@ mrl.plot(peaks$Discharge, umin = u_final,
 gpd.fitrange(peaks$Discharge, umin = u_final, umax = 120, nint = 12)
 ```
 
-We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
+We therefore lower the threshold to $u = `r u_final`$ $\text{m}^3$/s, giving `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma = `r round(gpd_fit$mle[1], 2)`$ (standard error`r round(gpd_fit\$se[1], 2)`) and $\hat\xi =`r round(gpd_fit$mle[2], 3)`$ (standard error `r round(gpd_fit$se[2], 3)`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
 
 ```{r diagnostic, echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
 gpd.diag(gpd_fit)
@@ -204,7 +204,7 @@ cor_result_table
 events_season_table
 ```
 
-Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that autumn floods tend to take longer to peak (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). With so few events per season, however, this difference should be treated with caution, and spring (6) and summer (1) had too few events to compare.
+Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $m^3/s$ and time to peak of 59 hours, compared with 108.95 $m^3/s$ and 35.5 hours for Winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that Autumn floods tend to take longer to peak (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). With so few events per season, however, this difference should be treated with caution, and Spring (6) and Summer (1) had too few events to compare.
 
 ```{r seasoncomparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertainty in the parameters by season"}
 max_season_plot + time_season_plot 
