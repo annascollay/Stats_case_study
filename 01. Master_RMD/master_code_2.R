@@ -263,10 +263,12 @@ summary_stats <- river_data %>%
   mutate(`Value (m³/s)` = sprintf("%.2f", `Value (m³/s)`))
 
 # Distrubtion of the data
+distribution_colours = c("#AA1945","#D0436A", "#E58FA6")
+
 distribution_plot <- ggplot(river_data, aes(x = Discharge)) +
   geom_histogram(bins = 60, fill = "#5298BC", colour = "white") +
   geom_vline(xintercept = quantile(river_data$Discharge, c(0.5, 0.95, 0.99)),
-             linetype = "dashed", colour = "#AA1945") +
+             linetype = "dashed", colour = distribution_colours, linewidth = 0.8) +
   scale_x_log10() +
   labs(
     title = "Distribution of 15-minute discharge",
@@ -275,6 +277,22 @@ distribution_plot <- ggplot(river_data, aes(x = Discharge)) +
     y = "Number of readings"
   ) +
   theme_minimal()
+
+distribution_plot <- distribution_plot +
+  annotate(
+    "text",
+    x = c(
+      median(q, na.rm = TRUE),
+      quantile(q, 0.95, na.rm = TRUE),
+      quantile(q, 0.99, na.rm = TRUE)
+    ),
+    y = Inf,
+    label = c("Median", "95th", "99th"),
+    vjust = 1.5,
+    hjust = 1.1,
+    size = 3.5,
+    colour = distribution_colours
+  )
 
 # Seasonality of High Flows
 
@@ -417,17 +435,19 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
 
 # Plot visualising largest peaks by water year
 year_colours <- c(
-  "2017" = "#6BBED1",
-  "2018" = "#347F89",
-  "2019" = "#82B7E0",
-  "2020" = "#4285C5",
-  "2021" = "#5298BC",
-  "2022" = "#4169E1",
-  "2023" = "#2764A5",
-  "2024" = "#2445A2",
-  "2025" = "#174B67",
-  "2026" = "#142D59"
+  "#8ECFE0",  
+  "#5298BC",  
+  "#247C91",
+  "#6BBED1",
+  "#168F91",
+  "#174B67",
+  "#4285C5",
+  "#2764A5",
+  "#4169E1",
+  "#2445A2",
+  "#142D59"  
 )
+
 peak_wateryear_plot <- ggplot(annual_peak_shapes, aes(x = hours_from_peak, y = scaled_flow,
                                                       colour = factor(water_year), group = water_year)) +
   geom_line(linewidth = 0.7) +
@@ -604,14 +624,34 @@ rates_plot <- ggplot(independent_rates, aes(x = threshold, y = peaks_per_year)) 
            fill = "#BFDC80", alpha = 0.3) +
   geom_line(colour = "#5298BC") +
   geom_point(colour = "#5298BC", size = 1) +
-  geom_vline(xintercept = u_final, linetype = "dashed", colour = "#AA1945") +
+  geom_vline(xintercept = 79, linetype = "dashed", colour = "#AA1945") +
+  annotate("text",
+    x = 79,
+    y = Inf,
+    label = "Threshold Prior\nto Independence",
+    vjust = 1.5,
+    hjust = 1.1,
+    size = 3.5,
+    colour = "#AA1945"
+  ) +
+  geom_vline(xintercept = u_final, linetype = "dashed", colour = "#E58FA6") +
+  annotate("text",
+           x = 65,
+           y = Inf,
+           label = "Threshold Post\nIndependence",
+           vjust = 1.5,
+           hjust = 1.1,
+           size = 3.5,
+           colour = "#E58FA6"
+  ) +
   labs(
     title = "Independent peaks per year by threshold",
-    subtitle = "Shaded band: 3 to 5 peaks per year | Dashed line: chosen threshold",
+    subtitle = "Shaded band: 3 to 5 peaks per year",
     x = expression("Threshold ("*m^3*"/s)"),
     y = "Independent peaks per year"
   ) +
   theme_minimal()
+
 
 # Independent peaks at the final threshold
 peaks <- independent_peaks(u_final)
