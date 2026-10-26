@@ -185,7 +185,9 @@ mrl.plot(peaks$Discharge, umin = 20,
 gpd.fitrange(peaks$Discharge, umin = 20, umax = 120, nint = 12)
 ```
 
-Therefore, we lower the threshold to $u = `r u_final`$ $\text{m}^3/\text{s}$. After applying the @robson1999 independence rules once more, we yield `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma =$ `r round(gpd_fit$mle[1], 2)` (standard error `r round(gpd_fit\$se[1], 2)`) and $\hat\xi =$ `r round(gpd_fit$mle[2], 3)` (standard error `r round(gpd_fit\$se[2], 3)\`). [The diagnostic plots in Figure \@ref(fig:diagnostic) show ...]
+Therefore, we lower the threshold to $u = `r u_final`$ $\text{m}^3/\text{s}$. After applying the @robson1999 independence rules once more, we yield `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma =$ `r round(gpd_fit$mle[1], 2)` (standard error `r round(gpd_fit\$se[1], 2)`) and $\hat\xi =$ `r round(gpd_fit$mle[2], 3)` (standard error `r round(gpd_fit\$se[2], 3)`).
+
+The diagnostic plots in Figure \@ref(fig:diagnostic) show that our GPD model fits the lower-to-moderate exceedances well, but shows signs of tail under-estimation and high extrapolation uncertainty at long return periods.
 
 ```{r diagnostic, echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
 gpd.diag(gpd_fit)
