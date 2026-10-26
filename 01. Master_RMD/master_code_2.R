@@ -822,14 +822,9 @@ for (u in c(55, 60, 65, 70, 75)) {
   start_rows <- mapply(function(p, prev) {
     rise_start_row(p, earliest = max(t[p] - 7 * 24 * 3600, t[prev]))
   }, peak_rows, previous)
-<<<<<<< HEAD
   
   # Calculate time_to_peak_h locally
   time_to_peak_h <- as.numeric(difftime(peaks_test$Timestamp, t[start_rows], units = "hours"))
-=======
-  time_to_peak_h <- as.numeric(
-    difftime(peaks_test$Timestamp, t[start_rows], units = "hours"))
->>>>>>> fed22808ff0961fe14f5ec538056917e0772833b
   
   # One row of results for this threshold
   results <- bind_rows(results, tibble(
