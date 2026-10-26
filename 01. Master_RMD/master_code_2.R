@@ -119,7 +119,7 @@ quality_combined <- quality_code_table %>%
   ) %>%
   mutate(
     Count = coalesce(Count, 0L),
-    Percentage = sprintf("%.2f%%", Count / sum(Count) * 100)
+    Percentage = sprintf("%.2f\\%%", Count / sum(Count) * 100)
   )
 
 # Combine into one table, with one row per quality code below the data description
@@ -137,18 +137,23 @@ data_table <- bind_rows(
 # Combined table
 
 # Create a table describing the data
+# Create a table describing the data
 tidy_data_table <- kable(
-  data_table, col.names = c("", ""), 
+  data_table, col.names = c("", ""),
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
   caption = "Data used in this analysis, and the quality codes assigned to each reading",
   label = "tidyingthedata") %>%
   kable_styling(
-    bootstrap_options = c("bordered", "striped", "hover"),
+    latex_options = c("striped", "hold_position"),
     font_size = 9,
     full_width = FALSE,
     position = "left"
   ) %>%
-  pack_rows("Data description", 1, 7) %>%
-  pack_rows("Quality codes", 8, nrow(data_table))
+  pack_rows("Data description", 1, 9) %>%
+  pack_rows("Quality codes", 10, nrow(data_table))
+
 # Filter for Quality Codes 50 and 100, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
