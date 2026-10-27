@@ -205,7 +205,7 @@ The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 44 independent 
 Max_vs_time
 ```
 
-Since both distributions are skewed and we are interested in any monotonic relationship, we used Spearman's rank correlation, obtaining $\rho = 0.287$ $(p = 0.059)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level, suggesting that larger floods do not necessarily take longer to reach their peak.
+Since both distributions are skewed and we are interested in any monotonic relationship, we used Spearman's rank correlation, obtaining $\rho = 0.496$ $(p = 0.001)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level, suggesting that larger floods do not necessarily take longer to reach their peak.
 
 ```{r coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
 cor_result_table
@@ -215,7 +215,7 @@ cor_result_table
 events_season_table
 ```
 
-Autumn events (September–November, $n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $\text{m}^3/\text{s}$ and time to peak of 59 hours, compared with 108.95 $\text{m}^3/\text{s}$ and 35.5 hours for Winter events (December–February, $n$ = `r sum(peaks$season == "Winter")`), suggesting that Autumn floods tend to take longer to peak (Table \@ref(tab:seasontable)), Figure \@ref(fig:seasoncomparison). With so few events per season, however, this difference should be treated with caution, and Spring (6) and Summer (1) had too few events to compare.
+Autumn events ($n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $\text{m}^3/\text{s}$ and time to peak of 59 hours, compared with 108.95 $\text{m}^3/\text{s}$ and 35.5 hours for Winter events ($n$ = `r sum(peaks$season == "Winter")`), suggesting that Autumn floods tend to take longer to peak (Table \@ref(tab:seasontable)), Figure \@ref(fig:seasoncomparison). With so few events per season, however, this difference should be treated with caution, and Spring ($n = 6$) and Summer ($n = 1$) had too few events to compare.
 
 ```{r seasoncomparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertainty in the parameters by season"}
 max_season_plot + time_season_plot 
@@ -231,8 +231,3 @@ Repeating the analysis at thresholds of 60-75 $\text{m}^3/\text{s}$, median time
 
 ::: {#refs}
 :::
-
-# Appendix: Code {.unnumbered}
-
-```{r print-code, echo=TRUE, eval=FALSE, code=readLines("master_code_2.R")}
-```
