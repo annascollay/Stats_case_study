@@ -196,7 +196,7 @@ qc_plot <- ggplot(qc_plot_data,
 river_data <- river_data %>%
   filter(as.numeric(QualityCode) %in% c(50, 100))
 
-# Subsection 2.2 - Exploratory Analysis
+# Subsection 2.3 - Exploratory Analysis
 # --------------------------------------------------------------
 
 # Sort by time and create month, season and water year variables to support our analysis
@@ -694,6 +694,42 @@ peaks <- peaks %>%
     time_to_peak_h = as.numeric(difftime(Timestamp, start_time, units = "hours"))
   )
 
+# Hydrograph showing final threshold and independent peaks
+final_threshold_plot <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(colour = "#5298BC", linewidth = 0.35) +
+  
+  # Final threshold at 65 m³/s
+  geom_hline(
+    yintercept = u_final,
+    colour = "#AA1945",
+    linetype = "dashed",
+    linewidth = 0.7
+  ) +
+  
+  # Mark independent flood peaks
+  geom_point(
+    data = peaks,
+    aes(x = Timestamp, y = Discharge),
+    colour = "#D0436A",
+    size = 1.5
+  ) +
+  
+  labs(
+    title = expression("Hydrograph with Independent Flood Peaks at Final Threshold 65 "*m^3*"/s"),
+    subtitle = paste0(
+      nrow(peaks), " independent events (",
+      round(nrow(peaks) / n_years, 1),
+      " events per year)"
+    ),
+    x = "Date",
+    y = expression("Discharge (" * m^3 * "/s)")
+  ) +
+  theme_minimal()
+
+
 #---------------------------------------------------------------------------
 # Section 4 - Uncertainty Analysis
 #--------------------------------------------------------------------------
@@ -860,38 +896,3 @@ results_table <- knitr::kable(
     background = "#E4F1D8",
     bold = TRUE
   )
-
-# Hydrograph showing final threshold and independent peaks
-final_threshold_plot <- ggplot(
-  river_data,
-  aes(x = Timestamp, y = Discharge)
-) +
-  geom_line(colour = "#5298BC", linewidth = 0.35) +
-  
-  # Final threshold at 65 m³/s
-  geom_hline(
-    yintercept = u_final,
-    colour = "#AA1945",
-    linetype = "dashed",
-    linewidth = 0.7
-  ) +
-  
-  # Mark independent flood peaks
-  geom_point(
-    data = peaks,
-    aes(x = Timestamp, y = Discharge),
-    colour = "#D0436A",
-    size = 1.5
-  ) +
-  
-  labs(
-    title = expression("Hydrograph with Independent Flood Peaks at Final Threshold 65 "*m^3*"/s"),
-    subtitle = paste0(
-      nrow(peaks), " independent events (",
-      round(nrow(peaks) / n_years, 1),
-      " events per year)"
-    ),
-    x = "Date",
-    y = expression("Discharge (" * m^3 * "/s)")
-  ) +
-  theme_minimal()
