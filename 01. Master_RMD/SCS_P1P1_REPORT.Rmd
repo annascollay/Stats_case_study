@@ -9,7 +9,8 @@ classoption: a4paper
 fontsize: 11pt
 geometry: margin=2.5cm
 bibliography: references.bib
-biblio-style: apalike
+csl: https://www.zotero.org/styles/apa
+citation_package: default
 link-citations: true
 linkcolor: blue
 citecolor: blue
@@ -24,6 +25,9 @@ header-includes:
   - \usepackage{caption}
   - \floatplacement{figure}{H}
   - \floatplacement{table}{H}
+  - \usepackage{ragged2e}
+  - \usepackage{etoolbox}
+  - \AtBeginEnvironment{CSLReferences}{\RaggedRight}
 ---
 
 \begin{titlepage}
@@ -99,7 +103,7 @@ The subsequent analysis uses discharge readings ($\text{m}^3/\text{s}$) covering
 
 Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
-- Estimated ($n=14,915$): Retained. SEPA defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit at which Good readings are capped (Figure \@ref(fig:dischargeqc)). These are the largest flow readings, so we retain to preserve the extremes.
+- Estimated ($n=14,915$): Retained. @sepa2026 defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit at which Good readings are capped (Figure \@ref(fig:dischargeqc)). These are the largest flow readings, so we retain to preserve the extremes.
 
 - Unchecked ($n=30$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and sporadic 2017–2018 occurrences of at most 45 minutes. Only two coincide with extreme flows, so their removal leaves a fully verified data-set with negligible impact.
 

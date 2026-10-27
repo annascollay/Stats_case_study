@@ -662,17 +662,7 @@ rates_plot <- ggplot(independent_rates, aes(x = threshold, y = peaks_per_year)) 
     hjust = 1.1,
     size = 2.5,
     colour = "#AA1945"
-  ) +
-  geom_vline(xintercept = u_final, linetype = "dashed", colour = "#E58FA6") +
-  annotate("text",
-           x = 65,
-           y = Inf,
-           label = "Threshold Post\nIndependence",
-           vjust = 1.5,
-           hjust = 1.1,
-           size = 2.5,
-           colour = "#E58FA6"
-  ) +
+  )  +
   labs(
     title = "Independent peaks per year by threshold",
     subtitle = "Shaded band: 3 to 5 peaks per year",
