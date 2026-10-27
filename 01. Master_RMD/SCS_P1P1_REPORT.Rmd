@@ -103,9 +103,26 @@ Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
 - Unchecked ($n=30$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and in sporadic 2017–2018 bursts of at most 45 minutes. Only two coincided with extreme flows, so removing them leaves a fully verified data-set with negligible impact.
 
-```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Discharge distribution for quality codes 50 & 100."}
+\begin{minipage}{0.48\textwidth}
+\centering
+
+```{r mapofdon, echo=FALSE, out.width='\\linewidth'}
+knitr::include_graphics("mapofdon.png")
+```
+
+\captionof{figure}{SEPA map of the location of the Parkhill gauging station on the River Don.}
+\end{minipage}
+\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+
+```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, out.width='\\linewidth'}
 qc_plot
 ```
+
+\captionof{figure}{Discharge distribution for quality codes 50 and 100.}
+\end{minipage}
+
 
 ## Report Assumptions {#assumptions}
 
