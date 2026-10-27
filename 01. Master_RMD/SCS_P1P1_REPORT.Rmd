@@ -192,6 +192,9 @@ The diagnostic plots (Figure @ref(fig:diagnostic)) show a good fit to lower-to-m
 gpd.diag(gpd_fit)
 ```
 
+```{r finalthresholdplot, echo=FALSE, fig.cap="The hydrograoh showing the final threshold and each indpedendent flood peak"}
+final_threshold_plot
+```
 # Uncertainty Analysis
 
 The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 42 independent flood events. Both maximum flow and time to peak varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis)). Maximum flow had a median of `r round(max_flow_q[2], 2)` $\text{m}^3/\text{s}$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $\text{m}^3/\text{s}$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This variation suggests that flood events cannot be properly characterised by a single maximum discharge or a fixed time to peak.
@@ -220,11 +223,13 @@ Seasonal differences were also observed (Table \@ref(tab:seasontable), Figure \@
 max_season_plot + time_season_plot 
 ```
 
-```{r uncertaintytable, echo=FALSE, tab.cap="Final uncertainty table"}
+```{r uncertaintytable, echo=FALSE, tab.cap="Final uncertainty table with thresholds that satisfy 3-5 events highlighted."}
 results_table
 ```
 
-Repeating the analysis at thresholds of 60-75 $\text{m}^3/\text{s}$ (Table \@ref(tab:uncertaintytable)), median time to peak remains similar - between 72.75–86.13 hours, and Spearman's correlation between 0.371 and 0.496. This suggests that results are somewhat sensitive to threshold selection, although a positive association between peak discharge and time to peak exists.
+Repeating the analysis across thresholds of 55-85 $\text{m}^3/\text{s}$ (Table \@ref(tab:uncertaintytable)), median time to peak ranges from 65.25 to 90 hours hours, while Spearman's correlation ranges from 0.308 to 0.496. The highlighted thresholds satisfy the 3–5 events-per-year criterion, with the chosen threshold of 65 $\text{m}^3/\text{s}$ providing 4.2 independent events per year. Although results vary with threshold selection, a positive association between peak discharge and time to peak persists.
+
+
 
 # References {.unnumbered}
 

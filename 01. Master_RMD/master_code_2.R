@@ -812,7 +812,7 @@ time_season_plot <- peaks %>% group_by(season) %>%
 # Uncertainty final table
 results <- tibble()
 
-for (u in c(55, 60, 65, 70, 75)) {
+for (u in c(55, 60, 65, 70, 75, 80, 85)) {
   peaks_test <- independent_peaks(u)
   
   # Start of each rise and time to peak using the standardized rise_start_row function
@@ -837,6 +837,11 @@ for (u in c(55, 60, 65, 70, 75)) {
   ))
 }
 
+# Identify rows with 3–5 independent events per year
+highlight_rows <- which(
+  results$events_per_year >= 3 &
+    results$events_per_year <= 5
+)
 
 results_table <- knitr::kable(
   results,
@@ -845,10 +850,51 @@ results_table <- knitr::kable(
                 "median_time_to_peak_h" = "Median Time to Peak (Hours)", 
                 "spearman_rho" = "Spearman Rho Corelation"),
   booktabs = T,
+  linesep = "", 
   digits = 3,
-  caption = "Final Uncertanity Table",
+  caption = "Final Uncertanity Table, With Thresholds Satisfying 3-5 Events per Year Criteria Highlighted.",
   label = "uncertaintytable"
 ) %>%
   kable_styling(
-    latex_options = c("striped", "scale_down", "hold_position"),
-    font_size = 9)
+    latex_options = c("scale_down", "hold_position"),
+    font_size = 9)%>%
+  row_spec(
+    highlight_rows,
+    background = "#E4F1D8",
+    bold = TRUE
+  )
+
+# Hydrograph showing final threshold and independent peaks
+final_threshold_plot <- ggplot(
+  river_data,
+  aes(x = Timestamp, y = Discharge)
+) +
+  geom_line(colour = "#5298BC", linewidth = 0.35) +
+  
+  # Final threshold at 65 m³/s
+  geom_hline(
+    yintercept = u_final,
+    colour = "#AA1945",
+    linetype = "dashed",
+    linewidth = 0.7
+  ) +
+  
+  # Mark independent flood peaks
+  geom_point(
+    data = peaks,
+    aes(x = Timestamp, y = Discharge),
+    colour = "#D0436A",
+    size = 1.5
+  ) +
+  
+  labs(
+    title = expression("Hydrograph With Independent Flood Peaks at Final Threshold 65 "*m^3*"/s"),
+    subtitle = paste0(
+      nrow(peaks), " independent events (",
+      round(nrow(peaks) / n_years, 1),
+      " events per year)"
+    ),
+    x = "Date",
+    y = expression("Discharge (" * m^3 * "/s)")
+  ) +
+  theme_minimal()
