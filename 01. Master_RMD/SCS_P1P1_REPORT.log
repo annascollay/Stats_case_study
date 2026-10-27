@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.18)  27 OCT 2026 09:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.18)  27 OCT 2026 11:22
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -725,7 +725,13 @@ Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.p
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[10 <./SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf>] [11] (./SCS_P1P1_REPORT.aux)
+[10 <./SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf>]
+<SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf, id=266, 469.755pt x 325.215pt>
+File: SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf Graphic file (type pdf)
+<use SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf>
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf  used on input line 418.
+(pdftex.def)             Requested size: 455.24608pt x 315.17035pt.
+[11 <./SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf>] (./SCS_P1P1_REPORT.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
@@ -735,18 +741,18 @@ LaTeX Warning: There were undefined references.
 
  ) 
 Here is how much of TeX's memory you used:
- 15072 strings out of 469040
- 248632 string characters out of 5455879
- 695806 words of memory out of 5000000
- 43888 multiletter control sequences out of 15000+600000
+ 15081 strings out of 469040
+ 249158 string characters out of 5455879
+ 695983 words of memory out of 5000000
+ 43896 multiletter control sequences out of 15000+600000
  693321 words of font info for 84 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  88i,11n,93p,1008b,498s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb></Users/annascollay/Library/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb>
-Output written on SCS_P1P1_REPORT.pdf (12 pages, 3198952 bytes).
+Output written on SCS_P1P1_REPORT.pdf (12 pages, 3697033 bytes).
 PDF statistics:
- 414 PDF objects out of 1000 (max. 8388607)
- 326 compressed objects within 4 object streams
- 49 named destinations out of 1000 (max. 500000)
- 198 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 421 PDF objects out of 1000 (max. 8388607)
+ 331 compressed objects within 4 object streams
+ 50 named destinations out of 1000 (max. 500000)
+ 203 words of extra memory for PDF output out of 10000 (max. 10000000)
 
