@@ -81,11 +81,12 @@ library(gridExtra)
 
 # Executive Summary
 
-Current flood models treat the shape of the hydrograph as fixed, varying only the maximum flow. This report explores uncertainty in the maximum flow of a hydrograph peak and the time from the start of the rise to that maximum.
+Current flood models often assume that floods follow the same pattern, with only their maximum flow changing. This report investigates the uncertainty in how both flood size and the time taken to reach peak flow vary.
 
-Using ten years of river discharge data from the River Don at Parkhill velocity-area gauging station, we identified `r nrow(peaks)` independent extreme flow events, across which both quantities varied considerably, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Flood events were concentrated in Autumn and Winter, with Autumn events typically showing longer times to peak.
+Using ten years of data from the River Don at Parkhill, we identified `r nrow(peaks)` independent extreme flood events. Both flood size and time to peak varied considerably, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Flood events were concentrated in Autumn and Winter, with Autumn events typically showing longer times to peak.
 
-Upon initial investigation, the evidence to suggest a relationship between maximum flow and time to peak was weak. Thus, assuming a fixed hydrograph shape may overlook important uncertainty, and SEPA should consider incorporating variation in time to peak alongside maximum flow in future flood risk modelling guidance.
+Upon investigation, we found larger floods generally take longer to reach their peak, but the time varies considerably between events. This means that assuming all floods follow the same pattern may overlook important uncertainty. SEPA should therefore consider both flood size and the time taken to reach peak flow when assessing flood risk.
+
 
 # Data and Exploratory Analysis
 
@@ -195,7 +196,7 @@ gpd.diag(gpd_fit)
 
 # Uncertainty Analysis
 
-The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 44 independent flood events over the ten water years, across which maximum flow and time to peak both varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis)). Maximum flow had a median of `r round(max_flow_q[2], 2)` $\text{m}^3/\text{s}$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $\text{m}^3/\text{s}$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This suggests that extreme flood hydrographs cannot be adequately characterised by a single peak magnitude or a fixed time to peak.
+The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 42 independent flood events. Both maximum flow and time to peak varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis)). Maximum flow had a median of `r round(max_flow_q[2], 2)` $\text{m}^3/\text{s}$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $\text{m}^3/\text{s}$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This variation suggests that flood events cannot be properly characterised by a single maximum discharge or a fixed time to peak.
 
 ```{r distributionanalysis, echo=FALSE, fig.cap="The Distribution of the two parameters", fig.width=12}
 (Max_flow_plot + Time_to_peak_plot)
@@ -205,7 +206,7 @@ The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 44 independent 
 Max_vs_time
 ```
 
-Since both distributions are skewed and we are interested in any monotonic relationship, we used Spearman's rank correlation, obtaining $\rho = 0.496$ $(p = 0.001)$. This indicates a weak positive association, but with insufficient evidence of a monotonic relationship at the $5\%$ significance level, suggesting that larger floods do not necessarily take longer to reach their peak.
+Since both variables are skewed, we use [Spearman's rank correlation](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient) to investigate a potential monotonic relationship. Table \@ref(tab:coranalysistable) indicates a moderate, statistically significant positive association $(\rho = 0.496$, $p = 0.001)$, suggesting that larger flood peaks tend to be associated with longer times to peak. However, the scatter in Figure \@ref(fig:uncertaintyanalysis) indicates that peak discharge alone does not determine the time taken to reach the maximum.
 
 ```{r coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
 cor_result_table
@@ -215,7 +216,7 @@ cor_result_table
 events_season_table
 ```
 
-Autumn events ($n$ = `r sum(peaks$season == "Autumn")`) had a median maximum flow of 117.19 $\text{m}^3/\text{s}$ and time to peak of 59 hours, compared with 108.95 $\text{m}^3/\text{s}$ and 35.5 hours for Winter events ($n$ = `r sum(peaks$season == "Winter")`), suggesting that Autumn floods tend to take longer to peak (Table \@ref(tab:seasontable)), Figure \@ref(fig:seasoncomparison). With so few events per season, however, this difference should be treated with caution, and Spring ($n = 6$) and Summer ($n = 1$) had too few events to compare.
+Seasonal differences were also observed (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). Autumn events ($n$ = `r sum(peaks$season == "Autumn")`) had a median maximum discharge of 108.308 $\text{m}^3/\text{s}$ and time to peak of 85.25 hours, compared with 108.95 $\text{m}^3/\text{s}$ and 51.88 hours for Winter events ($n$ = `r sum(peaks$season == "Winter")`), highlighting that Autumn floods tend to take longer to peak.  However, the season sample size are limited particularly for Spring ($n = 6$) and Summer ($n = 1$), so these difference should be interpreted cautiously.
 
 ```{r seasoncomparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertainty in the parameters by season"}
 max_season_plot + time_season_plot 
@@ -225,7 +226,7 @@ max_season_plot + time_season_plot
 results_table
 ```
 
-Repeating the analysis at thresholds of 60-75 $\text{m}^3/\text{s}$, median time to peak remained between 43 and 47.25 hours and Spearman's correlation between 0.184 and 0.287 (Table \@ref(tab:uncertaintytable)), suggesting that the observed variability in time to peak is not simply a consequence of the chosen threshold.
+Repeating the analysis at thresholds of 60-75 $\text{m}^3/\text{s}$ (Table \@ref(tab:uncertaintytable)), median time to peak remains similar - between 72.75–86.13 hours, and Spearman's correlation between 0.371 and 0.496. This suggests that results are somewhat sensitive to threshold selection, although a positive association between peak discharge and time to peak exists.
 
 # References {.unnumbered}
 
