@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  27 OCT 2026 13:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  27 OCT 2026 13:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -605,115 +605,110 @@ File: SCS_P1P1_REPORT_files/figure-latex/dischargeqc-1.pdf Graphic file (type pd
 <use SCS_P1P1_REPORT_files/figure-latex/dischargeqc-1.pdf>
 Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/dischargeqc-1.pdf  used on input line 249.
 (pdftex.def)             Requested size: 218.51521pt x 145.67767pt.
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 252.
-See the caption package documentation for explanation.
-
 [2
 
 {c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
 <SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf, id=68, 722.7pt x 289.08pt>
 File: SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf  used on input line 269.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf  used on input line 268.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 <SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf, id=69, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf  used on input line 276.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf  used on input line 275.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
 <SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf, id=70, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf  used on input line 276.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf  used on input line 275.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
 
-Overfull \hbox (2.43333pt too wide) in paragraph at lines 276--276
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 275--275
 [][] [] 
  []
 
 [3{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc} <./mapofdon.png> <./SCS_P1P1_REPORT_files/figure-latex/dischargeqc-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/hydrographdis-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf, id=101, 433.62pt x 361.35pt>
+<SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf, id=100, 433.62pt x 361.35pt>
 File: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf  used on input line 284.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf  used on input line 283.
 (pdftex.def)             Requested size: 227.62206pt x 189.68402pt.
-<SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf, id=102, 433.62pt x 361.35pt>
+<SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf, id=101, 433.62pt x 361.35pt>
 File: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf  used on input line 284.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf  used on input line 283.
 (pdftex.def)             Requested size: 227.62206pt x 189.68402pt.
 
-Overfull \hbox (2.43333pt too wide) in paragraph at lines 284--284
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 283--283
 [][] [] 
  []
 
-<SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf, id=104, 722.7pt x 289.08pt>
+<SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf, id=103, 722.7pt x 289.08pt>
 File: SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf  used on input line 293.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf  used on input line 292.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [4 <./SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/meandistimeabove-2.pdf> <./SCS_P1P1_REPORT_files/figure-latex/anatomylargest-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/anatomylargest-2.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf, id=143, 722.7pt x 289.08pt>
+<SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf, id=142, 722.7pt x 289.08pt>
 File: SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf  used on input line 307.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf  used on input line 306.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [5 <./SCS_P1P1_REPORT_files/figure-latex/dis15log-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf, id=162, 867.24pt x 361.35pt>
+<SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf, id=161, 867.24pt x 361.35pt>
 File: SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf  used on input line 319.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf  used on input line 318.
 (pdftex.def)             Requested size: 867.2379pt x 361.34912pt.
-<SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf, id=164, 578.16pt x 252.945pt>
+<SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf, id=163, 578.16pt x 252.945pt>
 File: SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf  used on input line 329.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf  used on input line 328.
 (pdftex.def)             Requested size: 578.15858pt x 252.94438pt.
 [6 <./SCS_P1P1_REPORT_files/figure-latex/candidatethresholds-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/peaksaboveinitial-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf, id=184, 433.62pt x 433.62pt>
+<SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf, id=183, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf  used on input line 336.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf  used on input line 335.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
-<SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf, id=185, 433.62pt x 433.62pt>
+<SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf, id=184, 433.62pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf  used on input line 336.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf  used on input line 335.
 (pdftex.def)             Requested size: 227.62206pt x 227.62082pt.
 
-Overfull \hbox (2.43333pt too wide) in paragraph at lines 336--336
+Overfull \hbox (2.43333pt too wide) in paragraph at lines 335--335
 [][] [] 
  []
 
 [7{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc} <./SCS_P1P1_REPORT_files/figure-latex/indpeaksperyear-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/meanresstab-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/meanresstab-2.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf, id=212, 650.43pt x 433.62pt>
+<SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf, id=211, 650.43pt x 433.62pt>
 File: SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf  used on input line 345.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf  used on input line 344.
 (pdftex.def)             Requested size: 364.19667pt x 242.8057pt.
-<SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf, id=213, 469.755pt x 325.215pt>
+<SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf, id=212, 469.755pt x 325.215pt>
 File: SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf  used on input line 354.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf  used on input line 353.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [8 <./SCS_P1P1_REPORT_files/figure-latex/diagnostic-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/finalthresholdplot-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf, id=233, 867.24pt x 325.215pt>
+<SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf, id=232, 867.24pt x 325.215pt>
 File: SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf  used on input line 364.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf  used on input line 363.
 (pdftex.def)             Requested size: 867.2379pt x 325.2142pt.
-<SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf, id=234, 469.755pt x 325.215pt>
+<SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf, id=233, 469.755pt x 325.215pt>
 File: SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf  used on input line 370.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf  used on input line 369.
 (pdftex.def)             Requested size: 386.96027pt x 267.8938pt.
 [9 <./SCS_P1P1_REPORT_files/figure-latex/distributionanalysis-1.pdf> <./SCS_P1P1_REPORT_files/figure-latex/uncertaintyanalysis-1.pdf>]
-<SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf, id=260, 867.24pt x 578.16pt>
+<SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf, id=259, 867.24pt x 578.16pt>
 File: SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf Graphic file (type pdf)
 <use SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf>
-Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf  used on input line 412.
+Package pdftex.def Info: SCS_P1P1_REPORT_files/figure-latex/seasoncomparison-1.pdf  used on input line 411.
 (pdftex.def)             Requested size: 867.2379pt x 578.15858pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
@@ -725,18 +720,18 @@ L3 programming layer <2026-09-09>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 14542 strings out of 469040
- 242919 string characters out of 5455508
- 684359 words of memory out of 5000000
+ 14541 strings out of 469040
+ 242911 string characters out of 5455508
+ 683358 words of memory out of 5000000
  43352 multiletter control sequences out of 15000+600000
  693321 words of font info for 84 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  88i,11n,93p,1488b,498s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb>
-Output written on SCS_P1P1_REPORT.pdf (12 pages, 4992477 bytes).
+Output written on SCS_P1P1_REPORT.pdf (12 pages, 4992376 bytes).
 PDF statistics:
- 426 PDF objects out of 1000 (max. 8388607)
- 334 compressed objects within 4 object streams
- 52 named destinations out of 1000 (max. 500000)
+ 425 PDF objects out of 1000 (max. 8388607)
+ 333 compressed objects within 4 object streams
+ 51 named destinations out of 1000 (max. 500000)
  208 words of extra memory for PDF output out of 10000 (max. 10000000)
 

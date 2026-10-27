@@ -120,7 +120,6 @@ knitr::include_graphics("mapofdon.png")
 qc_plot
 ```
 
-\captionof{figure}{Discharge distribution for quality codes 50 and 100.}
 \end{minipage}
 
 
