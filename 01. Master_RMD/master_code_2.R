@@ -63,12 +63,7 @@ if (file.exists(cache_file)) {
   saveRDS(river_data, cache_file)
 }
 
-# Subsection 2.1 - Filtering and Cleaning
-# --------------------------------------------------------------
-
-# Data Description
-
-# Subsection 2.1 - Filtering and Cleaning
+# Subsection 2.1 - Data Description and Quality
 # --------------------------------------------------------------
 
 # Data Description
@@ -124,7 +119,7 @@ quality_combined <- quality_code_table %>%
   ) %>%
   mutate(
     Count = coalesce(Count, 0L),
-    Percentage = sprintf("%.2f%%", Count / sum(Count) * 100)
+    Percentage = sprintf("%.2f\\%%", Count / sum(Count) * 100)
   )
 
 # Combine into one table, with one row per quality code below the data description
@@ -139,19 +134,26 @@ data_table <- bind_rows(
     )
 )
 
+# Combined table
+
+# Create a table describing the data
 # Create a table describing the data
 tidy_data_table <- kable(
-  data_table, col.names = c("", ""), 
+  data_table, col.names = c("", ""),
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
   caption = "Data used in this analysis, and the quality codes assigned to each reading",
   label = "tidyingthedata") %>%
   kable_styling(
-    bootstrap_options = c("bordered", "striped", "hover"),
+    latex_options = c("striped", "hold_position"),
     font_size = 9,
     full_width = FALSE,
     position = "left"
   ) %>%
-  pack_rows("Data description", 1, 7) %>%
-  pack_rows("Quality codes", 8, nrow(data_table))
+  pack_rows("Data description", 1, 9) %>%
+  pack_rows("Quality codes", 10, nrow(data_table))
+
 # Filter for Quality Codes 50 and 100, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
@@ -562,7 +564,7 @@ independent_peaks <- function(u) {
   })]
   if (length(clean) < 5) stop("Fewer than five clean peaks above ", u)
   
-  # Average time to rise over the clean peaks
+  # Average time to rise over the clean peaks, using the full 7-day look-back
   rise_hours <- sapply(clean, function(p) {
     as.numeric(difftime(t[p], t[rise_start_row(p)], units = "hours"))
   })
@@ -632,6 +634,9 @@ thresholds_3to5 <- independent_rates %>%
   filter(peaks_per_year >= 3, peaks_per_year <= 5) %>%
   pull(threshold)
 
+# Independent peaks above a low base threshold, for the GPD diagnostic plots
+peaks_base <- independent_peaks(50)
+
 # Final threshold, chosen from the range above using the GPD checks
 u_final <- 65
 
@@ -676,14 +681,8 @@ peaks <- independent_peaks(u_final)
 # GPD fitted to the excesses of the independent peak flows above the final threshold
 gpd_fit <- gpd.fit(peaks$Discharge, u_final, npy = nrow(peaks) / n_years, show = FALSE)
 
-# MRL plot
-mrl.plot(peaks$Discharge, umin = 20,
-         umax = sort(peaks$Discharge, decreasing = TRUE)[5])
-
-# Parameter stability plots
-gpd.fitrange(peaks$Discharge, umin = 20, umax = 120, nint = 12)
-
-# Start of each rise: searching back up to 7 days, but never past the previous peak
+# Start of each rise: up to 7 days back, but never past the previous peak
+# (all peaks are now independent so we do not go further than a previous peak)
 peak_rows <- match(peaks$Timestamp, t)
 previous_rows <- c(1, head(peak_rows, -1))
 start_rows <- mapply(function(p, prev) {
