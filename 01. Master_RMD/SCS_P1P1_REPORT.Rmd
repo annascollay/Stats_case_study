@@ -83,7 +83,7 @@ library(gridExtra)
 
 Current flood models assume flood patterns are fixed, adjusting only for maximum flow. This report investigates the uncertainty in both the peak flow rate and the time it takes to reach that maximum from the start of the rise.
 
-Using ten years of river flow data from the River Don at Parkhill gauging station, we identified `r nrow(peaks)` major flood events. Both factors varied significantly, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Floods primarily occurred in Autumn and Winter, with Autumn events typically taking longer to reach their peak.
+Using 10 years of river flow data from the River Don at Parkhill gauging station, we identified `r nrow(peaks)` major flood events. Both factors varied significantly, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Floods primarily occurred in Autumn and Winter, with Autumn events typically taking longer to reach their peak.
 
 We found that larger floods generally take longer to reach maximum flow, though this timing varies considerably between events. Assuming all floods follow a standard pattern may overlook real-world uncertainty. Consequently, SEPA should factor in both peak flow rate and time to peak when assessing flood risk.
 
@@ -99,9 +99,9 @@ The subsequent analysis uses discharge readings ($\text{m}^3/\text{s}$) covering
 
 Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
-- Estimated ($n=14,915$): Retained. SEPA defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit, at which Good readings are capped (Figure \@ref(fig:dischargeqc)), so they contain the largest flows and preserve the extremes.
+- Estimated ($n=14,915$): Retained. SEPA defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit at which Good readings are capped (Figure \@ref(fig:dischargeqc)). These are the largest flow readings, so we retain to preserve the extremes.
 
-- Unchecked ($n=30$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and in sporadic 2017–2018 bursts of at most 45 minutes. Only two coincided with extreme flows, so removing them leaves a fully verified data-set with negligible impact.
+- Unchecked ($n=30$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and sporadic 2017–2018 occurrences of at most 45 minutes. Only two coincide with extreme flows, so their removal leaves a fully verified data-set with negligible impact.
 
 ```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=10, fig.height=6, fig.cap="Discharge distribution for quality codes 50 & 100."}
 qc_plot
@@ -129,12 +129,12 @@ Median discharge is highest from December to February and lowest from July to Se
 
 ### Flood Event Hydrographs
 
-```{r anatomylargest, echo=FALSE, message=FALSE, warning=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=5, fig.cap="The largest recorded flood event, showing the max flow and time to peak calculated using $t_{\\text{rise}}$ assumption (left), and the largest peak in each water year, aligned at the peak and scaled by peak flow (right)."}
+```{r anatomylargest, echo=FALSE, message=FALSE, warning=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=5, fig.cap="The largest recorded flood event, showing the maximum flow and time to peak calculated using $t_{\\text{rise}}$ assumption (left), and the largest peak in each water year, aligned at the peak and scaled by peak flow (right)."}
 flood_anatomy_plot
 peak_wateryear_plot
 ```
 
-Figure \@ref(fig:anatomylargest) shows that hydrograph peak shapes vary considerably, which treating as fixed will overlook, and that smaller peaks often cluster around maxima, so extreme flow events must be filtered for independence.
+Figure \@ref(fig:anatomylargest) shows that hydrograph peak shapes vary considerably, and smaller peaks often cluster around maxima meaning extreme flow events must be filtered for independence.
 
 ### Flow Distribution
 
@@ -147,13 +147,13 @@ grid.arrange(
 )
 ```
 
-Discharge is strongly right-skewed (Figure @ref(fig:dis15log)), with a maximum over r floor(max(q) / median(q)) times the median, suggesting extreme flows behave differently from typical flows and require separate analysis.
+Discharge is strongly right-skewed (Figure \@ref(fig:dis15log)), with a maximum over `r floor(max(q) / median(q))` times the median, suggesting extreme flows behave differently from typical flows and require separate analysis.
 
 # Threshold Selection and Independence
 
 ## Initial Threshold
 
-We use the Peaks Over Threshold (POT) method to identify extreme flow events exceeding a threshold $u$, typically set at the 95th percentile or a level yielding 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) visualises these thresholds: the 95th percentile is `r round(quantile(q, 0.95), 1)` $\text{m}^3/\text{s}$, while raw threshold crossings yield 5, 4, and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)`, and `r crossing_threshold(3)` $\text{m}^3/\text{s}$. However, this raw count overstates distinct events since a single flood can cross the threshold multiple times. Because the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, the two rules disagree. We therefore follow the peaks-per-year rule -- which directly controls event frequency rather than time above threshold -- and set our initial threshold to $u$ = r u_initial $\text{m}^3/\text{s}$, giving 5 peaks per year, the upper end of the range [@robson1999], since independence filtering will reduce this count.
+We use the Peaks Over Threshold (POT) method to identify extreme flow events exceeding a threshold $u$, typically set at the 95th percentile or a level yielding 3 to 5 peaks per year. Figure \@ref(fig:candidatethresholds) visualises these thresholds: the 95th percentile is `r round(quantile(q, 0.95), 1)` $\text{m}^3/\text{s}$, while raw threshold crossings yield 5, 4, and 3 peaks per year at `r crossing_threshold(5)`, `r crossing_threshold(4)`, and `r crossing_threshold(3)` $\text{m}^3/\text{s}$. However, this raw count overstates distinct events since a single flood can cross the threshold multiple times. Because the 95th percentile yields `r round(length(candidate_peaks(as.numeric(quantile(q, 0.95)))) / n_years, 1)` peaks per year, the two rules disagree. Therefore, we follow the peaks-per-year rule -- which directly controls event frequency rather than time above threshold -- and set our initial threshold to $u$ = `r u_initial` $\text{m}^3/\text{s}$, giving 5 peaks per year, the upper end of the range [@robson1999], since independence filtering will reduce this count.
 
 ```{r candidatethresholds, echo=FALSE, fig.width=10, fig.height=4, fig.cap="Hydrograph with the candidate thresholds. Peaks per year are counted before applying the independence rules."}
 threshold_plot
@@ -161,7 +161,7 @@ threshold_plot
 
 ## Independence of Peaks
 
-We implement our [assumptions](#assumptions) to apply the @robson1999 independence rules. If either rule fails, we treat the peaks as one event and keep the larger peak.
+We implement our [assumptions](#assumptions) to apply the [@robson1999] independence rules. If either rule fails, we treat the peaks as one event and keep the larger peak.
 
 This reduces the `r nrow(candidates_initial)` candidate peaks to `r nrow(peaks_initial)` independent events, or `r round(nrow(peaks_initial) / n_years, 1)` per year (Figure \@ref(fig:peaksaboveinitial)).
 
@@ -177,7 +177,7 @@ Our initial threshold yields `r round(nrow(peaks_initial) / n_years, 1)` indepen
 rates_plot
 ```
 
-To choose among these, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$ with scale $\sigma$ and shape $\xi$, so that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale, $\sigma - \xi u$, stay roughly constant [@coles2001]. Figure \@ref(fig:meanresstab) shows that the mean residual life plot is approximately linear and the parameter estimates are roughly constant above `r u_final` $\text{m}^3/\text{s}$.
+To choose a final threshold, we use the result that excesses over a high enough threshold follow a Generalised Pareto Distribution, $$P(X - u \le y \mid X > u) = 1 - \left(1 + \frac{\xi y}{\sigma}\right)^{-1/\xi}, \quad y > 0, \quad 1 + \frac{\xi y}{\sigma} > 0,$$ with scale $\sigma$ and shape $\xi$, so that above a valid threshold the mean excess $E[X - u \mid X > u]$ is linear in $u$ and the estimates of $\xi$ and the modified scale, $\sigma - \xi u$, stay roughly constant [@coles2001]. Figure \@ref(fig:meanresstab) shows that the mean residual life plot is approximately linear and the parameter estimates are roughly constant above `r u_final` $\text{m}^3/\text{s}$.
 
 ```{r meanresstab, echo=FALSE, fig.show="hold", out.width="50%", fig.width=6, fig.height=6, fig.cap="Mean residual life plot (left) and parameter stability plots (right) for independent peaks above 50 $\\text{m}^3/\\text{s}$."}
 mrl.plot(peaks_base$Discharge, umin = 50,
@@ -185,41 +185,41 @@ mrl.plot(peaks_base$Discharge, umin = 50,
 gpd.fitrange(peaks_base$Discharge, umin = 50, umax = 120, nint = 12)
 ```
 
-We therefore set $u = r u_final$ $\text{m}^3/\text{s}$ and, reapplying the independence rules, obtain r nrow(peaks) independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma =$ `r round(gpd_fit$mle[1], 2)` (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi =$ `r round(gpd_fit$mle[2], 3)` (standard error `r round(gpd_fit$se[2], 3)`).
+Therefore, we set $u =$ `r u_final` $\text{m}^3/\text{s}$. Re-applying the independence rules, we obtain `r nrow(peaks)` independent events (`r round(nrow(peaks) / n_years, 1)` per year), with fitted parameters $\hat\sigma =$ `r round(gpd_fit$mle[1], 2)` (standard error `r round(gpd_fit$se[1], 2)`) and $\hat\xi =$ `r round(gpd_fit$mle[2], 3)` (standard error `r round(gpd_fit$se[2], 3)`).
 
-The diagnostic plots (Figure @ref(fig:diagnostic)) show a good fit to lower-to-moderate exceedances, but some tail under-estimation and high extrapolation uncertainty at long return periods.
+The diagnostic plots (Figure \@ref(fig:diagnostic)) show a good fit to lower-to-moderate exceedances, but some tail under-estimation and high extrapolation uncertainty at long return periods.
 
 ```{r diagnostic, echo=FALSE, fig.align='center', fig.cap="Diagnostic plots for the GPD fitted at the final threshold.", fig.height=6, fig.width=9, out.width="80%"}
 gpd.diag(gpd_fit)
 ```
 
-```{r finalthresholdplot, echo=FALSE, fig.cap="The hydrograoh showing the final threshold and each indpedendent flood peak"}
+```{r finalthresholdplot, echo=FALSE, fig.cap="Hydrograph showing the final threshold and each independent flood peak."}
 final_threshold_plot
 ```
 
 # Uncertainty Analysis
 
-The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies 42 independent flood events. Both maximum flow and time to peak varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis)). Maximum flow had a median of `r round(max_flow_q[2], 2)` $\text{m}^3/\text{s}$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $\text{m}^3/\text{s}$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This variation suggests that flood events cannot be properly characterised by a single maximum discharge or a fixed time to peak.
+The final threshold of $u = 65$ $\text{m}^3/\text{s}$ identifies `r nrow(peaks)` independent flood events. Both maximum flow and time to peak varied considerably (Figures \@ref(fig:distributionanalysis) and \@ref(fig:uncertaintyanalysis)). Maximum flow had a median of `r round(max_flow_q[2], 2)` $\text{m}^3/\text{s}$ (interquartile range `r round(max_flow_q[1], 1)`–`r round(max_flow_q[3], 1)` $\text{m}^3/\text{s}$), while time to peak had a median of `r round(ttp_q[2], 2)` hours (interquartile range `r round(ttp_q[1], 1)`–`r round(ttp_q[3], 1)` hours) and ranged from `r round(ttp_range[1], 1)` to `r round(ttp_range[2], 1)` hours. This variation suggests that flood events cannot be properly characterised by a single maximum discharge or a fixed time to peak.
 
 ```{r distributionanalysis, echo=FALSE, fig.cap="The Distribution of the two parameters", fig.width=12}
 (Max_flow_plot + Time_to_peak_plot)
 ```
 
-```{r uncertaintyanalysis, echo=FALSE, fig.cap="Max flow against time to peak, with a smoothed trend", out.width="85%", fig.align='center'}
+```{r uncertaintyanalysis, echo=FALSE, fig.cap="Maximum flow against time to peak, with a smoothed trend", out.width="85%", fig.align='center'}
 Max_vs_time
 ```
 
-Since both variables are skewed, we use [Spearman's rank correlation](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient) to investigate a potential monotonic relationship. Table \@ref(tab:coranalysistable) indicates a moderate, statistically significant positive association $(\rho = 0.496$, $p = 0.001)$, suggesting that larger flood peaks tend to be associated with longer times to peak. However, the scatter in Figure \@ref(fig:uncertaintyanalysis) indicates that peak discharge alone does not determine the time taken to reach the maximum.
+Since both variables are skewed, we use [Spearman's rank correlation](https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient) to investigate a potential monotonic relationship. Table \@ref(tab:coranalysistable) indicates a moderate, statistically significant positive association ($\rho =$ `r round(unname(cor_result$estimate), 3)`, $p =$ `r round(cor_result$p.value, 3)`), suggesting that larger flood peaks tend to be associated with longer times to peak. However, the scatter plot in Figure \@ref(fig:uncertaintyanalysis) suggests that peak discharge alone does not determine the time taken to reach the maximum.
 
 ```{r coranalysistable, echo=FALSE, tab.cap="Spearman's rank correlation between peak discharge and time to peak"}
 cor_result_table
 ```
 
-```{r seasontable, echo=FALSE, tab.cap="Summary of max flow and time to peak for each season"}
+```{r seasontable, echo=FALSE, tab.cap="Summary of maximum flow and time to peak for each season"}
 events_season_table
 ```
 
-Seasonal differences were also observed (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). Autumn events ($n$ = `r sum(peaks$season == "Autumn")`) had a median maximum discharge of 108.308 $\text{m}^3/\text{s}$ and time to peak of 85.25 hours, compared with 108.95 $\text{m}^3/\text{s}$ and 51.88 hours for Winter events ($n$ = `r sum(peaks$season == "Winter")`), highlighting that Autumn floods tend to take longer to peak. However, the season sample sizes are limited particularly for Spring ($n = 6$) and Summer ($n = 1$), so these differences should be interpreted cautiously.
+Seasonal differences were also observed (Table \@ref(tab:seasontable), Figure \@ref(fig:seasoncomparison)). Autumn events ($n$ = `r sum(peaks$season == "Autumn")`) had a median maximum discharge of 108.308 $\text{m}^3/\text{s}$ and time to peak of 85.25 hours, compared with 113.694 $\text{m}^3/\text{s}$ and 55.00 hours for Winter events ($n =$ `r sum(peaks$season == "Winter")`), highlighting that Autumn floods tend to take longer to reach peak flow. However, the season sample sizes are limited, particularly for Spring ($n =$ `r sum(peaks$season == "Spring")`) and Summer ($n =$ `r sum(peaks$season == "Summer")`), so these differences should be interpreted cautiously.
 
 ```{r seasoncomparison, echo=FALSE, fig.height=8, fig.width=12, fig.cap="A comparison of the uncertainty in the parameters by season"}
 max_season_plot + time_season_plot 
@@ -229,7 +229,7 @@ max_season_plot + time_season_plot
 results_table
 ```
 
-Repeating the analysis across thresholds of 55-85 $\text{m}^3/\text{s}$ (Table \@ref(tab:uncertaintytable)), median time to peak ranges from 65.25 to 90 hours hours, while Spearman's correlation coefficient ranges from 0.308 to 0.496. The highlighted thresholds satisfy the 3–5 events-per-year criterion, with the chosen threshold of 65 $\text{m}^3/\text{s}$ yielding 4.2 independent events per year. Although results vary with threshold selection, a positive correlation between peak discharge and time to peak persists.
+Repeating the analysis across thresholds of 55-85 $\text{m}^3/\text{s}$ (Table \@ref(tab:uncertaintytable)), median time to peak ranges from 65.250 hours to 90.000 hours, while Spearman's correlation coefficient ranges from 0.308 to 0.488. The highlighted thresholds satisfy the 3–5 events-per-year criterion, with the chosen threshold of 65 $\text{m}^3/\text{s}$ yielding `r nrow(peaks) / n_years` independent events per year. Although results vary with threshold selection, a positive correlation between peak discharge and time to peak persists.
 
 # References {.unnumbered}
 

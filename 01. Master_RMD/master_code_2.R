@@ -486,14 +486,21 @@ peak_wateryear_plot <- ggplot(annual_peak_shapes,
 #-----------------------------------------------------------------------------------
 
 # Candidate peaks: the highest reading in each separate period above threshold u,
-# returned as row numbers of river_data
-candidate_peaks <- function(u) {
+# requiring a minimum duration above the threshold to filter out noise ripples
+candidate_peaks <- function(u, min_duration_hours = 1) {
+  # 15-minute resolution means 4 readings per hour
+  min_readings <- min_duration_hours * 4 
+  
   river_data %>%
-    mutate(row = row_number(),
-           above = Discharge > u,
-           run = cumsum(above & !lag(above, default = FALSE))) %>%
+    mutate(
+      row = row_number(),
+      above = Discharge > u,
+      run = cumsum(above & !lag(above, default = FALSE))
+    ) %>%
     filter(above) %>%
     group_by(run) %>%
+    # Filter out any threshold excursions that don't last long enough
+    filter(n() >= min_readings) %>% 
     slice_max(Discharge, n = 1, with_ties = FALSE) %>%
     ungroup() %>%
     pull(row)
@@ -848,7 +855,7 @@ results_table <- knitr::kable(
   col.names = c("threshold", "events", "events_per_year" = "Events per Year",
                 "median_max_flow" = "Median Max Flow",
                 "median_time_to_peak_h" = "Median Time to Peak (Hours)", 
-                "spearman_rho" = "Spearman Rho Corelation"),
+                "spearman_rho" = "Spearman Rho Correlation"),
   booktabs = T,
   linesep = "", 
   digits = 3,
@@ -888,7 +895,7 @@ final_threshold_plot <- ggplot(
   ) +
   
   labs(
-    title = expression("Hydrograph With Independent Flood Peaks at Final Threshold 65 "*m^3*"/s"),
+    title = expression("Hydrograph with Independent Flood Peaks at Final Threshold 65 "*m^3*"/s"),
     subtitle = paste0(
       nrow(peaks), " independent events (",
       round(nrow(peaks) / n_years, 1),
