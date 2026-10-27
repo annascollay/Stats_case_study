@@ -116,7 +116,7 @@ knitr::include_graphics("mapofdon.png")
 \begin{minipage}{0.48\textwidth}
 \centering
 
-```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.width=6, fig.height=4, out.width='\\linewidth'}
+```{r dischargeqc, echo=FALSE, message=FALSE, warning=FALSE, fig.cap="Discharge distribution for quality codes 50 and 100.", fig.width=6, fig.height=4, out.width='\\linewidth'}
 qc_plot
 ```
 

@@ -859,7 +859,7 @@ results_table <- knitr::kable(
   booktabs = T,
   linesep = "", 
   digits = 3,
-  caption = "Final Uncertanity Table, With Thresholds Satisfying 3-5 Events per Year Criteria Highlighted.",
+  caption = "Final uncertainty table, with thresholds satisfying 3-5 events per year criteria highlighted.",
   label = "uncertaintytable"
 ) %>%
   kable_styling(
