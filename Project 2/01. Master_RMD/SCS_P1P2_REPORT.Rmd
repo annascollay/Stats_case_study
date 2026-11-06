@@ -90,7 +90,7 @@ library(gridExtra)
 - Create hydrographs for the extreme events
 - Observations of the hydrographs and understand the variety in flood event shapes
 ## Data Cleaning
-For further analysis we require hydrographs with a fixed common time grid, however due to missing obervations we currenrly do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similairties between the unchecked values in and calclated interpolayed values, we find it reasonable to include these unchecked values in the hydorgraph.
+For further analysis we require hydrographs with a fixed common time grid, however due to missing observations we currently do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similarities between the unchecked values in and calculated interpolated values, we find it reasonable to include these unchecked values in the hydorgraph.
 
 # Statistical methodology
 - fitting each of the statistical methods; The Polynomial regression, PCA, Wavelets
