@@ -228,7 +228,7 @@ ggplot(interpolation_check,
 
 # Exploratory analysis
 #Plotting all hydrographs shapes
-ggplot(
+all_hydrograph_shapes <- ggplot(
   hydrographs,
   aes(
     x = hours_from_peak,
@@ -268,7 +268,7 @@ shape_summary <- hydro_complete %>%
     .groups = "drop"
   )
 
-ggplot(
+Variation_hydrograph <- ggplot(
   shape_summary,
   aes(x = hours_from_peak, y = mean_flow)
 ) +
@@ -298,7 +298,7 @@ selected_events <- peaks %>%
   slice(1, ceiling(n() / 2), n()) %>%
   pull(event_id)
 
-hydrographs %>%
+Comparison_hydrograph <- hydrographs %>%
   filter(event_id %in% selected_events) %>%
   ggplot(
     aes(

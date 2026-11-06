@@ -61,7 +61,7 @@ Word Count: XXXX
 
 \vspace{0.5cm}
 
-October 2026
+November 2026
 
 \end{titlepage}
 \tableofcontents
