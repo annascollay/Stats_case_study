@@ -1,0 +1,115 @@
+---
+output:
+  bookdown::pdf_document2:
+    toc: false
+    number_sections: true
+
+documentclass: article
+classoption: a4paper
+fontsize: 11pt
+geometry: margin=2.5cm
+bibliography: Project_2_references.bib
+csl: https://www.zotero.org/styles/apa
+citation_package: default
+link-citations: true
+linkcolor: blue
+citecolor: blue
+urlcolor: blue
+nocite: |
+  @*
+
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{float}
+  - \usepackage{amsmath}
+  - \usepackage{caption}
+  - \floatplacement{figure}{H}
+  - \floatplacement{table}{H}
+  - \usepackage{ragged2e}
+  - \usepackage{etoolbox}
+  - \AtBeginEnvironment{CSLReferences}{\RaggedRight}
+---
+
+\begin{titlepage}
+\centering
+
+\vspace*{1cm}
+
+\includegraphics[width=1\linewidth]{edinburgh_logo.png}
+
+\vspace{1.5cm}
+
+{\Large\scshape Statistical Case Studies 2026/27 Semester 1\par}
+
+\vspace{3cm}
+
+{\LARGE\bfseries
+Project 1, part 2: Uncertainty in river flow hydrographs for flood
+inundation modelling\par}
+
+\vfill
+
+{\large Prepared by\par}
+
+\vspace{0.5cm}
+
+Anna Scollay (s2480899), Lewis Seath (s2475311), Zacharias Onyejiaka (s2624116)
+
+\vspace{1.5cm}
+
+Word Count: XXXX
+
+\vspace{0.5cm}
+
+October 2026
+
+\end{titlepage}
+\tableofcontents
+\clearpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+  )
+
+source("Project_2_code.R")
+```
+
+```{r loading packages for plotting, message=FALSE, warning=FALSE, include=FALSE}
+
+library(patchwork)
+library(gridExtra)
+```
+
+# Executive Summary
+
+# Data and Exploratory Data Analysis
+- Use the tidy data from part 1
+- Create hydrographs for the extreme events
+- Observations of the hydrographs and understand the variety in flood event shapes
+
+# Statistical methodology
+- fitting each of the statistical methods; The Polynomial regression, PCA, Wavelets
+- uncertainty modelling for each method
+
+# Results and validation
+- Compare the different methods 
+- Examine residual plots to investigate whether the method performs poorly on unusual flood events
+- e.g do testing and training data to assess how well the methods peform
+
+# Recommendation
+- Recommend the best method and justify
+- explain the limitations and uncertainity with each method
+
+# Emulator application
+- Give a brief explanation of how the emulator would be used
+- e.g, explain the two seperate phases,
+  
+First, SEPA could select different parameter combinations, reconstruct corresponding hydrographs and run these through the actual flood inundation model. The resulting input-output pairs would be used to train an emulator.
+
+Second, SEPA could repeatedly sample parameters from your fitted uncertainty distribution and feed those parameters into the trained emulator to obtain a distribution of predicted flood outcomes.
+
+# Conclusion
+
