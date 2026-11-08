@@ -74,44 +74,60 @@ knitr::opts_chunk$set(
 	warning = FALSE
   )
 
-source("Project_2_code.R")
+source("master_code_part2.R")
 ```
 
-```{r loading packages for plotting, message=FALSE, warning=FALSE, include=FALSE}
+```{r}
+cat(sprintf("\n===========================================================\n"))
+cat(sprintf("Robson & Reed (1999) Independence Criteria Results:\n"))
+cat(sprintf("  - Threshold (u): %g m³/s\n", u_final))
+cat(sprintf("  - Total Independent Peaks Identified: %d events\n", nrow(peaks)))
+cat(sprintf("  - Average Rate: %.2f peaks/year across %d water years\n", 
+            nrow(peaks) / n_years, n_years))
+cat(sprintf("===========================================================\n\n"))
+```
 
-library(patchwork)
-library(gridExtra)
+```{r}
+hydrograph_overlay_plot
+```
+
+```{r}
+if (length(unchecked_diagnostic_plots) > 0) {
+  print(unchecked_diagnostic_plots[[1]])
+}
 ```
 
 # Executive Summary
 
 # Data and Exploratory Data Analysis
+
 - Use the tidy data from part 1
 - Create hydrographs for the extreme events
-- Observations of the hydrographs and understand the variety in flood event shapes
-## Data Cleaning
-For further analysis we require hydrographs with a fixed common time grid, however due to missing observations we currently do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similarities between the unchecked values in and calculated interpolated values, we find it reasonable to include these unchecked values in the hydorgraph.
+- Observations of the hydrographs and understand the variety in flood event shapes \## Data Cleaning For further analysis we require hydrographs with a fixed common time grid, however due to missing observations we currently do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similarities between the unchecked values in and calculated interpolated values, we find it reasonable to include these unchecked values in the hydorgraph.
 
 # Statistical methodology
+
 - fitting each of the statistical methods; The Polynomial regression, PCA, Wavelets
 - uncertainty modelling for each method
 
 # Results and validation
-- Compare the different methods 
+
+- Compare the different methods
 - Examine residual plots to investigate whether the method performs poorly on unusual flood events
 - e.g do testing and training data to assess how well the methods peform
 
 # Recommendation
+
 - Recommend the best method and justify
 - explain the limitations and uncertainity with each method
 
 # Emulator application
+
 - Give a brief explanation of how the emulator would be used
 - e.g, explain the two seperate phases,
-  
+
 First, SEPA could select different parameter combinations, reconstruct corresponding hydrographs and run these through the actual flood inundation model. The resulting input-output pairs would be used to train an emulator.
 
 Second, SEPA could repeatedly sample parameters from your fitted uncertainty distribution and feed those parameters into the trained emulator to obtain a distribution of predicted flood outcomes.
 
 # Conclusion
-
