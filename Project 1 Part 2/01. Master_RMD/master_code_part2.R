@@ -301,22 +301,22 @@ hydrograph_overlay_plot <- ggplot() +
   geom_line(
     data = df_events_long,
     aes(x = hours_from_peak, y = Discharge, group = event_id),
-    colour = "grey70",
+    colour = "#5298BC",
     linewidth = 0.4,
     alpha = 0.5
   ) +
   geom_line(
     data = df_mean,
     aes(x = hours_from_peak, y = Discharge),
-    colour = "black",
+    colour = "#174B67",
     linewidth = 1.3
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
-  geom_hline(yintercept = u_final, linetype = "dotted", colour = "#5298BC", linewidth = 0.6) +
+  geom_hline(yintercept = u_final, linetype = "dotted", colour = "black", linewidth = 0.7) +
   annotate("text", x = 0, y = max(Y_raw) * 0.98, label = "Peak Arrival (t = 0)", 
            colour = "#AA1945", hjust = -0.1, size = 3.5, fontface = "bold") +
   annotate("text", x = -45, y = u_final + 5, label = paste0("u = ", u_final, " m³/s"), 
-           colour = "#5298BC", hjust = 0, size = 3.2) +
+           colour = "black", hjust = 0, size = 3.2) +
   scale_x_continuous(breaks = seq(-48, 72, by = 12)) +
   labs(
     title = "River Don Hydrograph Shape Variability (N = 41 Events)",
@@ -338,3 +338,35 @@ print(hydrograph_overlay_plot)
 if (length(unchecked_diagnostic_plots) > 0) {
   print(unchecked_diagnostic_plots[[1]])
 }
+
+
+# Mean hydrograph and variation plot 
+shape_summary <- df_events_long %>%
+  group_by(hours_from_peak) %>%
+  summarise(
+    mean_flow = mean(Discharge),
+    lower = quantile(Discharge, 0.10),
+    upper = quantile(Discharge, 0.90),
+    .groups = "drop"
+  )
+
+Variation_hydrograph <- ggplot(
+  shape_summary,
+  aes(x = hours_from_peak, y = mean_flow)
+) +
+  geom_ribbon(
+    aes(ymin = lower, ymax = upper),
+    fill = "#5298BC",
+    alpha = 0.25
+  ) +
+  geom_line(
+    colour = "#174B67",
+    linewidth = 1
+  ) +
+  labs(
+    title = "Mean normalised hydrograph",
+    subtitle = "Shaded area: 10th to 90th percentile",
+    x = "Hours relative to peak",
+    y = "Normalised discharge"
+  ) +
+  theme_minimal()
