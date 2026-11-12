@@ -291,7 +291,7 @@ if (nrow(unchecked_in_events) > 0) {
     geom_point(colour = "#174B67", alpha = 0.7, size = 2) +
     coord_equal(xlim = lims, ylim = lims) +
     labs(
-      title = "Unchecked readings vs linear interpolation (peak windows)",
+      title = "Unchecked readings vs linear interpolation for peak windows",
       subtitle = sprintf("n = %d | RMSE = %.3f m³/s | dashed line = 1:1",
                          nrow(unique_readings), rmse),
       x = expression("Interpolated discharge (" * m^3 * "/s)"),

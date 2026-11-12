@@ -88,7 +88,7 @@ source("master_code_part2.R")
 ### **Robson & Reed (1999) Independence Criteria Results**
 
 | Metric | Value | Unit |
-|:-----------------------|:-----------------------|:-----------------------|
+|:---|:---|:---|
 | **Threshold (**$u$) | `r u_final` | m³/s |
 | **Total Independent Peaks** | `r nrow(peaks)` | events |
 | **Average Peak Rate** | `r sprintf("%.2f", nrow(peaks) / n_years)` | peaks/year |
