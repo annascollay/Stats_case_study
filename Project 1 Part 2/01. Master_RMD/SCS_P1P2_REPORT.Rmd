@@ -77,26 +77,6 @@ knitr::opts_chunk$set(
 source("master_code_part2.R")
 ```
 
-```{r}
-cat(sprintf("\n===========================================================\n"))
-cat(sprintf("Robson & Reed (1999) Independence Criteria Results:\n"))
-cat(sprintf("  - Threshold (u): %g m³/s\n", u_final))
-cat(sprintf("  - Total Independent Peaks Identified: %d events\n", nrow(peaks)))
-cat(sprintf("  - Average Rate: %.2f peaks/year across %d water years\n", 
-            nrow(peaks) / n_years, n_years))
-cat(sprintf("===========================================================\n\n"))
-```
-
-```{r}
-hydrograph_overlay_plot
-```
-
-```{r}
-if (length(unchecked_diagnostic_plots) > 0) {
-  print(unchecked_diagnostic_plots[[1]])
-}
-```
-
 # Executive Summary
 
 # Data and Exploratory Data Analysis
@@ -104,6 +84,39 @@ if (length(unchecked_diagnostic_plots) > 0) {
 - Use the tidy data from part 1
 - Create hydrographs for the extreme events
 - Observations of the hydrographs and understand the variety in flood event shapes \## Data Cleaning For further analysis we require hydrographs with a fixed common time grid, however due to missing observations we currently do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similarities between the unchecked values in and calculated interpolated values, we find it reasonable to include these unchecked values in the hydorgraph.
+
+### **Robson & Reed (1999) Independence Criteria Results**
+
+| Metric | Value | Unit |
+|:-----------------------|:-----------------------|:-----------------------|
+| **Threshold (**$u$) | `r u_final` | m³/s |
+| **Total Independent Peaks** | `r nrow(peaks)` | events |
+| **Average Peak Rate** | `r sprintf("%.2f", nrow(peaks) / n_years)` | peaks/year |
+| **Period of Record** | `r n_years` | water years |
+
+```{r}
+hydrograph_overlay_plot
+```
+
+```{r, results= "asis", echo=FALSE}
+knitr::kable(
+    bind_rows(burst_tbl, overall_row),
+    format    = "markdown",
+    align     = "llrrrrr",
+    col.names = c("Burst", "Event(s)", "Start", "Readings",
+                  "Duration (min)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
+    caption   = "Unchecked readings (codes 200/254) within peak windows compared with linear interpolation between checked readings."
+  )
+```
+
+```{r}
+if (nrow(unchecked_in_events) > 0) {
+  unchecked_scatter_plot
+  
+} else {
+  cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
+}
+```
 
 # Statistical methodology
 

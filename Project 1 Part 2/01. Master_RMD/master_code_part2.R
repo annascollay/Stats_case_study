@@ -143,113 +143,15 @@ dt_hours       <- 0.25 # 15-minute sampling interval
 rel_time_hours <- seq(-win_before_h, win_after_h, by = dt_hours)
 m_points       <- length(rel_time_hours)
 
-# Storage for diagnostic plots comparing unchecked values against interpolation
-unchecked_diagnostic_plots <- list()
-unchecked_summary_list <- list()
-
 extract_event_hydrograph <- function(event_idx, peak_row) {
   t_pk <- t[peak_row]
-  t_start_win <- t_pk - win_before_h * 3600
-  t_end_win   <- t_pk + win_after_h * 3600
-  
-  idx <- which(t >= t_start_win & t <= t_end_win)
+  idx  <- which(t >= t_pk - win_before_h * 3600 & t <= t_pk + win_after_h * 3600)
   df_win <- river_data[idx, ]
   
   event_t_rel <- as.numeric(difftime(df_win$Timestamp, t_pk, units = "hours"))
-  event_q     <- df_win$Discharge
   
-  # Identify distinct continuous bursts of unchecked quality codes (200/254)
-  df_win <- df_win %>%
-    mutate(
-      is_unchecked = QualityCode %in% c(200, 254),
-      # Assign a unique ID to each distinct contiguous burst
-      burst_id = cumsum(is_unchecked & !lag(is_unchecked, default = FALSE)),
-      burst_id = if_else(is_unchecked, burst_id, NA_integer_)
-    )
-  
-  # Initialize gap-only interpolation column
-  df_win$Discharge_Interp <- NA_real_
-  
-  unique_bursts <- unique(na.omit(df_win$burst_id))
-  
-  if (length(unique_bursts) > 0) {
-    for (b in unique_bursts) {
-      burst_indices <- which(df_win$burst_id == b)
-      idx_start <- min(burst_indices)
-      idx_end   <- max(burst_indices)
-      
-      # Identify bounding checked points immediately before and after this burst
-      idx_before <- max(1, idx_start - 1)
-      idx_after  <- min(nrow(df_win), idx_end + 1)
-      gap_idx    <- idx_before:idx_after
-      
-      # Interpolate strictly across the gap [idx_before, idx_after]
-      interp_vals <- approx(
-        x = as.numeric(df_win$Timestamp[c(idx_before, idx_after)]),
-        y = df_win$Discharge[c(idx_before, idx_after)],
-        xout = as.numeric(df_win$Timestamp[gap_idx]),
-        rule = 2
-      )$y
-      
-      # Assign interpolated values ONLY across this gap
-      df_win$Discharge_Interp[gap_idx] <- interp_vals
-      
-      # Metrics for this specific burst
-      burst_rows <- df_win[burst_indices, ]
-      burst_duration_mins <- nrow(burst_rows) * 15
-      
-      # Difference between raw unchecked readings and interpolation
-      diffs <- abs(df_win$Discharge[gap_idx] - df_win$Discharge_Interp[gap_idx])
-      max_diff <- max(diffs[gap_idx %in% burst_indices], na.rm = TRUE)
-      
-      # Store burst summary
-      unchecked_summary_list[[length(unchecked_summary_list) + 1]] <<- tibble(
-        Event_ID = event_idx,
-        Burst_ID = b,
-        Burst_Start = format(df_win$Timestamp[idx_start], "%Y-%m-%d %H:%M"),
-        Duration_Mins = burst_duration_mins,
-        Max_Diff_m3s = max_diff
-      )
-      
-      # Dedicated plot zoomed tightly around THIS specific burst (+/- 3 hours)
-      t_start_b  <- df_win$Timestamp[idx_start]
-      t_end_b    <- df_win$Timestamp[idx_end]
-      zoom_start <- t_start_b - hours(3)
-      zoom_end   <- t_end_b + hours(3)
-      
-      p_diag <- ggplot(df_win, aes(x = Timestamp)) +
-        # Raw continuous river flow series
-        geom_line(aes(y = Discharge, colour = "Raw Series"), linewidth = 0.6) +
-        # Dashed line drawn strictly across the gap
-        geom_line(aes(y = Discharge_Interp, colour = "Interpolated (Checked Boundary)"), 
-                  linetype = "dashed", linewidth = 1.0, na.rm = TRUE) +
-        # Highlight unchecked points for this burst
-        geom_point(data = burst_rows, 
-                   aes(y = Discharge, fill = "Unchecked Reading (Code 200/254)"), 
-                   shape = 21, size = 3, colour = "black") +
-        coord_cartesian(xlim = c(zoom_start, zoom_end)) +
-        scale_colour_manual(values = c("Raw Series" = "#5298BC", 
-                                       "Interpolated (Checked Boundary)" = "#E58FA6")) +
-        scale_fill_manual(values = c("Unchecked Reading (Code 200/254)" = "#AA1945")) +
-        labs(
-          title = sprintf("Event %d (%s): Burst %d Diagnostic", 
-                          event_idx, format(t_pk, "%d %b %Y"), b),
-          subtitle = sprintf("Burst Duration: %d mins | Max Diff vs Linear Interp: %.3f m³/s", 
-                             burst_duration_mins, max_diff),
-          x = "Timestamp",
-          y = expression("Discharge (" * m^3 * "/s)"),
-          colour = "Series",
-          fill = "Point Status"
-        ) +
-        theme_minimal() +
-        theme(legend.position = "bottom")
-      
-      unchecked_diagnostic_plots[[paste0("Event_", event_idx, "_Burst_", b)]] <<- p_diag
-    }
-  }
-  
-  # Return interpolated curve on standard 481-point relative time grid
-  approx(x = event_t_rel, y = event_q, xout = rel_time_hours, rule = 2)$y
+  # Resample onto the standard 481-point relative time grid
+  approx(x = event_t_rel, y = df_win$Discharge, xout = rel_time_hours, rule = 2)$y
 }
 
 # ------------------------------------------------------------------------------
@@ -269,12 +171,136 @@ mean_hydrograph <- colMeans(Y_raw)
 # Construct mean-centered matrix Y_centered for Milestone 2 PCA/Basis models
 Y_centered <- sweep(Y_raw, 2, mean_hydrograph, FUN = "-")
 
-# Print Summary of Unchecked Values found within Peak Windows
-if (length(unchecked_summary_list) > 0) {
-  df_unchecked_summary <- bind_rows(unchecked_summary_list)
-  cat("Unchecked Value Events Summary:\n")
-  print(kable(df_unchecked_summary, digits = 3))
-  cat("\nDiagnostic comparison plots saved in list `unchecked_diagnostic_plots`.\n\n")
+# Unchecked readings vs interpolation for peak windows
+# Step 1: for every unchecked reading in the record, interpolate linearly
+# between the checked readings immediately before and after its burst.
+# Done on the full record so that a burst touching the edge of a peak window
+# still has its checked anchor points.
+compare_unchecked <- function(data, unchecked_codes = c(200, 254)) {
+  d <- data %>%
+    mutate(
+      is_unch  = QualityCode %in% unchecked_codes,
+      burst_id = cumsum(is_unch & !lag(is_unch, default = FALSE)),
+      burst_id = if_else(is_unch, burst_id, NA_integer_)
+    )
+  tnum <- as.numeric(d$Timestamp)
+  out  <- list()
+  
+  for (b in na.omit(unique(d$burst_id))) {
+    bi         <- which(d$burst_id == b)
+    idx_before <- min(bi) - 1
+    idx_after  <- max(bi) + 1
+    
+    # No checked anchor on one side (start/end of record): cannot interpolate
+    if (idx_before < 1 || idx_after > nrow(d)) next
+    
+    interp <- approx(
+      x    = tnum[c(idx_before, idx_after)],
+      y    = d$Discharge[c(idx_before, idx_after)],
+      xout = tnum[bi]            # exact timestamps of the unchecked readings
+    )$y
+    
+    out[[length(out) + 1]] <- tibble(
+      Burst_ID            = b,
+      Timestamp           = d$Timestamp[bi],
+      Discharge_Unchecked = d$Discharge[bi],
+      Discharge_Interp    = interp,
+      Diff                = d$Discharge[bi] - interp,
+      Burst_Length_Mins   = length(bi) * 15
+    )
+  }
+  bind_rows(out)
+}
+
+unchecked_all <- compare_unchecked(river_data)
+
+# Step 2: keep only unchecked readings that fall inside a peak window.
+# These are the ones that end up in Y_raw
+unchecked_in_events <- map_dfr(seq_len(N_events), function(i) {
+  t_pk <- peaks$Timestamp[i]
+  unchecked_all %>%
+    filter(Timestamp >= t_pk - win_before_h * 3600,
+           Timestamp <= t_pk + win_after_h * 3600) %>%
+    mutate(Event_ID = i,
+           Hours_From_Peak = as.numeric(difftime(Timestamp, t_pk, units = "hours")))
+})
+
+# Step 3: summaries and scatter plot
+if (nrow(unchecked_in_events) > 0) {
+  
+  # Per-burst summary (readings inside windows only)
+  df_unchecked_summary <- unchecked_in_events %>%
+    group_by(Event_ID, Burst_ID) %>%
+    summarise(
+      Burst_Start      = format(min(Timestamp), "%Y-%m-%d %H:%M"),
+      N_Readings       = n(),
+      Duration_Mins    = first(Burst_Length_Mins),
+      Max_Abs_Diff_m3s = max(abs(Diff)),
+      .groups = "drop"
+    )
+  
+  # Overall agreement statistics. each reading counted once even if two
+  # event windows overlap
+  unique_readings <- distinct(unchecked_in_events, Timestamp, .keep_all = TRUE)
+  rmse   <- sqrt(mean(unique_readings$Diff^2))
+  max_ad <- max(abs(unique_readings$Diff))
+  
+  # Table for agreement statistics
+  events_lookup <- unchecked_in_events %>%
+    group_by(Burst_ID) %>%
+    summarise(Events = paste(sort(unique(Event_ID)), collapse = ", "), .groups = "drop")
+  
+  burst_tbl <- unique_readings %>%
+    group_by(Burst_ID) %>%
+    summarise(
+      Start         = format(min(Timestamp), "%Y-%m-%d %H:%M"),
+      Readings      = n(),
+      Duration_Mins = first(Burst_Length_Mins),
+      RMSE          = sqrt(mean(Diff^2)),
+      Max_Abs_Diff  = max(abs(Diff)),
+      .groups = "drop"
+    ) %>%
+    left_join(events_lookup, by = "Burst_ID") %>%
+    transmute(
+      Burst        = as.character(row_number()),
+      Event        = Events,
+      Start,
+      Readings     = as.character(Readings),
+      Duration_Min = as.character(Duration_Mins),
+      RMSE         = sprintf("%.3f", RMSE),
+      Max_Abs_Diff = sprintf("%.3f", Max_Abs_Diff)
+    )
+  
+  overall_row <- tibble(
+    Burst        = "**All**",
+    Event        = sprintf("**%d of %d events**", n_distinct(unchecked_in_events$Event_ID), N_events),
+    Start        = "—",
+    Readings     = sprintf("**%d**", nrow(unique_readings)),
+    Duration_Min = "—",
+    RMSE         = sprintf("**%.3f**", rmse),
+    Max_Abs_Diff = sprintf("**%.3f**", max_ad)
+  )
+  
+  # Scatter: interpolated (x) vs unchecked (y) at identical timestamps
+  lims <- range(c(unique_readings$Discharge_Interp,
+                  unique_readings$Discharge_Unchecked))
+  
+  unchecked_scatter_plot <- ggplot(unique_readings,
+                                   aes(x = Discharge_Interp, y = Discharge_Unchecked)) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "#AA1945") +
+    geom_point(colour = "#174B67", alpha = 0.7, size = 2) +
+    coord_equal(xlim = lims, ylim = lims) +
+    labs(
+      title = "Unchecked readings vs linear interpolation (peak windows)",
+      subtitle = sprintf("n = %d | RMSE = %.3f m³/s | dashed line = 1:1",
+                         nrow(unique_readings), rmse),
+      x = expression("Interpolated discharge (" * m^3 * "/s)"),
+      y = expression("Unchecked discharge (" * m^3 * "/s)")
+    ) +
+    theme_minimal()
+  
+  print(unchecked_scatter_plot)
+  
 } else {
   cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
 }
@@ -333,11 +359,6 @@ hydrograph_overlay_plot <- ggplot() +
 
 # Display master plot
 print(hydrograph_overlay_plot)
-
-# Example: Display diagnostic plot for the first event with unchecked readings (if any exist)
-if (length(unchecked_diagnostic_plots) > 0) {
-  print(unchecked_diagnostic_plots[[1]])
-}
 
 
 # Mean hydrograph and variation plot 
