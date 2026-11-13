@@ -298,6 +298,8 @@ selected_events <- peaks %>%
   slice(1, ceiling(n() / 2), n()) %>%
   pull(event_id)
 
+selected_event_min <- peaks %>% group_by(event_id) %>% slice_min(time_to_peak_h)
+
 Comparison_hydrograph <- hydrographs %>%
   filter(event_id %in% selected_events) %>%
   ggplot(
@@ -312,9 +314,131 @@ Comparison_hydrograph <- hydrographs %>%
     title = "Comparison of selected flood events",
     subtitle = "A comparision of the shortest, median and longest time to peak events",
     x = "Hours relative to peak",
-    y = "Normalised discharge",
+    y = "Discharge",
     colour = "Event ID"
   ) +
   scale_color_manual(values = c("#AA1945", "#5298BC", "#BFDC80"))+
   theme_minimal()
 
+df_events_long %>% filter(event_id %in% c(3,13, 24)) %>% 
+  ggplot(aes(x = hours_from_peak,
+             y = Discharge,
+             colour = factor(event_id))) +
+  geom_line(linewidth = 0.8) +
+  labs(title = "Comparison of selected flood events",
+       subtitle = "A comparision of the smallest, median and biggest discharge events",
+       x = "Hours relative to peak",
+       y = "Discharge",
+       colour = "Event ID") +
+  scale_color_manual(values = c("#AA1945", "#5298BC", "#BFDC80"))+
+  theme_minimal()
+
+
+
+# -------------------
+
+
+#Heat map comparing flood events
+heat_map_plot <- ggplot(df_events_long,
+                        aes(x = hours_from_peak,
+                            y = event_id,
+                            fill = Discharge)) +
+  geom_tile() +
+  scale_fill_gradient(
+    low = "#DCEEF5",
+    high = "#174B67"
+  ) +
+  labs(
+    title = "Heatmap of Flood Hydrograph Events",
+    x = "Hours Relative to Peak",
+    y = "Flood Event",
+    fill = "Discharge"
+  ) +
+  theme_minimal()
+
+
+# Comparasion of hydrographs with simialr peak flows shapes
+# Identify the peak time (t = 0)
+peak_col <- which.min(abs(rel_time_hours))
+
+# Observed peak discharge for each event
+peak_values <- Y_raw[, peak_col]
+
+stopifnot(
+  N_events >= 2,
+  all(is.finite(Y_raw)),
+  all(peak_values > 0),
+  length(peak_values) == N_events
+)
+
+# Peak-normalized hydrographs
+Y_norm <- sweep(Y_raw, 1, peak_values, "/")
+
+# Long-format dataset
+df_norm <- tibble(
+  event_id = rep(seq_len(N_events), each = ncol(Y_norm)),
+  hours_from_peak = rep(rel_time_hours, times = N_events),
+  normalized_flow = as.vector(t(Y_norm))
+)
+
+# Select 4 events with similar peak discharge
+n_compare <- min(4, N_events)
+
+peak_order <- order(peak_values)
+sorted_peaks <- peak_values[peak_order]
+
+# Find the group of 4 consecutive sorted peaks
+# with the smallest difference between largest and smallest
+peak_ranges <- sapply(
+  seq_len(N_events - n_compare + 1),
+  function(i) {
+    sorted_peaks[i + n_compare - 1] - sorted_peaks[i]
+  }
+)
+
+best_start <- which.min(peak_ranges)
+
+selected_events <- peak_order[
+  best_start:(best_start + n_compare - 1)
+]
+
+# Prepare data
+df_similar <- df_norm %>%
+  filter(event_id %in% selected_events) %>%
+  mutate(
+    event = factor(
+      event_id,
+      levels = selected_events,
+      labels = paste0(
+        "Event ", selected_events,
+        " (", round(peak_values[selected_events], 1),
+        " m³/s)"
+      )
+    )
+  )
+
+similar_peak_plot <- ggplot(
+  df_similar,
+  aes(
+    x = hours_from_peak,
+    y = normalized_flow,
+    colour = event
+  )
+) +
+  geom_line(linewidth = 0.9) +
+  geom_vline(
+    xintercept = 0,
+    linetype = "dashed",
+    colour = "grey40"
+  ) +
+  labs(
+    title = "Hydrograph Shape Variation at Similar Peak Flows",
+    subtitle = "Four events selected for similar maximum discharge",
+    x = "Hours relative to peak",
+    y = "Discharge / Peak discharge",
+    colour = "Flood event"
+  ) + scale_color_manual(values = c("#8ECFE0","#5298BC","#247C91", "#2A5267")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+print(similar_peak_plot)

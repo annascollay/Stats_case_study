@@ -391,3 +391,23 @@ Variation_hydrograph <- ggplot(
     y = "Normalised discharge"
   ) +
   theme_minimal()
+
+
+
+#Heat map comparing flood events
+heat_map_plot <- ggplot(df_events_long,
+                        aes(x = hours_from_peak,
+                            y = event_id,
+                            fill = Discharge)) +
+  geom_tile() +
+  scale_fill_gradient(
+    low = "#DCEEF5",
+    high = "#174B67"
+  ) +
+  labs(
+    title = "Heatmap of Flood Hydrograph Events",
+    x = "Hours Relative to Peak",
+    y = "Flood Event",
+    fill = "Discharge"
+  ) +
+  theme_minimal()
