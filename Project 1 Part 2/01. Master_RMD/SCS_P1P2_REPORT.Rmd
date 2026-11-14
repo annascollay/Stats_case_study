@@ -80,10 +80,10 @@ source("master_code_part2.R")
 # Executive Summary
 
 # Data and Exploratory Data Analysis
-In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten water years (2016-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flood events, and form the basis of our analysis of hydrograph shape uncertainty. 
+In part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten water years (2016-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flood events, and form the basis of our analysis of hydrograph shape uncertainty. 
 
 ## **Robson & Reed (1999) Independence Criteria Results**
-Using the threshold of 65 m³/s established in Part 1, we identified 41 independent flood events across the ten-year observation period, corresponding to an average of 4.10 events per year.
+Using the threshold of 65 m³/s established in part 1, we identified 41 independent flood events across the ten-year observation period, corresponding to an average of 4.10 events per year.
 
 | Metric | Value | Unit |
 |:---|:---|:---|
@@ -124,33 +124,42 @@ Figure \@ref(fig:uncheckedscatter) compares the unchecked and interpolated value
 
 Although this does not prove that the unchecked observations are completely accurate, the small size of the discrepancies provide some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes. 
 
-We therefore retained the unchecked SEPA observations rather than replacing them with the corresponding interpolated estimates as the values were similar enough that preserving the original recorded values avoids unnecessary modification of the data.
+We therefore retained the unchecked SEPA observations rather than replacing them with the corresponding interpolated estimates as the values were similar enough that preserving the original recorded values would avoid unnecessary modification to the data.
 
 
 ## Exploratory Analysis
-To investigate the variation in hydrograph shape, the 41 independent flood events were aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph was examined over the same 120-hour window, allowing differences in peak magnitude, rising limbs and recession behaviour to be compared.
+To investigate the variation in hydrograph shape, the 41 independent flood events were aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph was examined over the same 120-hour window, allowing differences in peak magnitude, rising and falling behaviour to be compared.
 
 ```{r Hydrograph, echo=FALSE}
 hydrograph_overlay_plot
 ```
 Plotting all of the hydrographs on the same time scale shows the variation in shapes of flood events. All events are aligned at their peaks showing not only do their maximum discharges differ considerably, (with the largest exceeding 400 m³/s) but the differences in the rate of discharge vary considerably.
 
-Some events exhibit sharp peaks followed by rapid recession, whereas others have more broad hydrographs with gradual changes in discharge. Several events also display elevated discharge or secondary fluctuations away from the main peak, suggesting that flood behaviour cannot always be accuartely described by a single common shape.
+Some events exhibit sharp peaks followed by rapid recession, whereas others have more broad hydrographs with gradual changes in discharge. Several events also display elevated discharge or secondary fluctuations away from the main peak, suggesting that flood behaviour cannot always be accurately described by a single common shape.
 
-While the mean hydrograph provides a useful summary of the typical flood event shape, it smooths over important differences between individual events. Consequently, representing every flood using only an average hydrograph scaled by peak discharge may fail to capture the full variability in flood duration and shape.
+While the mean hydrograph provides a useful summary of the typical flood event shape, it smooths over important differences between individual events. Consequently, representing every flood using only an average hydrograph scaled by peak discharge may fail to capture the full variability in a flood.
 
 ```{r echo=FALSE, fig.height=10, fig.width=9}
 heat_map_plot
 ```
 
-The heatmap provides an alternative representation of this variability, with darker shading indicates higher discharge. The concentration of higher discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation before and after the peak highlights differences in the flood events. In particular, some events maintain relatively elevated discharge for longer periods, while others return towards lower flow levels more rapidly.
+The heatmap illustrates this variability further, with darker shading indicating higher discharge. The concentration of high discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation between events before and after their peak. In particular, some events maintain high discharge for longer periods, while others return to lower flows more rapidly.
 
-Together, these visualisations demonstrate that flood events differ not only in maximum discharge but also in their temporal development. This supports the need to investigate statistical methods capable of representing uncertainty in hydrograph shape, rather than assuming a fixed shape for all extreme-flow events.
+Together, these visualisations illustrate the variation between flood event shapes not captured by only their maximum discharge. 
 
 
 ## Standardising the hydrogpraphs
-Since different floods have different durations, maximum discharges and peak positions comparing the shape of the flood event directly is difficult because their time and discharge scales differ. To combat this we standardise the hydrographs by rescaling time to [0,1] scale, aliging all peaks, creating a new measure by dividing discharge by maximum peak, and interpolating every flood onto 64 equally spaced time points to create the Y matrix we will use for our analysis later.
+From our analysis above we can see that flood events differ in duration, peak discharge, and the relative timing of their peaks, so without standardisation, these differences would obscure the underlying variation in hydrograph shape.
 
+To make the events comparable, each flood was first defined between its rising and falling limb troughs. Time was then rescaled to the interval [0,1], with zero representing the start of the event and one representing its end. The relative peak position was calculated as the time from the event start to its peak, divided by its total duration.
+
+The rising and falling limbs were then rescaled separately so that every hydrograph reached its peak at the mean peak position across all events. This alignment allows differences in the shape of the rising and falling limbs to be compared without variation in peak timing dominating the analysis.
+
+Discharge was also divided by the event's maximum flow, giving each standardised hydrograph a peak value of one. Finally, linear interpolation was used to represent every hydrograph at 64 equally spaced points on the standardised time scale.
+
+The resulting data were arranged into a matrix (Y), with one row per flood event and 64 columns representing common time points. This provides a consistent basis for comparing hydrograph shapes and applying the statistical modelling methods described in the following section.
+
+Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
 
 # Statistical methodology
 ## Polynomial regression
