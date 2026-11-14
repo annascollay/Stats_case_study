@@ -139,13 +139,13 @@ Some events exhibit sharp peaks followed by rapid recession, whereas others have
 
 While the mean hydrograph provides a useful summary of the typical flood event shape, it smooths over important differences between individual events. Consequently, representing every flood using only an average hydrograph scaled by peak discharge may fail to capture the full variability in a flood.
 
-```{r echo=FALSE, fig.height=10, fig.width=9}
+```{r heatmap, echo=FALSE, fig.height=10, fig.width=9, fig.cap="A heat map showing the varation in discharge and timeline of each of the 41 flood events"}
 heat_map_plot
 ```
 
-The heatmap illustrates this variability further, with darker shading indicating higher discharge. The concentration of high discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation between events before and after their peak. In particular, some events maintain high discharge for longer periods, while others return to lower flows more rapidly.
+Figure \@ref(fig:heatmap), illustrates this variability further, with darker shading indicating higher discharge. The concentration of high discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation between events before and after their peak. In particular, some events maintain high discharge for longer periods, while others return to lower flows more rapidly.
 
-Together, these visualisations illustrate the variation between flood event shapes not captured by only their maximum discharge. 
+Together, both these visualisations help illustrate the variation between flood event shapes not captured by only their maximum discharge. 
 
 
 ## Standardising the hydrogpraphs
@@ -167,8 +167,6 @@ Importantly, the original peak discharge, event duration and relative peak posit
 ## Wavelets
 ## Uncertanity analysis
 
-- fitting each of the statistical methods; The Polynomial regression, PCA, Wavelets
-- uncertainty modelling for each method
 
 # Results and validation
 
