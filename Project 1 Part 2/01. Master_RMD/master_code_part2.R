@@ -360,40 +360,6 @@ hydrograph_overlay_plot <- ggplot() +
 # Display master plot
 print(hydrograph_overlay_plot)
 
-
-# Mean hydrograph and variation plot 
-shape_summary <- df_events_long %>%
-  group_by(hours_from_peak) %>%
-  summarise(
-    mean_flow = mean(Discharge),
-    lower = quantile(Discharge, 0.10),
-    upper = quantile(Discharge, 0.90),
-    .groups = "drop"
-  )
-
-Variation_hydrograph <- ggplot(
-  shape_summary,
-  aes(x = hours_from_peak, y = mean_flow)
-) +
-  geom_ribbon(
-    aes(ymin = lower, ymax = upper),
-    fill = "#5298BC",
-    alpha = 0.25
-  ) +
-  geom_line(
-    colour = "#174B67",
-    linewidth = 1
-  ) +
-  labs(
-    title = "Mean normalised hydrograph",
-    subtitle = "Shaded area: 10th to 90th percentile",
-    x = "Hours relative to peak",
-    y = "Normalised discharge"
-  ) +
-  theme_minimal()
-
-
-
 #Heat map comparing flood events
 heat_map_plot <- ggplot(df_events_long,
                         aes(x = hours_from_peak,
@@ -411,3 +377,6 @@ heat_map_plot <- ggplot(df_events_long,
     fill = "Discharge"
   ) +
   theme_minimal()
+
+## ADD A PLOT OF THE HYDROGRAPHS AFTER STANDARDISATION TO ILLUSTRATE THE CHANGES
+
