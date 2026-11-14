@@ -162,9 +162,14 @@ The resulting data were arranged into a matrix (Y), with one row per flood event
 Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
 
 # Statistical methodology
+## SEPA (average shape)
 ## Polynomial regression
 ## PCA
 ## Wavelets
+## Other methods
+### Gamma-type
+### B-spline
+### Log-flow PCA
 ## Uncertanity analysis
 
 
