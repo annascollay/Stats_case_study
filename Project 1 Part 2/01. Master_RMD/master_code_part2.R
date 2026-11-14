@@ -288,7 +288,7 @@ if (nrow(unchecked_in_events) > 0) {
   unchecked_scatter_plot <- ggplot(unique_readings,
                                    aes(x = Discharge_Interp, y = Discharge_Unchecked)) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "#AA1945") +
-    geom_point(colour = "#174B67", alpha = 0.7, size = 2) +
+    geom_point(colour = "#5298BC", alpha = 0.7, size = 2) +
     coord_equal(xlim = lims, ylim = lims) +
     labs(
       title = "Unchecked readings vs linear interpolation for peak windows",

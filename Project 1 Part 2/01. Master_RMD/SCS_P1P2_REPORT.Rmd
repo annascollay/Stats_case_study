@@ -80,12 +80,10 @@ source("master_code_part2.R")
 # Executive Summary
 
 # Data and Exploratory Data Analysis
+In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten water years (2016-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flood events, and form the basis of our analysis of hydrograph shape uncertainty. 
 
-- Use the tidy data from part 1
-- Create hydrographs for the extreme events
-- Observations of the hydrographs and understand the variety in flood event shapes \## Data Cleaning For further analysis we require hydrographs with a fixed common time grid, however due to missing observations we currently do not have this. Hence, in the absence of proper information about why there were short bursts of unchecked readings in the late-November and early-December 2017, and given the similarities between the unchecked values in and calculated interpolated values, we find it reasonable to include these unchecked values in the hydorgraph.
-
-### **Robson & Reed (1999) Independence Criteria Results**
+## **Robson & Reed (1999) Independence Criteria Results**
+Using the threshold of 65 m³/s established in Part 1, we identified 41 independent flood events across the ten-year observation period, corresponding to an average of 4.10 events per year.
 
 | Metric | Value | Unit |
 |:---|:---|:---|
@@ -94,11 +92,12 @@ source("master_code_part2.R")
 | **Average Peak Rate** | `r sprintf("%.2f", nrow(peaks) / n_years)` | peaks/year |
 | **Period of Record** | `r n_years` | water years |
 
-```{r}
-hydrograph_overlay_plot
-```
+## Checking the data
+Before constructing individual hydrographs for each flood event, we assessed the reliability of the discharge observations for each of the 41 identified events. Each event was initially represented using a common 120-hour window, extending 48 hours before and 72 hours after its peak, with observations recorded at 15-minute intervals.
 
-```{r, results= "asis", echo=FALSE}
+For later analysis, we require all flood events to have a common time grid. Due to data cleaning in part 1 where we excluded observations with unchecked readings (SEPA quality codes 200 and 254), there exists missing readings in our data (Table \@ref(tab:uncheckeddata)). Within the selected flood windows, only two unchecked readings were identified, both belonging to Event 5 on 22 November 2017.
+
+```{r uncheckeddata, results= "asis", echo=FALSE}
 knitr::kable(
     bind_rows(burst_tbl, overall_row),
     format    = "markdown",
@@ -109,7 +108,10 @@ knitr::kable(
   )
 ```
 
-```{r}
+
+To fix this, we compared the original unchecked observations with estimated values to decide whether retaining these unchecked readings was reasonable. The estimated values were obtained by linear interpolation of the nearest checked observations by assuming a constant rate of change. 
+
+```{r uncheckedscatter, echo=FALSE, fig.cap="An assesment of unchecked values"}
 if (nrow(unchecked_in_events) > 0) {
   unchecked_scatter_plot
   
@@ -118,7 +120,43 @@ if (nrow(unchecked_in_events) > 0) {
 }
 ```
 
+Figure \@ref(fig:uncheckedscatter) compares the unchecked and interpolated values. The dashed 1:1 line indicates perfect agreement, since both observations lie close to this line, it suggests only a small difference between the recorded and interpolated values. In proportion to the discharge of approximately 83–84 m³/s these discrepancies are small. 
+
+Although this does not prove that the unchecked observations are completely accurate, the small size of the discrepancies provide some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes. 
+
+We therefore retained the unchecked SEPA observations rather than replacing them with the corresponding interpolated estimates as the values were similar enough that preserving the original recorded values avoids unnecessary modification of the data.
+
+
+## Exploratory Analysis
+To investigate the variation in hydrograph shape, the 41 independent flood events were aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph was examined over the same 120-hour window, allowing differences in peak magnitude, rising limbs and recession behaviour to be compared.
+
+```{r Hydrograph, echo=FALSE}
+hydrograph_overlay_plot
+```
+Plotting all of the hydrographs on the same time scale shows the variation in shapes of flood events. All events are aligned at their peaks showing not only do their maximum discharges differ considerably, (with the largest exceeding 400 m³/s) but the differences in the rate of discharge vary considerably.
+
+Some events exhibit sharp peaks followed by rapid recession, whereas others have more broad hydrographs with gradual changes in discharge. Several events also display elevated discharge or secondary fluctuations away from the main peak, suggesting that flood behaviour cannot always be accuartely described by a single common shape.
+
+While the mean hydrograph provides a useful summary of the typical flood event shape, it smooths over important differences between individual events. Consequently, representing every flood using only an average hydrograph scaled by peak discharge may fail to capture the full variability in flood duration and shape.
+
+```{r echo=FALSE, fig.height=10, fig.width=9}
+heat_map_plot
+```
+
+The heatmap provides an alternative representation of this variability, with darker shading indicates higher discharge. The concentration of higher discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation before and after the peak highlights differences in the flood events. In particular, some events maintain relatively elevated discharge for longer periods, while others return towards lower flow levels more rapidly.
+
+Together, these visualisations demonstrate that flood events differ not only in maximum discharge but also in their temporal development. This supports the need to investigate statistical methods capable of representing uncertainty in hydrograph shape, rather than assuming a fixed shape for all extreme-flow events.
+
+
+## Standardising the hydrogpraphs
+Since different floods have different durations, maximum discharges and peak positions comparing the shape of the flood event directly is difficult because their time and discharge scales differ. To combat this we standardise the hydrographs by rescaling time to [0,1] scale, aliging all peaks, creating a new measure by dividing discharge by maximum peak, and interpolating every flood onto 64 equally spaced time points to create the Y matrix we will use for our analysis later.
+
+
 # Statistical methodology
+## Polynomial regression
+## PCA
+## Wavelets
+## Uncertanity analysis
 
 - fitting each of the statistical methods; The Polynomial regression, PCA, Wavelets
 - uncertainty modelling for each method
@@ -132,12 +170,12 @@ if (nrow(unchecked_in_events) > 0) {
 # Recommendation
 
 - Recommend the best method and justify
-- explain the limitations and uncertainity with each method
+- explain the limitations and uncertainty with each method
 
 # Emulator application
 
 - Give a brief explanation of how the emulator would be used
-- e.g, explain the two seperate phases,
+- e.g, explain the two separate phases,
 
 First, SEPA could select different parameter combinations, reconstruct corresponding hydrographs and run these through the actual flood inundation model. The resulting input-output pairs would be used to train an emulator.
 
