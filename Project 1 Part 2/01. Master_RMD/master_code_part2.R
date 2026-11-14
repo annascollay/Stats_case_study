@@ -9,7 +9,9 @@
 library(tidyverse)
 library(lubridate)
 library(knitr)
-library(patchwork)
+library(patchwork) # For combining diagnostic plots if installed
+library(wavelets)
+library(splines)   # part of base R; provides bs()
 
 # Set HTTP timeout limit for SEPA API fetch if local RDS is absent
 options(timeout = 300)
@@ -49,7 +51,7 @@ if (file.exists(cache_file)) {
 # Key Modification: Include Unchecked codes (200 & 254) along with 50 & 100
 river_data <- river_data %>%
   arrange(Timestamp) %>%
-  mutate(QualityCode = as.numeric(as.character(QualityCode))) %>%
+  mutate(QualityCode = as.numeric(QualityCode)) %>%
   filter(QualityCode %in% c(50, 100, 200, 254)) %>%
   mutate(
     is_unchecked = QualityCode %in% c(200, 254),
@@ -65,8 +67,8 @@ river_data <- river_data %>%
   )
 
 # Extract convenient vectors for peak extraction
-q     <- river_data$Discharge
-times <- river_data$Timestamp
+q <- river_data$Discharge
+t <- river_data$Timestamp
 n_years <- n_distinct(river_data$water_year)
 
 # ------------------------------------------------------------------------------
@@ -74,15 +76,15 @@ n_years <- n_distinct(river_data$water_year)
 # ------------------------------------------------------------------------------
 
 # Helper: Find rising limb breakout (P1P1 logic)
-rise_start_row <- function(p, earliest = times[p] - 7 * 24 * 3600) {
-  window <- which(times >= earliest & times <= times[p])
+rise_start_row <- function(p, earliest = t[p] - 7 * 24 * 3600) {
+  window <- which(t >= earliest & t <= t[p])
   lowest <- min(q[window])
   max(window[q[window] <= 1.05 * lowest])
 }
 
 # Candidate peaks above threshold u
 candidate_peaks <- function(u, min_duration_hours = 1) {
-  min_readings <- min_duration_hours * 4
+  min_readings <- min_duration_hours * 4 
   river_data %>%
     mutate(
       row = row_number(),
@@ -91,7 +93,7 @@ candidate_peaks <- function(u, min_duration_hours = 1) {
     ) %>%
     filter(above) %>%
     group_by(run) %>%
-    filter(n() >= min_readings) %>%
+    filter(n() >= min_readings) %>% 
     slice_max(Discharge, n = 1, with_ties = FALSE) %>%
     ungroup() %>%
     pull(row)
@@ -102,19 +104,19 @@ independent_peaks <- function(u) {
   candidates <- candidate_peaks(u)
   
   clean <- candidates[sapply(candidates, function(p) {
-    window_mask <- abs(as.numeric(difftime(times[candidates], times[p], units = "days"))) <= 7
+    window_mask <- abs(as.numeric(difftime(t[candidates], t[p], units = "days"))) <= 7
     q[p] == max(q[candidates[window_mask]])
   })]
   
   rise_hours <- sapply(clean, function(p) {
-    as.numeric(difftime(times[p], times[rise_start_row(p)], units = "hours"))
+    as.numeric(difftime(t[p], t[rise_start_row(p)], units = "hours"))
   })
   min_gap_hours <- 3 * mean(rise_hours)
   
   kept <- candidates[1]
   for (p in candidates[-1]) {
     last <- kept[length(kept)]
-    gap <- as.numeric(difftime(times[p], times[last], units = "hours"))
+    gap <- as.numeric(difftime(t[p], t[last], units = "hours"))
     trough <- min(q[last:p])
     
     if (gap >= min_gap_hours & trough <= q[last] / 3) {
@@ -134,13 +136,257 @@ u_final <- 65
 peaks <- independent_peaks(u_final) %>%
   mutate(event_id = row_number())
 
-# Row number of each peak in river_data (used by the later sections)
-peak_rows <- match(peaks$Timestamp, times)
+# ------------------------------------------------------------------------------
+# 4. Matrix Construction & Diagnostic Output
+# ------------------------------------------------------------------------------
+win_before_h   <- 48
+win_after_h    <- 72
+dt_hours       <- 0.25 # 15-minute sampling interval
+rel_time_hours <- seq(-win_before_h, win_after_h, by = dt_hours)
 
-cat("Number of independent events:", nrow(peaks), "\n")
+extract_event_hydrograph <- function(event_idx, peak_row) {
+  t_pk <- t[peak_row]
+  idx  <- which(t >= t_pk - win_before_h * 3600 & t <= t_pk + win_after_h * 3600)
+  df_win <- river_data[idx, ]
+  
+  event_t_rel <- as.numeric(difftime(df_win$Timestamp, t_pk, units = "hours"))
+  
+  # Resample onto the standard 481-point relative time grid
+  approx(x = event_t_rel, y = df_win$Discharge, xout = rel_time_hours, rule = 2)$y
+}
+
+N_events  <- nrow(peaks)
+peak_rows <- match(peaks$Timestamp, t)
+
+# Construct N x m matrix Y_raw (41 x 481)
+Y_raw <- t(sapply(1:N_events, function(i) extract_event_hydrograph(i, peak_rows[i])))
+rownames(Y_raw) <- paste0("Event_", 1:N_events)
+colnames(Y_raw) <- paste0("t_", sprintf("%+.2fh", rel_time_hours))
+
+# Calculate empirical mean hydrograph vector Q_bar(t)
+mean_hydrograph <- colMeans(Y_raw)
 
 # ------------------------------------------------------------------------------
-# 4. Event start, end and width (trough to trough)
+# 5. Unchecked readings vs interpolation for peak windows
+# ------------------------------------------------------------------------------
+
+# Step 1: for every unchecked reading in the record, interpolate linearly
+# between the checked readings immediately before and after its burst.
+# Done on the full record so that a burst touching the edge of a peak window
+# still has its checked anchor points.
+compare_unchecked <- function(data, unchecked_codes = c(200, 254)) {
+  d <- data %>%
+    mutate(
+      is_unch  = QualityCode %in% unchecked_codes,
+      burst_id = cumsum(is_unch & !lag(is_unch, default = FALSE)),
+      burst_id = if_else(is_unch, burst_id, NA_integer_)
+    )
+  tnum <- as.numeric(d$Timestamp)
+  out  <- list()
+  
+  for (b in na.omit(unique(d$burst_id))) {
+    bi         <- which(d$burst_id == b)
+    idx_before <- min(bi) - 1
+    idx_after  <- max(bi) + 1
+    
+    # No checked anchor on one side (start/end of record): cannot interpolate
+    if (idx_before < 1 || idx_after > nrow(d)) next
+    
+    interp <- approx(
+      x    = tnum[c(idx_before, idx_after)],
+      y    = d$Discharge[c(idx_before, idx_after)],
+      xout = tnum[bi]            # exact timestamps of the unchecked readings
+    )$y
+    
+    out[[length(out) + 1]] <- tibble(
+      Burst_ID            = b,
+      Timestamp           = d$Timestamp[bi],
+      Discharge_Unchecked = d$Discharge[bi],
+      Discharge_Interp    = interp,
+      Diff                = d$Discharge[bi] - interp,
+      Burst_Length_Mins   = length(bi) * 15
+    )
+  }
+  bind_rows(out)
+}
+
+unchecked_all <- compare_unchecked(river_data)
+
+# Unchecked readings falling inside a set of windows. starts/ends/peak_times
+# are POSIXct vectors with one element per event.
+unchecked_in_windows <- function(starts, ends, peak_times) {
+  map_dfr(seq_along(starts), function(i) {
+    unchecked_all %>%
+      filter(Timestamp >= starts[i], Timestamp <= ends[i]) %>%
+      mutate(Event_ID = i,
+             Hours_From_Peak = as.numeric(difftime(Timestamp, peak_times[i],
+                                                   units = "hours")))
+  })
+}
+
+# Statistics, combined table and scatter plot for one set of windows.
+# Returns NULL if there are no unchecked readings in the windows.
+summarise_unchecked_readings <- function(in_windows, n_events) {
+  if (nrow(in_windows) == 0) return(NULL)
+  
+  # each reading counted once even if two event windows overlap
+  unique_readings <- distinct(in_windows, Timestamp, .keep_all = TRUE)
+  rmse   <- sqrt(mean(unique_readings$Diff^2))
+  max_ad <- max(abs(unique_readings$Diff))
+  
+  events_lookup <- in_windows %>%
+    group_by(Burst_ID) %>%
+    summarise(Events = paste(sort(unique(Event_ID)), collapse = ", "),
+              .groups = "drop")
+  
+  burst_tbl <- unique_readings %>%
+    group_by(Burst_ID) %>%
+    summarise(
+      Start         = format(min(Timestamp), "%Y-%m-%d %H:%M"),
+      Readings      = n(),
+      Duration_Mins = first(Burst_Length_Mins),
+      RMSE          = sqrt(mean(Diff^2)),
+      Max_Abs_Diff  = max(abs(Diff)),
+      .groups = "drop"
+    ) %>%
+    left_join(events_lookup, by = "Burst_ID") %>%
+    transmute(
+      Burst        = as.character(row_number()),
+      Event        = Events,
+      Start,
+      Readings     = as.character(Readings),
+      Duration_Min = as.character(Duration_Mins),
+      RMSE         = sprintf("%.3f", RMSE),
+      Max_Abs_Diff = sprintf("%.3f", Max_Abs_Diff)
+    )
+  
+  overall_row <- tibble(
+    Burst        = "**All**",
+    Event        = sprintf("**%d of %d events**", n_distinct(in_windows$Event_ID), n_events),
+    Start        = "—",
+    Readings     = sprintf("**%d**", nrow(unique_readings)),
+    Duration_Min = "—",
+    RMSE         = sprintf("**%.3f**", rmse),
+    Max_Abs_Diff = sprintf("**%.3f**", max_ad)
+  )
+  
+  lims <- range(c(unique_readings$Discharge_Interp, unique_readings$Discharge_Unchecked))
+  
+  plot <- ggplot(unique_readings, aes(x = Discharge_Interp, y = Discharge_Unchecked)) +
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "#AA1945") +
+    geom_point(colour = "#5298BC", alpha = 0.7, size = 2) +
+    coord_equal(xlim = lims, ylim = lims) +
+    labs(
+      title = "Unchecked readings vs linear interpolation",
+      subtitle = sprintf("n = %d | RMSE = %.3f m³/s | dashed line = 1:1",
+                         nrow(unique_readings), rmse),
+      x = expression("Interpolated discharge (" * m^3 * "/s)"),
+      y = expression("Unchecked discharge (" * m^3 * "/s)")
+    ) +
+    theme_minimal()
+  
+  list(in_windows = in_windows, unique_readings = unique_readings,
+       rmse = rmse, max_ad = max_ad,
+       burst_tbl = burst_tbl, overall_row = overall_row,
+       table = bind_rows(burst_tbl, overall_row), plot = plot)
+}
+
+# Fixed [-48h, +72h] windows
+unchecked_in_events <- unchecked_in_windows(
+  starts     = peaks$Timestamp - win_before_h * 3600,
+  ends       = peaks$Timestamp + win_after_h * 3600,
+  peak_times = peaks$Timestamp
+)
+unchecked_fixed <- summarise_unchecked_readings(unchecked_in_events, N_events)
+
+if (!is.null(unchecked_fixed)) {
+  # Create object names for Rmd
+  unique_readings        <- unchecked_fixed$unique_readings
+  rmse                   <- unchecked_fixed$rmse
+  max_ad                 <- unchecked_fixed$max_ad
+  burst_tbl              <- unchecked_fixed$burst_tbl
+  overall_row            <- unchecked_fixed$overall_row
+  unchecked_table        <- unchecked_fixed$table
+  unchecked_scatter_plot <- unchecked_fixed$plot
+} else {
+  cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
+}
+
+# ------------------------------------------------------------------------------
+# 6. Master Hydrograph Overlay Plot Generation
+# ------------------------------------------------------------------------------
+df_events_long <- as_tibble(Y_raw) %>%
+  mutate(event_id = factor(1:N_events)) %>%
+  pivot_longer(
+    cols = starts_with("t_"),
+    names_to = "t_col",
+    values_to = "Discharge"
+  ) %>%
+  mutate(hours_from_peak = rep(rel_time_hours, times = N_events))
+
+df_mean <- tibble(
+  hours_from_peak = rel_time_hours,
+  Discharge = mean_hydrograph
+)
+
+# Plot: All 41 hydrographs centered at peak arrival (greyed out + bold black mean)
+hydrograph_overlay_plot <- ggplot() +
+  geom_line(
+    data = df_events_long,
+    aes(x = hours_from_peak, y = Discharge, group = event_id),
+    colour = "#5298BC",
+    linewidth = 0.4,
+    alpha = 0.5
+  ) +
+  geom_line(
+    data = df_mean,
+    aes(x = hours_from_peak, y = Discharge),
+    colour = "#174B67",
+    linewidth = 1.3
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
+  geom_hline(yintercept = u_final, linetype = "dotted", colour = "black", linewidth = 0.7) +
+  annotate("text", x = 0, y = max(Y_raw) * 0.98, label = "Peak Arrival (t = 0)", 
+           colour = "#AA1945", hjust = -0.1, size = 3.5, fontface = "bold") +
+  annotate("text", x = -45, y = u_final + 5, label = paste0("u = ", u_final, " m³/s"), 
+           colour = "black", hjust = 0, size = 3.2) +
+  scale_x_continuous(breaks = seq(-48, 72, by = 12)) +
+  labs(
+    title = "River Don Hydrograph Shape Variability (N = 41 Events)",
+    subtitle = "Centered at peak arrival (t = 0) [-48h, +72h]. Bold black: Mean curve Q̄(t). Unchecked values retained.",
+    x = "Hours from Peak Arrival (t = 0)",
+    y = expression("Discharge (" * m^3 * "/s)")
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold", size = 12),
+    plot.subtitle = element_text(size = 9.5, colour = "grey30")
+  )
+
+# Display master plot
+print(hydrograph_overlay_plot)
+
+#Heat map comparing flood events
+heat_map_plot <- ggplot(df_events_long,
+                        aes(x = hours_from_peak,
+                            y = event_id,
+                            fill = Discharge)) +
+  geom_tile() +
+  scale_fill_gradient(
+    low = "#DCEEF5",
+    high = "#174B67"
+  ) +
+  labs(
+    title = "Heatmap of Flood Hydrograph Events",
+    x = "Hours Relative to Peak",
+    y = "Flood Event",
+    fill = "Discharge"
+  ) +
+  theme_minimal()
+
+# ------------------------------------------------------------------------------
+# 7. Event start, end and width (trough to trough)
 # ------------------------------------------------------------------------------
 
 search_days   <- 7     # how far either side of a peak to search for a trough
@@ -149,7 +395,7 @@ trough_factor <- 1.05  # trough = reading within 5% of the local minimum
 # End of the falling limb: the first reading after the peak within 5% of the
 # lowest flow before the limit (mirrors rise_start_row)
 fall_end_row <- function(p, limit) {
-  window <- which(times >= times[p] & times <= limit)
+  window <- which(t >= t[p] & t <= limit)
   lowest <- min(q[window])
   min(window[q[window] <= trough_factor * lowest])
 }
@@ -157,8 +403,8 @@ fall_end_row <- function(p, limit) {
 # Where to stop searching for each event's end: 7 days after its peak,
 # or the next event's peak if that comes sooner
 end_limit <- pmin(
-  times[peak_rows] + search_days * 24 * 3600,
-  lead(times[peak_rows], default = max(times))
+  t[peak_rows] + search_days * 24 * 3600,
+  lead(t[peak_rows], default = max(t))
 )
 
 # One row per event: start, peak and end, with the key quantities for each
@@ -169,9 +415,9 @@ events <- tibble(
   end_row   = map2_int(peak_rows, end_limit, fall_end_row)
 ) %>%
   mutate(
-    peak_time      = times[peak_row],
-    start_time     = times[start_row],
-    end_time       = times[end_row],
+    peak_time      = t[peak_row],
+    start_time     = t[start_row],
+    end_time       = t[end_row],
     peak_flow      = q[peak_row],
     time_to_peak_h = as.numeric(difftime(peak_time, start_time, units = "hours")),
     recession_h    = as.numeric(difftime(end_time, peak_time, units = "hours")),
@@ -179,8 +425,30 @@ events <- tibble(
     peak_position  = time_to_peak_h / width_h   # where the peak falls in [0, 1]
   )
 
+unchecked_model_in_events <- unchecked_in_windows(
+  starts     = events$start_time,
+  ends       = events$end_time,
+  peak_times = events$peak_time
+)
+unchecked_model <- summarise_unchecked_readings(unchecked_model_in_events, nrow(events))
+
+if (!is.null(unchecked_model)) {
+  fixed_ts <- if (is.null(unchecked_fixed)) as.POSIXct(character(0)) else
+    unchecked_fixed$unique_readings$Timestamp
+  cat(sprintf(
+    "Modelling events (trough to trough): %d unchecked readings, %d of them outside the fixed windows.\n",
+    nrow(unchecked_model$unique_readings),
+    sum(!unchecked_model$unique_readings$Timestamp %in% fixed_ts)))
+  cat(sprintf("RMSE vs interpolation: %.3f m3/s | max abs diff: %.3f m3/s\n\n",
+              unchecked_model$rmse, unchecked_model$max_ad))
+  # unchecked_model$table  -> kable() for the report
+  # unchecked_model$plot   -> scatter plot for the report
+} else {
+  cat("No unchecked quality codes within the modelling events.\n\n")
+}
+
 # ------------------------------------------------------------------------------
-# 5. Standardise each event and make the Y matrix
+# 8. Standardise each event and make the Y matrix
 # ------------------------------------------------------------------------------
 # For each event, one at a time:
 #   a. rescale time onto [0, 1]   (0 = start of event, 1 = end)
@@ -195,32 +463,29 @@ u_star <- mean(events$peak_position)
 n_grid <- 64
 grid_u <- seq(0, 1, length.out = n_grid)
 
-Y <- matrix(NA, nrow = nrow(events), ncol = n_grid)
-
-for (i in 1:nrow(events)) {
+standardise_event <- function(i) {
   rows <- events$start_row[i]:events$end_row[i]   # readings in this event
   p    <- events$peak_position[i]                 # where its peak falls in [0, 1]
   
   # a. rescale time onto [0, 1]
-  u <- as.numeric(difftime(times[rows], events$start_time[i], units = "hours")) /
+  u <- as.numeric(difftime(t[rows], events$start_time[i], units = "hours")) /
     events$width_h[i]
   
-  # b. realign: stretch the rising part to [0, u_star], the falling part to [u_star, 1]
+  # b. realign: rising part -> [0, u_star], falling part -> [u_star, 1]
   u_reg <- ifelse(u <= p,
                   u * u_star / p,
                   u_star + (u - p) * (1 - u_star) / (1 - p))
   
-  # c. divide flow by peak flow
-  y <- q[rows] / events$peak_flow[i]
-  
-  # d. read off at the 64 grid points
-  Y[i, ] <- approx(u_reg, y, xout = grid_u, rule = 2)$y
+  # c. divide flow by peak flow, d. read off at the 64 grid points
+  approx(u_reg, q[rows] / events$peak_flow[i], xout = grid_u, rule = 2)$y
 }
+
+Y <- t(sapply(seq_len(nrow(events)), standardise_event))
 
 cat("Y:", nrow(Y), "events x", ncol(Y), "points; peaks aligned at u =", round(u_star, 3), "\n")
 
 # ------------------------------------------------------------------------------
-# 6. Reconstruct a real hydrograph
+# 9. Reconstruct a real hydrograph
 # ------------------------------------------------------------------------------
 # Reverses section 5: turns a standardised curve back into a real flood.
 #   1. undo the realignment: move the peak from u_star back to the flood's
@@ -243,11 +508,34 @@ reconstruct_hydrograph <- function(y, peak_position, width_h, peak_flow) {
 }
 
 # ------------------------------------------------------------------------------
-# 7. Shared functions for checking every method
+# 10. Shared functions for checking every method
 # ------------------------------------------------------------------------------
 # Every method is checked in the same way, so they can be compared fairly:
 # each fitted curve is turned back into a real flood (section 6) and compared
 # with the observed flood in m^3/s and hours.
+
+# Set use_cache <- FALSE to force everything to be recomputed.
+use_cache <- TRUE
+
+# name : label for the cache file
+# expr : the expensive code (only evaluated when there is no usable cache)
+# key  : any settings the result depends on besides Y (ranges, chosen values)
+# The file name contains a hash of Y and key, so the cache refreshes
+# automatically if the data or those settings change.
+# If the CODE of a function used inside expr is edited, delete the cache /
+# folder.
+cached <- function(name, expr, key = NULL) {
+  if (!use_cache) return(expr)
+  file <- file.path("cache",
+                    paste0(name, "_", substr(rlang::hash(list(Y, key)), 1, 10), ".rds"))
+  if (file.exists(file)) return(readRDS(file))
+  result <- expr
+  tryCatch({
+    dir.create("cache", showWarnings = FALSE)
+    saveRDS(result, file)
+  }, error = function(e) NULL, warning = function(w) NULL)   # never fail on saving
+  result
+}
 
 # Area under a curve (trapezium rule), used for flood volume. Needed because
 # after undoing the realignment the points are not evenly spaced in hours.
@@ -359,9 +647,42 @@ plot_choice <- function(choice_table, setting_name) {
   par(mfrow = c(1, 1))
 }
 
+# Fitted curves for every flood, for any per-flood linear model
+fit_all_with <- function(fit_model, setting) {
+  t(sapply(1:nrow(Y), function(i) fitted(fit_model(Y[i, ], setting))))
+}
+
+# Train/test errors by setting (polynomial degree, number of B-spline functions)
+train_test_choice <- function(settings, fit_all) {
+  map_dfr(settings, function(s) {
+    errors <- method_errors(fit_all(s))
+    rbind(
+      data.frame(setting = s, type = "train", t(average_errors(errors[train_floods, ]))),
+      data.frame(setting = s, type = "test",  t(average_errors(errors[test_floods, ])))
+    )
+  })
+}
+
+# In-sample vs leave-one-out errors by setting (PCA k, wavelet coefficients kept)
+insample_loo_choice <- function(settings, rebuild, left_out) {
+  map_dfr(settings, function(s) {
+    rbind(
+      data.frame(setting = s, type = "in-sample",
+                 t(average_errors(method_errors(rebuild(s))))),
+      data.frame(setting = s, type = "leave-one-out",
+                 t(average_errors(method_errors(loocv(function(i) left_out(i, s))))))
+    )
+  })
+}
+
+# One summary row for the final comparison table
+cmp_row <- function(method, n_params, type, errors, negative = NA) {
+  data.frame(method = method, n_params = n_params, type = type,
+             t(average_errors(errors)), negative_points = negative)
+}
 
 # ------------------------------------------------------------------------------
-# 7a. SEPA's current approach (the baseline)
+# 11. SEPA's current approach (the baseline)
 # ------------------------------------------------------------------------------
 # SEPA uses one average shape for every flood, scaled by peak flow. SEPA does
 # not realign peaks, so the average is taken over the floods on their own
@@ -391,9 +712,10 @@ Y_baseline    <- t(sapply(1:nrow(Y), function(i) baseline_curve(average_shape, i
 baseline_errors <- method_errors(Y_baseline)
 
 # Leave-one-out: every flood gets the average of the other floods
-baseline_errors_loocv <- method_errors(loocv(function(i) {
-  baseline_curve(colMeans(Y_unaligned[-i, ]), i)
-}))
+baseline_errors_loocv <- cached("baseline_loocv",
+                                method_errors(loocv(function(i) {
+                                  baseline_curve(colMeans(Y_unaligned[-i, ]), i)
+                                })))
 
 cat("\nSEPA's approach (average shape), average errors:\n")
 print(rbind(in_sample     = average_errors(baseline_errors),
@@ -401,7 +723,7 @@ print(rbind(in_sample     = average_errors(baseline_errors),
 
 
 # ------------------------------------------------------------------------------
-# 8. Method 1: polynomial fitting
+# 12. Method 1: polynomial fitting
 # ------------------------------------------------------------------------------
 # Each flood's curve (one row of Y) is fitted with a polynomial in time,
 # separately for each flood, using lm() (Lecture 4):
@@ -421,49 +743,34 @@ fit_poly_model <- function(y, p) {
 }
 
 # Fitted curves for every flood at degree p
-poly_fit_all <- function(p) {
-  t(sapply(1:nrow(Y), function(i) fitted(fit_poly_model(Y[i, ], p))))
-}
+poly_fit_all <- function(p) fit_all_with(fit_poly_model, p)
 
-
-# ------------------------------------------------------------------------------
-# 8a. Choosing the degree
-# ------------------------------------------------------------------------------
-
+# Choosing the degree
 degrees <- 2:10
 
 # Significance of the highest term (as in the handout's quadratic vs cubic
 # comparison): proportion of floods where the highest term has p < 0.05.
 # Neighbouring points on a curve are correlated, so these p-values are too
 # optimistic (Lecture 5); use alongside the errors below.
-prop_significant <- sapply(degrees, function(p) {
-  mean(sapply(1:nrow(Y), function(i) {
-    coefs <- summary(fit_poly_model(Y[i, ], p))$coefficients
-    coefs[nrow(coefs), 4] < 0.05
-  }))
-})
+prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
+                    mean(sapply(1:nrow(Y), function(i) {
+                    coefs <- summary(fit_poly_model(Y[i, ], p))$coefficients
+                    coefs[nrow(coefs), 4] < 0.05
+                    }))}),
+                    key = degrees
+                    )
 
 print(data.frame(degree = degrees, prop_significant = prop_significant))
 
 # Errors by degree on training and test floods (Lecture 5): the chosen degree
 # should work as well on the test floods as on the training floods
-poly_choice <- data.frame()
-for (p in degrees) {
-  errors <- method_errors(poly_fit_all(p))
-  poly_choice <- rbind(poly_choice,
-                       data.frame(setting = p, type = "train", t(average_errors(errors[train_floods, ]))),
-                       data.frame(setting = p, type = "test",  t(average_errors(errors[test_floods, ]))))
-}
+poly_choice <- cached("poly_choice",
+                      train_test_choice(degrees, poly_fit_all), key = degrees)
 
 print(poly_choice, digits = 3)
 plot_choice(poly_choice, "Polynomial degree")
 
-
-# ------------------------------------------------------------------------------
-# 8b. Fit at the chosen degree
-# ------------------------------------------------------------------------------
-# UPDATE after looking at section 8a
-
+# Fit at the chosen degree
 p_chosen <- 6
 
 poly_models <- lapply(1:nrow(Y), function(i) fit_poly_model(Y[i, ], p_chosen))
@@ -483,15 +790,11 @@ print(average_errors(poly_errors))
 # Fitted flow should never be negative
 cat("Grid points with negative fitted flow:", sum(Y_poly < 0), "\n")
 
-
-# ------------------------------------------------------------------------------
-# 8c. Checking the fit (Lecture 5; the handout)
-# ------------------------------------------------------------------------------
-
+# Checking the fit
 plot_example_fits(Y_poly, "Polynomial")
 plot_residuals(Y_poly, "Polynomial")
 
-# Residuals against each polynomial term (Lecture 5; the handout)
+# Residuals against each polynomial term
 residuals_poly <- as.vector(t(Y - Y_poly))
 u_all          <- rep(grid_u, times = nrow(Y))
 
@@ -506,14 +809,14 @@ par(mfrow = c(1, 1))
 # Standard diagnostic plots for the worst-fitted flood (as in the handout):
 # residuals vs fitted, Q-Q, scale-location, leverage. Normality and
 # independence matter less here: the aim is a good basis, not inference.
-worst <- which.max(poly_errors[, "rmse"])
+worst_poly <- which.max(poly_errors[, "rmse"])
 
 par(mfrow = c(2, 2))
-plot(poly_models[[worst]])
+plot(poly_models[[worst_poly]])
 par(mfrow = c(1, 1))
 
 # Coefficient table for the same flood (as in the handout)
-print(summary(poly_models[[worst]]))
+print(summary(poly_models[[worst_poly]]))
 
 # Correlation between shape parameters across floods (Lecture 5): strong
 # correlations make modelling their uncertainty harder later
@@ -522,7 +825,7 @@ print(round(cor(poly_coefs), 2))
 
 
 # ------------------------------------------------------------------------------
-# 9. Method 2: principal component analysis (PCA)
+# 13. Method 2: principal component analysis (PCA)
 # ------------------------------------------------------------------------------
 # PCA finds the main shapes in the floods from the data itself (Lecture 4).
 # Each flood's curve is rebuilt as the mean curve plus k component curves:
@@ -533,30 +836,36 @@ print(round(cor(poly_coefs), 2))
 # Curves are centred but not scaled, as all points are on the same scale
 # (as in the lecture example).
 
-pca_result <- prcomp(Y, center = TRUE, scale. = FALSE)
-
-# Rebuilt curves using the first k components
-pca_rebuild <- function(k) {
-  scores   <- pca_result$x[, 1:k, drop = FALSE]
-  loadings <- pca_result$rotation[, 1:k, drop = FALSE]
-  sweep(scores %*% t(loadings), 2, colMeans(Y), FUN = "+")
+make_pca <- function(data, log = FALSE) {
+  X    <- if (log) log(data) else data      # log version needs strictly positive flow
+  back <- if (log) exp else identity
+  fit  <- prcomp(X, center = TRUE, scale. = FALSE)
+  
+  # Rebuilt curves for all floods using the first k components
+  rebuild <- function(k) {
+    scores   <- fit$x[, 1:k, drop = FALSE]
+    loadings <- fit$rotation[, 1:k, drop = FALSE]
+    back(sweep(scores %*% t(loadings), 2, colMeans(X), FUN = "+"))
+  }
+  
+  # Flood i rebuilt from components found WITHOUT it
+  left_out <- function(i, k) {
+    fit_train  <- prcomp(X[-i, ], center = TRUE, scale. = FALSE)
+    mean_train <- colMeans(X[-i, ])
+    loadings   <- fit_train$rotation[, 1:k, drop = FALSE]
+    scores     <- (X[i, ] - mean_train) %*% loadings
+    back(as.vector(mean_train + scores %*% t(loadings)))
+  }
+  
+  list(fit = fit, rebuild = rebuild, left_out = left_out)
 }
 
-# Left-out flood i, rebuilt from components found without it (Lecture 5):
-# centre it with the other floods' mean, project onto their loadings, rebuild
-pca_left_out <- function(i, k) {
-  pca_train  <- prcomp(Y[-i, ], center = TRUE, scale. = FALSE)
-  mean_train <- colMeans(Y[-i, ])
-  loadings   <- pca_train$rotation[, 1:k, drop = FALSE]
-  scores     <- (Y[i, ] - mean_train) %*% loadings
-  as.vector(mean_train + scores %*% t(loadings))
-}
+pca             <- make_pca(Y)
+pca_result      <- pca$fit
+pca_rebuild     <- pca$rebuild
+pca_left_out    <- pca$left_out
 
-
-# ------------------------------------------------------------------------------
-# 9a. Components and variance explained (as in the lecture example)
-# ------------------------------------------------------------------------------
-
+# Components and variance explained (as in the lecture example)
 # Loadings of the first three components as curves over time
 plot(grid_u, pca_result$rotation[, 1], type = "l", col = "red",
      ylim = range(pca_result$rotation[, 1:3]),
@@ -582,34 +891,22 @@ abline(h = 0.95, lty = 2, col = "red")
 
 cat("Smallest k explaining at least 95% of variance:", which(cum_var >= 0.95)[1], "\n")
 
-
-# ------------------------------------------------------------------------------
-# 9b. Choosing k: in-sample and leave-one-out errors (Lecture 5)
-# ------------------------------------------------------------------------------
+# Choosing k:
 # In-sample errors always fall as k grows; leave-one-out errors show whether
 # extra components still help for a new flood
-
 k_values <- 1:min(10, nrow(Y) - 2)
 
-pca_choice <- data.frame()
-for (k in k_values) {
-  pca_choice <- rbind(pca_choice,
-                      data.frame(setting = k, type = "in-sample",
-                                 t(average_errors(method_errors(pca_rebuild(k))))),
-                      data.frame(setting = k, type = "leave-one-out",
-                                 t(average_errors(method_errors(loocv(function(i) pca_left_out(i, k)))))))
-}
+pca_choice <- cached("pca_choice",
+                     insample_loo_choice(k_values, pca_rebuild, pca_left_out),
+                     key = k_values)
 
 print(pca_choice, digits = 3)
 plot_choice(pca_choice, "Number of components k")
 
-
-# ------------------------------------------------------------------------------
-# 9c. Fit at the chosen k and check the fit (Lecture 5)
-# ------------------------------------------------------------------------------
+# Fit at the chosen k and check the fit
 # UPDATE after looking at sections 9a and 9b
 
-k_chosen <- 3
+k_chosen <- 7
 
 # Rebuilt curves, one row per flood
 Y_pca <- pca_rebuild(k_chosen)
@@ -618,7 +915,9 @@ Y_pca <- pca_rebuild(k_chosen)
 pca_scores <- pca_result$x[, 1:k_chosen, drop = FALSE]
 
 pca_errors       <- method_errors(Y_pca)
-pca_errors_loocv <- method_errors(loocv(function(i) pca_left_out(i, k_chosen)))
+pca_errors_loocv <- cached("pca_loocv",
+                           method_errors(loocv(function(i) pca_left_out(i, k_chosen))),
+                           key = k_chosen)
 
 cat("\nPCA (k =", k_chosen, "), average errors:\n")
 print(rbind(in_sample     = average_errors(pca_errors),
@@ -642,7 +941,7 @@ print(round(cor(pca_scores), 2))
 
 
 # ------------------------------------------------------------------------------
-# 10. Method 3: wavelets
+# 14. Method 3: wavelets
 # ------------------------------------------------------------------------------
 # Each flood's curve is split by the discrete wavelet transform into a smooth
 # trend plus detail at several scales (Lecture 4). Most detail coefficients
@@ -652,8 +951,6 @@ print(round(cor(pca_scores), 2))
 # As in the lecture example: Daubechies "d4" filter, 3 levels, periodic
 # boundaries. Y has 64 = 2^6 points, so no padding is needed.
 # Shape parameters: the smooth coefficients plus the kept detail coefficients.
-
-library(wavelets)
 
 wav_filter <- "d4"   # wavelet filter
 wav_levels <- 3      # number of levels
@@ -694,11 +991,7 @@ wavelet_left_out <- function(i, keep) {
   wavelet_rebuild(wav_all[[i]], average_detail_size(wav_all[-i]), keep)
 }
 
-
-# ------------------------------------------------------------------------------
-# 10a. Decomposition of one flood (as in the lecture example)
-# ------------------------------------------------------------------------------
-
+# Decomposition of one flood
 wt_example <- wav_all[[1]]
 
 par(mfrow = c(4, 1), mar = c(2, 4, 2, 1))
@@ -711,47 +1004,36 @@ par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
 # Keeping every coefficient should rebuild the curve exactly
 cat("Max error of full rebuild:", max(abs(Y[1, ] - as.numeric(idwt(wt_example)))), "\n")
 
-
-# ------------------------------------------------------------------------------
-# 10b. Choosing how many detail coefficients to keep (Lecture 5)
-# ------------------------------------------------------------------------------
-
+# Choosing how many detail coefficients to keep
 keep_values <- c(1, 2, 3, 5, 8, 10, 15, 20)
 
-wav_choice <- data.frame()
-for (keep in keep_values) {
-  wav_choice <- rbind(wav_choice,
-                      data.frame(setting = keep, type = "in-sample",
-                                 t(average_errors(method_errors(wavelet_fit_all(keep))))),
-                      data.frame(setting = keep, type = "leave-one-out",
-                                 t(average_errors(method_errors(loocv(function(i) wavelet_left_out(i, keep)))))))
-}
+wav_choice <- cached("wav_choice",
+                     insample_loo_choice(keep_values, wavelet_fit_all, wavelet_left_out),
+                     key = keep_values)
 
 print(wav_choice, digits = 3)
 plot_choice(wav_choice, "Detail coefficients kept")
 
-
-# ------------------------------------------------------------------------------
-# 10c. Fit at the chosen number and check the fit (Lecture 5)
-# ------------------------------------------------------------------------------
+# Fit at the chosen number and check the fit
 # UPDATE after looking at section 10b
-
 keep_chosen <- 5
 
 # Rebuilt curves, one row per flood
 Y_wav <- wavelet_fit_all(keep_chosen)
 
 # Shape parameters: smooth coefficients + kept detail coefficients
-cutoff     <- sort(unlist(avg_size), decreasing = TRUE)[keep_chosen]
-kept       <- unlist(avg_size) >= cutoff
+cutoff_chosen     <- sort(unlist(avg_size), decreasing = TRUE)[keep_chosen]
+kept_coefs       <- unlist(avg_size) >= cutoff_chosen
 wav_params <- t(sapply(wav_all, function(wt) {
-  c(wt@V[[wav_levels]][, 1], unlist(wt@W)[kept])
+  c(wt@V[[wav_levels]][, 1], unlist(wt@W)[kept_coefs])
 }))
 
 cat("Wavelet shape parameters per flood:", ncol(wav_params), "\n")
 
 wav_errors       <- method_errors(Y_wav)
-wav_errors_loocv <- method_errors(loocv(function(i) wavelet_left_out(i, keep_chosen)))
+wav_errors_loocv <- cached("wav_loocv",
+                           method_errors(loocv(function(i) wavelet_left_out(i, keep_chosen))),
+                           key = keep_chosen)
 
 cat("\nWavelets (", keep_chosen, "detail coefficients ), average errors:\n")
 print(rbind(in_sample     = average_errors(wav_errors),
@@ -763,21 +1045,23 @@ cat("Grid points with negative rebuilt flow:", sum(Y_wav < 0), "\n")
 plot_example_fits(Y_wav, "Wavelets")
 plot_residuals(Y_wav, "Wavelets")
 
-# Sensitivity to the wavelet filter and number of levels (Lecture 5), keeping
+# Sensitivity to the wavelet filter and number of levels, keeping
 # the same number of detail coefficients. More levels means fewer smooth
 # coefficients (64 / 2^levels), so fewer parameters.
-wav_sensitivity <- data.frame()
-for (filter in c("haar", "d4", "la8")) {
-  for (levels in 3:5) {
-    wav_list <- lapply(1:nrow(Y), function(i) wavelet_transform(Y[i, ], filter, levels))
+run_wav_sensitivity <- function() {
+  grid <- expand.grid(wf = c("haar", "d4", "la8"), wl = 3:5, stringsAsFactors = FALSE)
+  map_dfr(seq_len(nrow(grid)), function(r) {
+    wf <- grid$wf[r]; wl <- grid$wl[r]
+    wav_list <- lapply(1:nrow(Y), function(i) wavelet_transform(Y[i, ], wf, wl))
     sizes    <- average_detail_size(wav_list)
     Y_fit    <- t(sapply(wav_list, function(wt) wavelet_rebuild(wt, sizes, keep_chosen)))
-    wav_sensitivity <- rbind(wav_sensitivity,
-                             data.frame(filter = filter, levels = levels,
-                                        n_params = 64 / 2^levels + keep_chosen,
-                                        t(average_errors(method_errors(Y_fit)))))
-  }
+    data.frame(filter = wf, levels = wl, n_params = 64 / 2^wl + keep_chosen,
+               t(average_errors(method_errors(Y_fit))))
+  })
 }
+
+wav_sensitivity <- cached("wav_sensitivity", run_wav_sensitivity(),
+                          key = list(keep_chosen, wav_filter, wav_levels))
 
 print(wav_sensitivity, digits = 3)
 
@@ -787,35 +1071,8 @@ print(round(apply(wav_params, 2, var), 4))
 cat("\nCorrelation between wavelet shape parameters:\n")
 print(round(cor(wav_params), 2))
 
-
 # ------------------------------------------------------------------------------
-# 11. Comparing the methods (Lecture 5)
-# ------------------------------------------------------------------------------
-# Accuracy (average errors), parsimony (number of shape parameters) and the
-# physical check (negative flows). For the polynomial, leave-one-out errors
-# are the same as in-sample errors, as each flood is fitted on its own.
-
-comparison <- rbind(
-  data.frame(method = "SEPA (average shape)", n_params = 0, type = "in-sample",
-             t(average_errors(baseline_errors)), negative_points = sum(Y_baseline < 0)),
-  data.frame(method = "SEPA (average shape)", n_params = 0, type = "leave-one-out",
-             t(average_errors(baseline_errors_loocv)), negative_points = NA),
-  data.frame(method = "Polynomial", n_params = p_chosen + 1, type = "in-sample",
-             t(average_errors(poly_errors)), negative_points = sum(Y_poly < 0)),
-  data.frame(method = "PCA", n_params = k_chosen, type = "in-sample",
-             t(average_errors(pca_errors)), negative_points = sum(Y_pca < 0)),
-  data.frame(method = "PCA", n_params = k_chosen, type = "leave-one-out",
-             t(average_errors(pca_errors_loocv)), negative_points = NA),
-  data.frame(method = "Wavelets", n_params = ncol(wav_params), type = "in-sample",
-             t(average_errors(wav_errors)), negative_points = sum(Y_wav < 0)),
-  data.frame(method = "Wavelets", n_params = ncol(wav_params), type = "leave-one-out",
-             t(average_errors(wav_errors_loocv)), negative_points = NA)
-)
-
-print(comparison, digits = 3, row.names = FALSE)
-
-# ------------------------------------------------------------------------------
-# 12. Method 4: known hydrograph function (gamma-type)
+# 15. Method 4: known hydrograph function (gamma-type)
 # ------------------------------------------------------------------------------
 # Lecture 4 suggests fitting a known function that approximates hydrographs,
 # as its parameters can be interpreted. A standard choice is the gamma-type
@@ -889,7 +1146,7 @@ print(round(cor(gamma_params[gamma_ok, ]), 2))
 
 
 # ------------------------------------------------------------------------------
-# 13. Method 5: B-splines
+# 16. Method 5: B-splines
 # ------------------------------------------------------------------------------
 # Ramsay & Silverman's standard alternative to polynomials. A B-spline basis
 # joins short cubic pieces smoothly, so each basis function only affects one
@@ -900,56 +1157,41 @@ print(round(cor(gamma_params[gamma_ok, ]), 2))
 # Each flood is fitted on its own, so the number of basis functions is
 # checked on training and test floods, as for the polynomial.
 
-library(splines)   # part of base R; provides bs()
-
-# Fit one flood's curve with df B-spline basis functions
-fit_bspline_model <- function(y, df) {
-  lm(y ~ bs(u, df = df), data = data.frame(y = y, u = grid_u))
+# Fit one flood's curve with n_basis B-spline basis functions
+fit_bspline_model <- function(y, n_basis) {
+  lm(y ~ bs(u, df = n_basis), data = data.frame(y = y, u = grid_u))
 }
 
-# Fitted curves for every flood with df basis functions
-bspline_fit_all <- function(df) {
-  t(sapply(1:nrow(Y), function(i) fitted(fit_bspline_model(Y[i, ], df))))
-}
+# Fitted curves for every flood with n_basis basis functions
+bspline_fit_all <- function(n_basis) fit_all_with(fit_bspline_model, n_basis)
 
+# Choosing the number of basis functions
+n_basis_values <- 4:15
 
-# ------------------------------------------------------------------------------
-# 13a. Choosing the number of basis functions
-# ------------------------------------------------------------------------------
-
-df_values <- 4:15
-
-bspline_choice <- data.frame()
-for (df in df_values) {
-  errors <- method_errors(bspline_fit_all(df))
-  bspline_choice <- rbind(bspline_choice,
-                          data.frame(setting = df, type = "train", t(average_errors(errors[train_floods, ]))),
-                          data.frame(setting = df, type = "test",  t(average_errors(errors[test_floods, ]))))
-}
+bspline_choice <- cached("bspline_choice",
+                         train_test_choice(n_basis_values, bspline_fit_all),
+                         key = n_basis_values)
 
 print(bspline_choice, digits = 3)
 plot_choice(bspline_choice, "Number of B-spline basis functions")
 
-
-# ------------------------------------------------------------------------------
-# 13b. Fit at the chosen number and check the fit
-# ------------------------------------------------------------------------------
+# Fit at the chosen number and check the fit
 # UPDATE after looking at section 13a
 
-df_chosen <- 8
+n_basis_chosen <- 8
 
-bspline_models <- lapply(1:nrow(Y), function(i) fit_bspline_model(Y[i, ], df_chosen))
+bspline_models <- lapply(1:nrow(Y), function(i) fit_bspline_model(Y[i, ], n_basis_chosen))
 
 # Fitted curves, one row per flood
 Y_bspline <- t(sapply(bspline_models, fitted))
 
 # Shape parameters, one row per flood
 bspline_coefs <- t(sapply(bspline_models, coef))
-colnames(bspline_coefs) <- paste0("theta_", 0:df_chosen)
+colnames(bspline_coefs) <- paste0("theta_", 0:n_basis_chosen)
 
 bspline_errors <- method_errors(Y_bspline)
 
-cat("\nB-splines (", df_chosen, "basis functions ), average errors:\n")
+cat("\nB-splines (", n_basis_chosen, "basis functions ), average errors:\n")
 print(average_errors(bspline_errors))
 
 # Fitted flow should never be negative
@@ -959,10 +1201,10 @@ plot_example_fits(Y_bspline, "B-spline")
 plot_residuals(Y_bspline, "B-spline")
 
 # Standard diagnostic plots for the worst-fitted flood (as in the handout)
-worst <- which.max(bspline_errors[, "rmse"])
+worst_bspline <- which.max(bspline_errors[, "rmse"])
 
 par(mfrow = c(2, 2))
-plot(bspline_models[[worst]])
+plot(bspline_models[[worst_bspline]])
 par(mfrow = c(1, 1))
 
 # Correlation between shape parameters across floods
@@ -971,54 +1213,27 @@ print(round(cor(bspline_coefs), 2))
 
 
 # ------------------------------------------------------------------------------
-# 14. Method 6: PCA on log flow
+# 17. Method 6: PCA on log flow
 # ------------------------------------------------------------------------------
 # Ramsay & Silverman represent curves that must stay positive through their
 # logarithm. PCA (as in section 9) is fitted to log(y), and rebuilt curves
 # are exponentiated, so rebuilt (and later simulated) flows can never be
 # negative.
 
-Y_log <- log(Y)   # scaled flows are always above zero
+log_pca <- make_pca(Y, log = TRUE)
+log_pca_result <- log_pca$fit
+log_pca_rebuild <- log_pca$rebuild
+log_pca_left_out <- log_pca$left_out
 
-log_pca_result <- prcomp(Y_log, center = TRUE, scale. = FALSE)
-
-# Rebuilt curves using the first k components
-log_pca_rebuild <- function(k) {
-  scores   <- log_pca_result$x[, 1:k, drop = FALSE]
-  loadings <- log_pca_result$rotation[, 1:k, drop = FALSE]
-  exp(sweep(scores %*% t(loadings), 2, colMeans(Y_log), FUN = "+"))
-}
-
-# Left-out flood i, rebuilt from components found without it
-log_pca_left_out <- function(i, k) {
-  pca_train  <- prcomp(Y_log[-i, ], center = TRUE, scale. = FALSE)
-  mean_train <- colMeans(Y_log[-i, ])
-  loadings   <- pca_train$rotation[, 1:k, drop = FALSE]
-  scores     <- (Y_log[i, ] - mean_train) %*% loadings
-  exp(as.vector(mean_train + scores %*% t(loadings)))
-}
-
-
-# ------------------------------------------------------------------------------
-# 14a. Choosing k: in-sample and leave-one-out errors
-# ------------------------------------------------------------------------------
-
-log_pca_choice <- data.frame()
-for (k in k_values) {
-  log_pca_choice <- rbind(log_pca_choice,
-                          data.frame(setting = k, type = "in-sample",
-                                     t(average_errors(method_errors(log_pca_rebuild(k))))),
-                          data.frame(setting = k, type = "leave-one-out",
-                                     t(average_errors(method_errors(loocv(function(i) log_pca_left_out(i, k)))))))
-}
+# Choosing k: in-sample and leave-one-out errors
+log_pca_choice <- cached("log_pca_choice",
+                         insample_loo_choice(k_values, log_pca_rebuild, log_pca_left_out),
+                         key = k_values)
 
 print(log_pca_choice, digits = 3)
 plot_choice(log_pca_choice, "Number of components k (log flow)")
 
-
-# ------------------------------------------------------------------------------
-# 14b. Fit at the chosen k and check the fit
-# ------------------------------------------------------------------------------
+# Fit at the chosen k and check the fit
 # UPDATE after looking at section 14a
 
 log_k_chosen <- 3
@@ -1030,7 +1245,9 @@ Y_log_pca <- log_pca_rebuild(log_k_chosen)
 log_pca_scores <- log_pca_result$x[, 1:log_k_chosen, drop = FALSE]
 
 log_pca_errors       <- method_errors(Y_log_pca)
-log_pca_errors_loocv <- method_errors(loocv(function(i) log_pca_left_out(i, log_k_chosen)))
+log_pca_errors_loocv <- cached("log_pca_loocv",
+                               method_errors(loocv(function(i) log_pca_left_out(i, log_k_chosen))),
+                               key = log_k_chosen)
 
 cat("\nPCA on log flow (k =", log_k_chosen, "), average errors:\n")
 print(rbind(in_sample     = average_errors(log_pca_errors),
@@ -1045,7 +1262,7 @@ print(round(apply(log_pca_scores, 2, var), 4))
 
 
 # ------------------------------------------------------------------------------
-# 15. Comparing all methods (Lecture 5)
+# 18. Comparing all methods (Lecture 5)
 # ------------------------------------------------------------------------------
 # Accuracy (average errors), parsimony (number of shape parameters) and the
 # physical check (negative flows). For methods fitted to each flood on its
@@ -1053,16 +1270,17 @@ print(round(apply(log_pca_scores, 2, var), 4))
 # as in-sample errors.
 
 all_comparison <- rbind(
-  comparison,
-  data.frame(method = "Gamma-type", n_params = 3, type = "in-sample",
-             t(average_errors(gamma_errors)),
-             negative_points = sum(Y_gamma[gamma_ok, ] < 0)),
-  data.frame(method = "B-spline", n_params = df_chosen + 1, type = "in-sample",
-             t(average_errors(bspline_errors)), negative_points = sum(Y_bspline < 0)),
-  data.frame(method = "Log-flow PCA", n_params = log_k_chosen, type = "in-sample",
-             t(average_errors(log_pca_errors)), negative_points = sum(Y_log_pca < 0)),
-  data.frame(method = "Log-flow PCA", n_params = log_k_chosen, type = "leave-one-out",
-             t(average_errors(log_pca_errors_loocv)), negative_points = NA)
+  cmp_row("SEPA (average shape)", 0, "in-sample", baseline_errors, sum(Y_baseline < 0)),
+  cmp_row("SEPA (average shape)", 0, "leave-one-out", baseline_errors_loocv),
+  cmp_row("Polynomial", p_chosen + 1, "in-sample", poly_errors, sum(Y_poly < 0)),
+  cmp_row("PCA", k_chosen, "in-sample", pca_errors, sum(Y_pca < 0)),
+  cmp_row("PCA", k_chosen, "leave-one-out", pca_errors_loocv),
+  cmp_row("Wavelets", ncol(wav_params), "in-sample", wav_errors, sum(Y_wav < 0)),
+  cmp_row("Wavelets", ncol(wav_params), "leave-one-out", wav_errors_loocv),
+  cmp_row("Gamma-type", 3, "in-sample", gamma_errors, sum(Y_gamma[gamma_ok, ] < 0)),
+  cmp_row("B-spline", n_basis_chosen + 1, "in-sample", bspline_errors, sum(Y_bspline < 0)),
+  cmp_row("Log-flow PCA", log_k_chosen, "in-sample", log_pca_errors, sum(Y_log_pca < 0)),
+  cmp_row("Log-flow PCA", log_k_chosen, "leave-one-out", log_pca_errors_loocv)
 )
 
 print(all_comparison, digits = 3, row.names = FALSE)
