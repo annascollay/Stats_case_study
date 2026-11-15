@@ -244,7 +244,7 @@ print(round(cor(poly_coefs), 2))
 
 ### Log-flow PCA
 
-## Uncertanity analysis
+## Uncertainty analysis
 
 # Results and validation
 

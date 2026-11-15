@@ -751,7 +751,7 @@ degrees <- 2:10
 # Significance of the highest term (as in the handout's quadratic vs cubic
 # comparison): proportion of floods where the highest term has p < 0.05.
 # Neighbouring points on a curve are correlated, so these p-values are too
-# optimistic (Lecture 5); use alongside the errors below.
+# optimistic; use alongside the errors below.
 prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
                     mean(sapply(1:nrow(Y), function(i) {
                     coefs <- summary(fit_poly_model(Y[i, ], p))$coefficients
