@@ -96,13 +96,13 @@ Using the threshold of `r u_final` $\text{m}^3 / \text{s}$ established in part 1
 
 ## Checking the data
 
-Before constructing individual hydrographs for each flood event, we assessed the reliability of the discharge observations for each of the `r nrow(peaks)` identified events. Each event was initially represented using a common 120-hour window, extending 48 hours before and 72 hours after its peak, with observations recorded at 15-minute intervals.
+Before constructing individual hydrographs for each flood event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending 48 hours before and 72 hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all flood events to be [standardised](#standardising-the-hydrogpraphs), forming the set of peak windows used throughout the rest of the report.
 
-For later analysis, we require all flood events to have a common time grid. Due to data cleaning in part 1 where we excluded observations with unchecked readings (SEPA quality codes 200 and 254), there exists missing readings in our data (Table \@ref(tab:uncheckeddata)). Within the selected flood windows, only two unchecked readings were identified, both belonging to Event 5 on 22 November 2017.
+Having excluded Unchecked readings in the data cleaning section of Part 1 (SEPA quality codes 200 and 254), we identified 8 missing Unchecked readings falling within two of the standardised flood windows, Events 5 and 6 (Table \@ref(tab:uncheckeddata)).
 
 ```{r uncheckeddata, results= "asis", echo=FALSE}
 knitr::kable(
-    bind_rows(burst_tbl, overall_row),
+    unchecked_model$table,
     format    = "markdown",
     align     = "llrrrrr",
     col.names = c("Burst", "Event(s)", "Start", "Readings",
@@ -111,32 +111,32 @@ knitr::kable(
   )
 ```
 
-To fix this, we compared the original unchecked observations with estimated values to decide whether retaining these unchecked readings was reasonable. The estimated values were obtained by linear interpolation of the nearest checked observations by assuming a constant rate of change.
+To fix this, we compared the original Unchecked readings with estimated values to decide whether retaining these Unchecked readings was reasonable. The estimated values were obtained by linear interpolation of the nearest checked readings by assuming a constant rate of change.
 
 ```{r uncheckedscatter, echo=FALSE, fig.cap="An assesment of unchecked values"}
 if (nrow(unchecked_in_events) > 0) {
-  unchecked_scatter_plot
+  unchecked_model$plot
   
 } else {
-  cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
+  cat("No Unchecked quality codes detected within the 120-hour peak event windows.\n\n")
 }
 ```
 
-Figure \@ref(fig:uncheckedscatter) compares the unchecked and interpolated values. The dashed 1:1 line indicates perfect agreement, since both observations lie close to this line, it suggests only a small difference between the recorded and interpolated values. In proportion to the discharge of approximately 83–84 $\text{m}^3 / \s$ these discrepancies are small.
+Figure \@ref(fig:uncheckedscatter) compares the Unchecked and interpolated values, with a dashed 1:1 line that represents perfect agreement. Since all Unchecked readings lie close to this line with a RMSE of `r unchecked_model$rmse`$\text{m}^3/\text{s}$ against discharge values of over 30$\text{m}^3 / \text{s}$, these discrepancies are relatively small.
 
-Although this does not prove that the unchecked observations are completely accurate, the small size of the discrepancies provide some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes.
+Although this does not prove that the Unchecked readings are completely accurate, the small size of the discrepancies provides some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes.
 
-We therefore retained the unchecked SEPA observations rather than replacing them with the corresponding interpolated estimates as the values were similar enough that preserving the original recorded values would avoid unnecessary modification to the data.
+Therefore, we retain the Unchecked SEPA readings rather than replacing them with the corresponding interpolated estimates as the values are close enough that preserving the original recorded values avoids unnecessary modification to the data.
 
-## Exploratory Analysis
+## Exploratory Analysis {#exploratory-analysis}
 
-To investigate the variation in hydrograph shape, the 41 independent flood events were aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph was examined over the same 120-hour window, allowing differences in peak magnitude, rising and falling behaviour to be compared.
+To investigate the variation in hydrograph shape, the 41 independent flood events are aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph is examined over the same 120-hour window, allowing differences in peak magnitude, rising and falling behaviour to be compared.
 
 ```{r Hydrograph, echo=FALSE}
 hydrograph_overlay_plot
 ```
 
-Plotting all of the hydrographs on the same time scale shows the variation in shapes of flood events. All events are aligned at their peaks showing not only do their maximum discharges differ considerably, (with the largest exceeding 400 $\text{m}^3 / \s$) but the differences in the rate of discharge vary considerably.
+Plotting all of the hydrographs on the same time scale shows the variation in shapes of flood events. All events are aligned at their peaks showing not only do their maximum discharges differ considerably, (with the largest exceeding 400 $\text{m}^3 / \text{s}$) but the differences in the rate of discharge vary considerably.
 
 Some events exhibit sharp peaks followed by rapid recession, whereas others have more broad hydrographs with gradual changes in discharge. Several events also display elevated discharge or secondary fluctuations away from the main peak, suggesting that flood behaviour cannot always be accurately described by a single common shape.
 
@@ -150,7 +150,7 @@ Figure \@ref(fig:heatmap), illustrates this variability further, with darker sha
 
 Together, both these visualisations help illustrate the variation between flood event shapes not captured by only their maximum discharge.
 
-## Standardising the hydrogpraphs
+## Standardising the hydrogpraphs {#standardising-the-hydrogpraphs}
 
 From our analysis above we can see that flood events differ in duration, peak discharge, and the relative timing of their peaks, so without standardisation, these differences would obscure the underlying variation in hydrograph shape.
 
@@ -163,14 +163,6 @@ Discharge was also divided by the event's maximum flow, giving each standardised
 The resulting data were arranged into a matrix (Y), with one row per flood event and 64 columns representing common time points. This provides a consistent basis for comparing hydrograph shapes and applying the statistical modelling methods described in the following section.
 
 Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
-
-```{r}
-unchecked_model$plot
-```
-
-```{r}
-unchecked_model$table
-```
 
 # Statistical methodology
 
