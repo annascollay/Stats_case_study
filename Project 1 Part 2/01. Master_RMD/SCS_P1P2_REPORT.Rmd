@@ -168,7 +168,69 @@ Importantly, the original peak discharge, event duration and relative peak posit
 
 ## SEPA (average shape)
 
+```{r}
+cat("\nSEPA's approach (average shape), average errors:\n")
+print(rbind(in_sample     = average_errors(baseline_errors),
+            leave_one_out = average_errors(baseline_errors_loocv)))
+```
+
 ## Polynomial regression
+
+```{r}
+print(data.frame(degree = degrees, prop_significant = prop_significant))
+```
+
+```{r}
+plot_choice(poly_choice, "Polynomial degree")
+```
+
+```{r}
+cat("\nPolynomial (degree", p_chosen, "), average errors:\n")
+print(average_errors(poly_errors))
+```
+
+```{r}
+# Fitted flow should never be negative
+cat("Grid points with negative fitted flow:", sum(Y_poly < 0), "\n")
+```
+
+```{r}
+# Checking the fit
+plot_example_fits(Y_poly, "Polynomial")
+```
+
+```{r}
+# Checking the fit
+plot_residuals(Y_poly, "Polynomial")
+```
+
+```{r}
+par(mfrow = c(2, 3))
+for (k in 1:p_chosen) {
+  plot(u_all^k, residuals_poly, pch = 20, cex = 0.4, col = "grey40",
+       xlab = paste0("u^", k), ylab = "Residual", main = paste0("Residuals vs u^", k))
+  abline(h = 0, col = "red", lty = 2)
+}
+par(mfrow = c(1, 1))
+```
+
+```{r}
+par(mfrow = c(2, 2))
+plot(poly_models[[worst_poly]])
+par(mfrow = c(1, 1))
+```
+
+```{r}
+# Coefficient table for the same flood (as in the handout)
+print(summary(poly_models[[worst_poly]]))
+```
+
+```{r}
+# Correlation between shape parameters across floods (Lecture 5): strong
+# correlations make modelling their uncertainty harder later
+cat("\nCorrelation between polynomial shape parameters:\n")
+print(round(cor(poly_coefs), 2))
+```
 
 ## PCA
 
