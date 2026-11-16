@@ -379,8 +379,7 @@ Methods taken forward (two?)
 
 # Recommendation
 
-- Recommend the best method and justify
-- explain the limitations and uncertainty with each method
+- Recommend the best method and justify, alongside advantages and disadvantages
 
 # Emulator application
 
