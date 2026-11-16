@@ -596,12 +596,16 @@ set.seed(2026)
 test_floods  <- sort(sample(1:nrow(Y), size = round(0.2 * nrow(Y))))
 train_floods <- setdiff(1:nrow(Y), test_floods)
 
-# Plot observed vs fitted floods in real units for four kinds of flood:
-# earliest peak, latest peak, shortest and longest
+# Plot observed vs fitted floods in real units for six kinds of flood:
+# earliest and latest peak, shortest and longest, sharpest and flattest
+# (Lecture 5: check different types of peak, e.g. sharp and long flat peaks)
+sharpness <- rowMeans(Y > 0.5)   # share of the event spent above half the peak
+
 plot_example_fits <- function(Y_fit, title) {
   examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
-                       which.min(events$width_h),       which.max(events$width_h)))
-  par(mfrow = c(2, 2))
+                       which.min(events$width_h),       which.max(events$width_h),
+                       which.max(sharpness),            which.min(sharpness)))
+  par(mfrow = c(2, 3))
   for (i in examples) {
     observed <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                        events$width_h[i], events$peak_flow[i])
@@ -707,6 +711,7 @@ baseline_curve <- function(average_shape, i) {
 
 # In-sample: every flood gets the average of all floods
 average_shape <- colMeans(Y_unaligned)
+average_shape <- average_shape / max(average_shape)   # rescale so the peak equals the max flow, as SEPA does
 Y_baseline    <- t(sapply(1:nrow(Y), function(i) baseline_curve(average_shape, i)))
 
 baseline_errors <- method_errors(Y_baseline)
@@ -714,7 +719,8 @@ baseline_errors <- method_errors(Y_baseline)
 # Leave-one-out: every flood gets the average of the other floods
 baseline_errors_loocv <- cached("baseline_loocv",
                                 method_errors(loocv(function(i) {
-                                  baseline_curve(colMeans(Y_unaligned[-i, ]), i)
+                                  s <- colMeans(Y_unaligned[-i, ])
+                                  baseline_curve(s / max(s), i)
                                 })))
 
 cat("\nSEPA's approach (average shape), average errors:\n")
@@ -771,7 +777,7 @@ print(poly_choice, digits = 3)
 plot_choice(poly_choice, "Polynomial degree")
 
 # Fit at the chosen degree
-p_chosen <- 6
+p_chosen <- 7
 
 poly_models <- lapply(1:nrow(Y), function(i) fit_poly_model(Y[i, ], p_chosen))
 
@@ -906,7 +912,7 @@ plot_choice(pca_choice, "Number of components k")
 # Fit at the chosen k and check the fit
 # UPDATE after looking at sections 9a and 9b
 
-k_chosen <- 7
+k_chosen <- 6
 
 # Rebuilt curves, one row per flood
 Y_pca <- pca_rebuild(k_chosen)
