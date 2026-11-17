@@ -371,6 +371,15 @@ plot_example_fits(Y_gamma, "Gamma-type")
 
 # Comparison and validation of methods
 
+```{r allcomparison}
+knitr::kable(
+  all_comparison, 
+  digits = 3, 
+  col.names = c("Method", "# Parameters", "Type", "RMSE", "Peak Error", "Timing Error", "Volume Error", "Negative Points"),
+  caption = "Comparison of Model Performance"
+)
+```
+
 Accuracy compared with SEPA's approach
 
 Number and behaviour of the parameters 

@@ -1221,9 +1221,7 @@ all_comparison <- rbind(
   cmp_row("Wavelets", ncol(wav_params), "in-sample", wav_errors, sum(Y_wav < 0)),
   cmp_row("Wavelets", ncol(wav_params), "leave-one-out", wav_errors_loocv),
   cmp_row("Gamma-type", 3, "in-sample", gamma_errors, sum(Y_gamma[gamma_ok, ] < 0)),
-  cmp_row("B-spline", n_basis_chosen + 1, "in-sample", bspline_errors, sum(Y_bspline < 0)),
-  cmp_row("Log-flow PCA", log_k_chosen, "in-sample", log_pca_errors, sum(Y_log_pca < 0)),
-  cmp_row("Log-flow PCA", log_k_chosen, "leave-one-out", log_pca_errors_loocv)
+  cmp_row("B-spline", n_basis_chosen + 1, "in-sample", bspline_errors, sum(Y_bspline < 0))
 )
 
 print(all_comparison, digits = 3, row.names = FALSE)
