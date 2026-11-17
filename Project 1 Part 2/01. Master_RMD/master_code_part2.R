@@ -457,7 +457,7 @@ if (!is.null(unchecked_model)) {
 #   c. divide flow by peak flow   (so every event peaks at 1)
 #   d. read the curve off at 64 equally spaced points between 0 and 1
 #      (linear interpolation between the 15-minute readings), giving one
-#      row of Y (Lecture 4: stack the hydrographs on a common grid of times)
+#      row of Y
 
 u_star <- mean(events$peak_position)
 n_grid <- 64
@@ -511,7 +511,7 @@ reconstruct_hydrograph <- function(y, peak_position, width_h, peak_flow) {
 # 10. Shared functions for checking every method
 # ------------------------------------------------------------------------------
 # Every method is checked in the same way, so they can be compared fairly:
-# each fitted curve is turned back into a real flood (section 6) and compared
+# each fitted curve is turned back into a real flood and compared
 # with the observed flood in m^3/s and hours.
 
 # Set use_cache <- FALSE to force everything to be recomputed.
@@ -537,13 +537,13 @@ cached <- function(name, expr, key = NULL) {
   result
 }
 
-# Area under a curve (trapezium rule), used for flood volume. Needed because
+# Trapezium rule used for flood volume. Needed because
 # after undoing the realignment the points are not evenly spaced in hours.
 area_under <- function(hours, flow) {
   sum(diff(hours) * (head(flow, -1) + tail(flow, -1)) / 2)
 }
 
-# Errors for one flood (observed and fitted flow at the same hours):
+# Errors for one flood:
 #   rmse         : overall closeness of the curve (m^3/s)
 #   peak_error   : fitted peak minus observed peak (m^3/s)
 #   timing_error : fitted peak time minus observed peak time (hours)
@@ -572,16 +572,16 @@ method_errors <- function(Y_fit) {
   errors
 }
 
-# Average size of each error across floods (one line per method)
+# Average size of each error across floods
 average_errors <- function(errors) {
   colMeans(abs(errors))
 }
 
-# Leave-one-out cross-validation (Lecture 5): each flood is left out in turn,
+# Leave-one-out cross-validation: each flood is left out in turn,
 # the method is fitted to the other floods, and the left-out flood is
 # predicted. fit_left_out(i) must return the method's curve for flood i
-# using only the other floods. (u_star is the average over all floods; its
-# effect on the left-out flood is negligible.)
+# using only the other floods. u_star is the average over all floods; its
+# effect on the left-out flood is negligible
 loocv <- function(fit_left_out) {
   Y_pred <- Y
   for (i in 1:nrow(Y)) {
@@ -590,15 +590,13 @@ loocv <- function(fit_left_out) {
   Y_pred
 }
 
-# Fixed training and test floods (Lecture 5): about 20% held out, chosen once
-# with a fixed seed so everyone uses the same split
+# Fixed training and test floods: about 20% held out, chosen once
+# with a fixed seed so same split always used
 set.seed(2026)
 test_floods  <- sort(sample(1:nrow(Y), size = round(0.2 * nrow(Y))))
 train_floods <- setdiff(1:nrow(Y), test_floods)
 
-# Plot observed vs fitted floods in real units for six kinds of flood:
-# earliest and latest peak, shortest and longest, sharpest and flattest
-# (Lecture 5: check different types of peak, e.g. sharp and long flat peaks)
+# Plot observed vs fitted floods in real units for six kinds of flood
 sharpness <- rowMeans(Y > 0.5)   # share of the event spent above half the peak
 
 plot_example_fits <- function(Y_fit, title) {
@@ -622,8 +620,7 @@ plot_example_fits <- function(Y_fit, title) {
   par(mfrow = c(1, 1))
 }
 
-# Plot residuals against time for every flood. Look for patterns (e.g. always
-# too low at the peak), not just small residuals. Red line: average residual.
+# Plot residuals against time for every flood. Red line is average residual.
 plot_residuals <- function(Y_fit, title) {
   residuals <- Y - Y_fit
   matplot(grid_u, t(residuals), type = "l", lty = 1, col = "grey",
@@ -633,8 +630,7 @@ plot_residuals <- function(Y_fit, title) {
   abline(h = 0, lty = 2)
 }
 
-# Plot the four average errors against a method's setting (e.g. degree),
-# with one line for each type of error (e.g. in-sample and leave-one-out)
+# Plot the four average errors against a method's setting with one line for each type of error
 plot_choice <- function(choice_table, setting_name) {
   types <- unique(choice_table$type)
   par(mfrow = c(2, 2))
@@ -656,7 +652,7 @@ fit_all_with <- function(fit_model, setting) {
   t(sapply(1:nrow(Y), function(i) fitted(fit_model(Y[i, ], setting))))
 }
 
-# Train/test errors by setting (polynomial degree, number of B-spline functions)
+# Train/test errors by setting
 train_test_choice <- function(settings, fit_all) {
   map_dfr(settings, function(s) {
     errors <- method_errors(fit_all(s))
@@ -667,7 +663,7 @@ train_test_choice <- function(settings, fit_all) {
   })
 }
 
-# In-sample vs leave-one-out errors by setting (PCA k, wavelet coefficients kept)
+# In-sample vs leave-one-out errors by setting
 insample_loo_choice <- function(settings, rebuild, left_out) {
   map_dfr(settings, function(s) {
     rbind(
@@ -679,20 +675,20 @@ insample_loo_choice <- function(settings, rebuild, left_out) {
   })
 }
 
-# One summary row for the final comparison table
+# Summary row for the final comparison table
 cmp_row <- function(method, n_params, type, errors, negative = NA) {
   data.frame(method = method, n_params = n_params, type = type,
              t(average_errors(errors)), negative_points = negative)
 }
 
 # ------------------------------------------------------------------------------
-# 11. SEPA's current approach (the baseline)
-# ------------------------------------------------------------------------------
+# 11. SEPA's current approach
+# -----------------------------------------------------------------------------
 # SEPA uses one average shape for every flood, scaled by peak flow. SEPA does
 # not realign peaks, so the average is taken over the floods on their own
 # timing. Every method is compared against this.
 
-# Each flood's curve on its own timing (not realigned), on the 64 points
+# Each flood's curve on its own timing on the 64 points
 unaligned_curve <- function(i) {
   real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                  events$width_h[i], events$peak_flow[i])
@@ -701,8 +697,7 @@ unaligned_curve <- function(i) {
 
 Y_unaligned <- t(sapply(1:nrow(Y), unaligned_curve))
 
-# Average shape given to flood i, laid out like Y (so it can be checked in
-# the same way as every method)
+# Average shape given to flood i, laid out like Y so it can be checked in the same way as every method
 baseline_curve <- function(average_shape, i) {
   real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                  events$width_h[i], events$peak_flow[i])
@@ -731,12 +726,11 @@ print(rbind(in_sample     = average_errors(baseline_errors),
 # ------------------------------------------------------------------------------
 # 12. Method 1: polynomial fitting
 # ------------------------------------------------------------------------------
-# Each flood's curve (one row of Y) is fitted with a polynomial in time,
-# separately for each flood, using lm() (Lecture 4):
+# Each flood's curve is fitted with a polynomial in time, separately for each flood, using lm():
 #   y(u) = theta_0 + theta_1 u + theta_2 u^2 + ... + theta_p u^p + error
 # The fitted coefficients theta_0, ..., theta_p are the flood's shape
 # parameters. Each flood is fitted on its own, so leave-one-out errors are the
-# same as in-sample errors; the degree is checked on training and test floods.
+# same as in-sample errors. degree is checked on training and test floods.
 
 # Formula y ~ I(u^1) + I(u^2) + ... + I(u^p), written as in the handout
 poly_formula <- function(p) {
@@ -754,10 +748,8 @@ poly_fit_all <- function(p) fit_all_with(fit_poly_model, p)
 # Choosing the degree
 degrees <- 2:10
 
-# Significance of the highest term (as in the handout's quadratic vs cubic
-# comparison): proportion of floods where the highest term has p < 0.05.
-# Neighbouring points on a curve are correlated, so these p-values are too
-# optimistic; use alongside the errors below.
+# Significance of the highest term: proportion of floods where the highest term has p < 0.05.
+# Neighbouring points on a curve are correlated, so these p-values are too optimistic
 prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
                     mean(sapply(1:nrow(Y), function(i) {
                     coefs <- summary(fit_poly_model(Y[i, ], p))$coefficients
@@ -768,7 +760,7 @@ prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
 
 print(data.frame(degree = degrees, prop_significant = prop_significant))
 
-# Errors by degree on training and test floods (Lecture 5): the chosen degree
+# Errors by degree on training and test floods. the chosen degree
 # should work as well on the test floods as on the training floods
 poly_choice <- cached("poly_choice",
                       train_test_choice(degrees, poly_fit_all), key = degrees)
@@ -812,7 +804,7 @@ for (k in 1:p_chosen) {
 }
 par(mfrow = c(1, 1))
 
-# Standard diagnostic plots for the worst-fitted flood (as in the handout):
+# Standard diagnostic plots for the worst-fitted flood:
 # residuals vs fitted, Q-Q, scale-location, leverage. Normality and
 # independence matter less here: the aim is a good basis, not inference.
 worst_poly <- which.max(poly_errors[, "rmse"])
@@ -821,10 +813,10 @@ par(mfrow = c(2, 2))
 plot(poly_models[[worst_poly]])
 par(mfrow = c(1, 1))
 
-# Coefficient table for the same flood (as in the handout)
+# Coefficient table for the same flood
 print(summary(poly_models[[worst_poly]]))
 
-# Correlation between shape parameters across floods (Lecture 5): strong
+# Correlation between shape parameters across floods: strong
 # correlations make modelling their uncertainty harder later
 cat("\nCorrelation between polynomial shape parameters:\n")
 print(round(cor(poly_coefs), 2))
@@ -833,14 +825,13 @@ print(round(cor(poly_coefs), 2))
 # ------------------------------------------------------------------------------
 # 13. Method 2: principal component analysis (PCA)
 # ------------------------------------------------------------------------------
-# PCA finds the main shapes in the floods from the data itself (Lecture 4).
+# PCA finds the main shapes in the floods from the data itself.
 # Each flood's curve is rebuilt as the mean curve plus k component curves:
 #   y_i(u) = mean curve(u) + C_i1 a_1(u) + ... + C_ik a_k(u)
 #   a_j  : loadings of component j (a curve over the 64 grid points)
 #   C_ij : score of flood i on component j
 # The scores C_i1, ..., C_ik are the flood's shape parameters.
 # Curves are centred but not scaled, as all points are on the same scale
-# (as in the lecture example).
 
 make_pca <- function(data, log = FALSE) {
   X    <- if (log) log(data) else data      # log version needs strictly positive flow
@@ -854,7 +845,7 @@ make_pca <- function(data, log = FALSE) {
     back(sweep(scores %*% t(loadings), 2, colMeans(X), FUN = "+"))
   }
   
-  # Flood i rebuilt from components found WITHOUT it
+  # Flood i rebuilt from components found without it
   left_out <- function(i, k) {
     fit_train  <- prcomp(X[-i, ], center = TRUE, scale. = FALSE)
     mean_train <- colMeans(X[-i, ])
@@ -871,7 +862,7 @@ pca_result      <- pca$fit
 pca_rebuild     <- pca$rebuild
 pca_left_out    <- pca$left_out
 
-# Components and variance explained (as in the lecture example)
+# Components and variance explained
 # Loadings of the first three components as curves over time
 plot(grid_u, pca_result$rotation[, 1], type = "l", col = "red",
      ylim = range(pca_result$rotation[, 1:3]),
@@ -886,8 +877,7 @@ legend("bottomright", c("PC1", "PC2", "PC3"),
 # Variance of each component
 plot(pca_result, main = "Variance of each principal component")
 
-# Cumulative proportion of variance explained (Lecture 5): choose the
-# smallest k that captures enough (Lecture 4 suggests e.g. 95%)
+# Cumulative proportion of variance explained: choose the smallest k that captures enough
 cum_var <- cumsum(pca_result$sdev^2) / sum(pca_result$sdev^2)
 
 plot(seq_along(cum_var), cum_var, type = "b", pch = 19, ylim = c(0, 1),
@@ -897,8 +887,7 @@ abline(h = 0.95, lty = 2, col = "red")
 
 cat("Smallest k explaining at least 95% of variance:", which(cum_var >= 0.95)[1], "\n")
 
-# Choosing k:
-# In-sample errors always fall as k grows; leave-one-out errors show whether
+# Choosing k: In-sample errors always fall as k grows; leave-one-out errors show whether
 # extra components still help for a new flood
 k_values <- 1:min(10, nrow(Y) - 2)
 
@@ -909,8 +898,8 @@ pca_choice <- cached("pca_choice",
 print(pca_choice, digits = 3)
 plot_choice(pca_choice, "Number of components k")
 
-# Fit at the chosen k and check the fit
-# UPDATE after looking at sections 9a and 9b
+# Fit at the chosen k and check the fit.
+# Update after looking at sections 9a and 9b
 
 k_chosen <- 6
 
@@ -935,10 +924,10 @@ cat("Grid points with negative rebuilt flow:", sum(Y_pca < 0), "\n")
 plot_example_fits(Y_pca, "PCA")
 plot_residuals(Y_pca, "PCA")
 
-# Outliers in the scores (Lecture 5): floods far from the rest are unusual
+# Outliers in the scores: floods far from the rest are unusual
 pairs(pca_scores, pch = 19, main = "Scores on the kept components")
 
-# Variance and correlation of the scores (Lecture 5). Scores are
+# Variance and correlation of the scores. Scores are
 # uncorrelated by construction, which helps when modelling their uncertainty.
 cat("\nVariance of each PCA score:\n")
 print(round(apply(pca_scores, 2, var), 4))
@@ -950,12 +939,11 @@ print(round(cor(pca_scores), 2))
 # 14. Method 3: wavelets
 # ------------------------------------------------------------------------------
 # Each flood's curve is split by the discrete wavelet transform into a smooth
-# trend plus detail at several scales (Lecture 4). Most detail coefficients
+# trend plus detail at several scales. Most detail coefficients
 # are tiny, so only the largest few are kept and the rest set to zero.
-# The same detail coefficients are kept for every flood (Lecture 4), chosen
+# The same detail coefficients are kept for every flood, chosen
 # as those that are largest on average across floods.
-# As in the lecture example: Daubechies "d4" filter, 3 levels, periodic
-# boundaries. Y has 64 = 2^6 points, so no padding is needed.
+# Daubechies "d4" filter, 3 levels, periodic boundaries. Y has 64 = 2^6 points, so no padding is needed.
 # Shape parameters: the smooth coefficients plus the kept detail coefficients.
 
 wav_filter <- "d4"   # wavelet filter
@@ -973,7 +961,7 @@ average_detail_size <- function(wav_list) {
   })
 }
 
-# Rebuild one curve keeping only the `keep` detail coefficients that are
+# Rebuild one curve keeping only the "keep" detail coefficients that are
 # largest on average (avg_size), setting the rest to zero
 wavelet_rebuild <- function(wt, avg_size, keep) {
   cutoff <- sort(unlist(avg_size), decreasing = TRUE)[keep]
@@ -987,7 +975,7 @@ wavelet_rebuild <- function(wt, avg_size, keep) {
 wav_all  <- lapply(1:nrow(Y), function(i) wavelet_transform(Y[i, ]))
 avg_size <- average_detail_size(wav_all)
 
-# Rebuilt curves for every flood, keeping `keep` detail coefficients
+# Rebuilt curves for every flood, keeping "keep" detail coefficients
 wavelet_fit_all <- function(keep) {
   t(sapply(wav_all, function(wt) wavelet_rebuild(wt, avg_size, keep)))
 }
@@ -1021,7 +1009,7 @@ print(wav_choice, digits = 3)
 plot_choice(wav_choice, "Detail coefficients kept")
 
 # Fit at the chosen number and check the fit
-# UPDATE after looking at section 10b
+# Update after looking at section 10b
 keep_chosen <- 5
 
 # Rebuilt curves, one row per flood
@@ -1071,7 +1059,7 @@ wav_sensitivity <- cached("wav_sensitivity", run_wav_sensitivity(),
 
 print(wav_sensitivity, digits = 3)
 
-# Variance and correlation of the shape parameters (Lecture 5)
+# Variance and correlation of the shape parameters
 cat("\nVariance of each wavelet shape parameter:\n")
 print(round(apply(wav_params, 2, var), 4))
 cat("\nCorrelation between wavelet shape parameters:\n")
@@ -1080,7 +1068,7 @@ print(round(cor(wav_params), 2))
 # ------------------------------------------------------------------------------
 # 15. Method 4: known hydrograph function (gamma-type)
 # ------------------------------------------------------------------------------
-# Lecture 4 suggests fitting a known function that approximates hydrographs,
+# Fit a known function that approximates hydrographs,
 # as its parameters can be interpreted. A standard choice is the gamma-type
 # hydrograph. Our curves start and end at the trough level rather than zero,
 # so a baseflow term b is added:
@@ -1097,7 +1085,7 @@ gamma_curve <- function(u, b, up, m) {
   b + (1 - b) * (u / up)^m * exp(m * (1 - u / up))
 }
 
-# Fit one flood's curve; returns NULL if the fit fails to converge
+# Fit one flood's curve
 fit_gamma_model <- function(y) {
   tryCatch(
     nls(y ~ gamma_curve(u, b, up, m),
@@ -1116,14 +1104,13 @@ gamma_models <- lapply(1:nrow(Y), function(i) fit_gamma_model(Y[i, ]))
 gamma_ok <- which(!sapply(gamma_models, is.null))
 cat("Gamma fits that failed to converge:", nrow(Y) - length(gamma_ok), "\n")
 
-# Fitted curves, one row per flood (failed fits left as the observed curve,
-# and excluded from the errors below)
+# Fitted curves, one row per flood (failed fits left as the observed curve, and excluded from the errors below)
 Y_gamma <- Y
 for (i in gamma_ok) {
   Y_gamma[i, ] <- fitted(gamma_models[[i]])
 }
 
-# Shape parameters, one row per flood (NA where the fit failed)
+# Shape parameters, one row per flood
 gamma_params <- matrix(NA, nrow = nrow(Y), ncol = 3,
                        dimnames = list(NULL, c("b", "up", "m")))
 for (i in gamma_ok) {
@@ -1182,7 +1169,7 @@ print(bspline_choice, digits = 3)
 plot_choice(bspline_choice, "Number of B-spline basis functions")
 
 # Fit at the chosen number and check the fit
-# UPDATE after looking at section 13a
+# Update after doing section 13a
 
 n_basis_chosen <- 8
 
@@ -1206,7 +1193,7 @@ cat("Grid points with negative fitted flow:", sum(Y_bspline < 0), "\n")
 plot_example_fits(Y_bspline, "B-spline")
 plot_residuals(Y_bspline, "B-spline")
 
-# Standard diagnostic plots for the worst-fitted flood (as in the handout)
+# Standard diagnostic plots for the worst-fitted flood
 worst_bspline <- which.max(bspline_errors[, "rmse"])
 
 par(mfrow = c(2, 2))
@@ -1218,7 +1205,7 @@ cat("\nCorrelation between B-spline shape parameters:\n")
 print(round(cor(bspline_coefs), 2))
 
 # ------------------------------------------------------------------------------
-# 18. Comparing all methods (Lecture 5)
+# 18. Comparing all methods
 # ------------------------------------------------------------------------------
 # Accuracy (average errors), parsimony (number of shape parameters) and the
 # physical check (negative flows). For methods fitted to each flood on its
@@ -1254,15 +1241,13 @@ print(all_comparison, digits = 3, row.names = FALSE)
 #   PCA      : pca_scores  (section 13, one row per flood, k_chosen columns)
 #   Wavelets : wav_params  (section 14, one row per flood, 13 columns)
 # To simulate new floods we need a probability distribution for these
-# parameters (Lecture 3: "assign a probability distribution to the inputs";
-# Lecture 5, slide 27: model the uncertainty in the parameters "by fitting
-# different statistical models, or by coming up with a sampling scheme").
+# parameters.
 #
 #   19a. Curves from simulated parameters
 #   19b. Looking at the shape parameters: distributions, correlations, and
 #        dependence on the size and timing of the flood
-#   19c. Simulating new shape parameters: a statistical model (multivariate
-#        Normal) and a sampling scheme (smoothed bootstrap)
+#   19c. Simulating new shape parameters: a statistical model and a sampling 
+#   scheme
 #   19d. Out-of-sample check of the simulated shapes against held-out floods
 #   19e. Plots of the out-of-sample check
 #   19f. Final simulations (provisionally PCA with the Normal)
@@ -1287,10 +1272,9 @@ params <- list(PCA = pca_scores, Wavelets = wav_params)
 # 19a. Curves from simulated parameters
 # ------------------------------------------------------------------------------
 # Sections 13 and 14 rebuild the observed floods only. These two functions
-# turn ANY shape parameters (one row per flood), e.g. simulated ones from
-# 19c, into curves laid out like Y.
-# By default they use the components / kept coefficients found from all
-# floods (sections 13 and 14); 19d passes in ones found from training floods.
+# turn any shape parameters (one row per flood), e.g. simulated ones from
+# 19c, into curves laid out like Y. By default they use the components / kept coefficients found from all
+# floods. 19d passes in ones found from training floods.
 
 # PCA: mean curve + scores x loadings
 pca_sim_curves <- function(scores, pca_fit = pca_result) {
@@ -1299,8 +1283,7 @@ pca_sim_curves <- function(scores, pca_fit = pca_result) {
 }
 
 # Wavelets: put the smooth and kept detail coefficients back into a wavelet
-# object (dropped detail coefficients set to zero, as in section 14) and
-# invert the transform
+# object and invert the transform
 wav_sim_curves <- function(params, kept = kept_coefs) {
   t(apply(params, 1, function(p) {
     wt <- wav_all[[1]]                                   # used as a template
@@ -1313,8 +1296,7 @@ wav_sim_curves <- function(params, kept = kept_coefs) {
   }))
 }
 
-# Check: the observed parameters should give back the curves from sections
-# 13 and 14 (differences of 0)
+# observed parameters should give back the curves from sections 13 and 14 (differences of 0)
 cat("PCA check:",      max(abs(pca_sim_curves(pca_scores) - Y_pca)), "\n")
 cat("Wavelets check:", max(abs(wav_sim_curves(wav_params) - Y_wav)), "\n")
 
@@ -1338,7 +1320,7 @@ plot_param_histograms <- function(shape_params, method_name) {
   par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
 }
 
-# Distributions (2): Normal Q-Q plot of each parameter (Lecture 5): if the parameter is
+# Distributions (2): Normal Q-Q plot of each parameter: if the parameter is
 # Normal, the points lie close to the red line. Curving away at the ends
 # means skew or long tails.
 plot_param_qq <- function(shape_params, method_name) {
@@ -1399,9 +1381,8 @@ par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
 # ------------------------------------------------------------------------------
 # 19c. Simulating new shape parameters
 # ------------------------------------------------------------------------------
-# Two ways to simulate shape parameters for new floods (Lecture 5, slide 27:
-# "fitting different statistical models, or coming up with a sampling
-# scheme"). Each takes the parameters of a set of floods (one row per flood)
+# Two ways to simulate shape parameters for new floods.
+# Each takes the parameters of a set of floods (one row per flood)
 # and returns n_sim simulated parameter vectors (one per row).
 # MASS::mvrnorm() draws from a multivariate Normal (MASS comes with R).
 
@@ -1480,7 +1461,7 @@ par(mfrow = c(1, 1))
 # ------------------------------------------------------------------------------
 # 19d. Out-of-sample check
 # ------------------------------------------------------------------------------
-# Lecture 5, slide 27: check whether the fitted distribution works well out
+# Check whether the fitted distribution works well out
 # of sample. For a held-out flood:
 #   1. using the training floods only, find the PCA components / wavelet
 #      coefficients to keep, and fit the Normal or bootstrap to their
@@ -1690,7 +1671,7 @@ cat("Share whose highest point is not within 5% of the peak flow:",
     round(mean(abs(apply(final_shapes, 1, max) - 1) > 0.05), 3), "\n")
 
 # Simulating whole floods in m^3/s and hours: what would be fed to the flood
-# inundation model or emulator (Lecture 3). Each simulated flood combines
+# inundation model or emulator. Each simulated flood combines
 #   - a simulated shape, divided by its own maximum so the flood peaks at
 #     exactly the drawn peak flow (as in SEPA's current approach)
 #   - a peak flow, width and peak position for that flood
@@ -1733,7 +1714,6 @@ par(mfrow = c(1, 1))
 # ------------------------------------------------------------------------------
 # 19g. Sampling uncertainty
 # ------------------------------------------------------------------------------
-# Lecture 5, slide 28: "sampling error, your dataset is limited in size".
 # Our simulations are based on only 41 floods; a different 41 floods would
 # give a slightly different model. To see how much this matters:
 #   1. resample the 41 floods with replacement (some floods appear more than
