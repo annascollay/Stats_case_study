@@ -1292,12 +1292,563 @@ all_comparison <- rbind(
 print(all_comparison, digits = 3, row.names = FALSE)
 
 # ------------------------------------------------------------------------------
-# Next steps
-#
-# - Compare models and choose (looking like PCA?)
-# - Model uncertainty in its parameters. I believe by fitting a distribution for
-# shape parameters, peak flow, width, and peak position. Check how they depend on
-# each other
-# - Simulate hydrographs and validate them using this
-# - Show the emulator workflow (don't actually need to fit)
+# 19. Uncertainty in the shape parameters
 # ------------------------------------------------------------------------------
+# Uncertainty analysis of the two chosen methods: PCA (k_chosen components)
+# and wavelets (la8, 3 levels, 8 smooth + 5 detail = 13 shape parameters).
+#
+# BEFORE RUNNING: in section 14 set wav_filter <- "la8", wav_levels <- 3 and
+# keep_chosen <- 5, so that wav_params holds the 13 la8 parameters.
+#
+# The shape parameters themselves come from earlier sections:
+#   PCA      : pca_scores  (section 13, one row per flood, k_chosen columns)
+#   Wavelets : wav_params  (section 14, one row per flood, 13 columns)
+# To simulate new floods we need a probability distribution for these
+# parameters (Lecture 3: "assign a probability distribution to the inputs";
+# Lecture 5, slide 27: model the uncertainty in the parameters "by fitting
+# different statistical models, or by coming up with a sampling scheme").
+#
+#   19a. Curves from simulated parameters
+#   19b. Looking at the shape parameters: distributions, correlations, and
+#        dependence on the size and timing of the flood
+#   19c. Simulating new shape parameters: a statistical model (multivariate
+#        Normal) and a sampling scheme (smoothed bootstrap)
+#   19d. Out-of-sample check of the simulated shapes against held-out floods
+#   19e. Plots of the out-of-sample check
+#   19f. Final simulations (provisionally PCA with the Normal)
+#   19g. Sampling uncertainty
+
+# Shape parameters from sections 13 and 14, labelled so plots and tables
+# are readable:
+#   PCA      : scores on the kept components (PC1, PC2, ...)
+#   Wavelets : smooth coefficients (S1, S2, ...) followed by the kept
+#              detail coefficients (D1, D2, ...). With la8 and 3 levels
+#              there are 64 / 2^3 = 8 smooth coefficients.
+# Both are stored in one list so steps can be run for both methods at once.
+colnames(pca_scores) <- paste0("PC", 1:ncol(pca_scores))
+n_smooth <- length(wav_all[[1]]@V[[wav_levels]])
+colnames(wav_params) <- c(paste0("S", 1:n_smooth),
+                          paste0("D", 1:(ncol(wav_params) - n_smooth)))
+
+params <- list(PCA = pca_scores, Wavelets = wav_params)
+
+
+# ------------------------------------------------------------------------------
+# 19a. Curves from simulated parameters
+# ------------------------------------------------------------------------------
+# Sections 13 and 14 rebuild the observed floods only. These two functions
+# turn ANY shape parameters (one row per flood), e.g. simulated ones from
+# 19c, into curves laid out like Y.
+# By default they use the components / kept coefficients found from all
+# floods (sections 13 and 14); 19d passes in ones found from training floods.
+
+# PCA: mean curve + scores x loadings
+pca_sim_curves <- function(scores, pca_fit = pca_result) {
+  loadings <- pca_fit$rotation[, 1:ncol(scores)]
+  sweep(scores %*% t(loadings), 2, pca_fit$center, FUN = "+")
+}
+
+# Wavelets: put the smooth and kept detail coefficients back into a wavelet
+# object (dropped detail coefficients set to zero, as in section 14) and
+# invert the transform
+wav_sim_curves <- function(params, kept = kept_coefs) {
+  t(apply(params, 1, function(p) {
+    wt <- wav_all[[1]]                                   # used as a template
+    wt@V[[wav_levels]][, 1] <- p[1:n_smooth]
+    detail       <- numeric(length(kept))
+    detail[kept] <- p[-(1:n_smooth)]
+    level <- rep(seq_along(wt@W), sapply(wt@W, nrow))   # level of each detail coefficient
+    for (j in seq_along(wt@W)) wt@W[[j]][, 1] <- detail[level == j]
+    as.numeric(idwt(wt))
+  }))
+}
+
+# Check: the observed parameters should give back the curves from sections
+# 13 and 14 (differences of 0)
+cat("PCA check:",      max(abs(pca_sim_curves(pca_scores) - Y_pca)), "\n")
+cat("Wavelets check:", max(abs(wav_sim_curves(wav_params) - Y_wav)), "\n")
+
+
+# ------------------------------------------------------------------------------
+# 19b. Looking at the shape parameters
+# ------------------------------------------------------------------------------
+
+# Distributions (1): histogram of each parameter with a Normal curve (same mean
+# and standard deviation) drawn on top. The multivariate Normal in 19c
+# assumes each parameter roughly follows this curve: look for skew, long
+# tails or outlying floods.
+plot_param_histograms <- function(shape_params, method_name) {
+  par(mfrow = c(ceiling(ncol(shape_params) / 4), 4), mar = c(4, 4, 2, 1))
+  for (j in 1:ncol(shape_params)) {
+    values <- shape_params[, j]
+    hist(values, freq = FALSE, breaks = 10, col = "#DCEEF5", xlab = "",
+         main = paste(method_name, colnames(shape_params)[j]))
+    curve(dnorm(x, mean(values), sd(values)), add = TRUE, col = "red", lwd = 2)
+  }
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+}
+
+# Distributions (2): Normal Q-Q plot of each parameter (Lecture 5): if the parameter is
+# Normal, the points lie close to the red line. Curving away at the ends
+# means skew or long tails.
+plot_param_qq <- function(shape_params, method_name) {
+  par(mfrow = c(ceiling(ncol(shape_params) / 4), 4), mar = c(4, 4, 2, 1))
+  for (j in 1:ncol(shape_params)) {
+    values <- shape_params[, j]
+    qqnorm(values, pch = 19, cex = 0.7,
+           main = paste(method_name, colnames(shape_params)[j]))
+    qqline(values, col = "red", lwd = 2)
+  }
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+}
+
+plot_param_histograms(pca_scores, "PCA")
+plot_param_qq(pca_scores, "PCA")
+plot_param_histograms(wav_params, "Wavelet")
+plot_param_qq(wav_params, "Wavelet")
+
+# Correlations between the parameters (printed in sections 13 and 14). PCA
+# scores are uncorrelated by construction; the wavelet parameters are not,
+# which the multivariate Normal in 19c has to capture (13 x 14 / 2 = 91
+# correlations estimated from 41 floods).
+wav_correlations <- cor(wav_params)
+image(1:13, 1:13, wav_correlations, zlim = c(-1, 1),
+      col = colorRampPalette(c("#AA1945", "white", "#174B67"))(41),
+      axes = FALSE, xlab = "", ylab = "", main = "Correlation between wavelet parameters")
+axis(1, 1:13, colnames(wav_correlations), las = 2)
+axis(2, 1:13, colnames(wav_correlations), las = 2)
+
+# Dependence on the size and timing of the flood. We divided by peak flow and
+# rescaled time, so shape is modelled separately from Part 1's peak flow and
+# time to peak. That is only justified if the shape parameters are (roughly)
+# unrelated to them.
+flood_size_timing <- cbind(log_peak_flow = log(events$peak_flow),
+                           log_width     = log(events$width_h),
+                           peak_position = events$peak_position)
+
+# Spearman correlation (based on ranks, so not driven by a few extreme
+# floods). With 41 floods, a correlation above about 0.31 in size would arise
+# by chance less than 1 time in 20; with this many correlations a few will
+# pass by chance, so look for strong, consistent relationships.
+size_timing_correlations <- lapply(params, function(shape_params)
+  round(cor(shape_params, flood_size_timing, method = "spearman"), 2))
+print(size_timing_correlations)
+
+# Scatter plots of each PCA score against each size/timing variable, with a
+# smooth trend line (red)
+par(mfrow = c(3, ncol(pca_scores)), mar = c(4, 4, 1, 1))
+for (v in colnames(flood_size_timing)) {
+  for (pc in colnames(pca_scores)) {
+    plot(flood_size_timing[, v], pca_scores[, pc], pch = 19, cex = 0.6, xlab = v, ylab = pc)
+    lines(lowess(flood_size_timing[, v], pca_scores[, pc]), col = "red")
+  }
+}
+par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+
+
+# ------------------------------------------------------------------------------
+# 19c. Simulating new shape parameters
+# ------------------------------------------------------------------------------
+# Two ways to simulate shape parameters for new floods (Lecture 5, slide 27:
+# "fitting different statistical models, or coming up with a sampling
+# scheme"). Each takes the parameters of a set of floods (one row per flood)
+# and returns n_sim simulated parameter vectors (one per row).
+# MASS::mvrnorm() draws from a multivariate Normal (MASS comes with R).
+
+# 1. Statistical model - multivariate Normal: each parameter is Normal, with
+#    the means and correlations estimated from the floods
+simulate_normal <- function(shape_params, n_sim) {
+  MASS::mvrnorm(n_sim, mu = colMeans(shape_params), Sigma = cov(shape_params))
+}
+
+# 2. Sampling scheme - smoothed bootstrap: pick one of the observed floods at
+#    random and add a little Normal noise, so new floods are similar to, but
+#    not copies of, observed ones. No Normality assumption.
+#    noise_scale sets the size of the noise relative to the spread of the
+#    floods. It uses Silverman's rule of thumb, the standard default choice
+#    (the same rule R's density() uses): less noise when there are more
+#    floods. Here it is about 0.65 for PCA and 0.75 for wavelets.
+simulate_bootstrap <- function(shape_params, n_sim) {
+  n_floods    <- nrow(shape_params)
+  n_params    <- ncol(shape_params)
+  noise_scale <- (4 / ((n_params + 2) * n_floods))^(1 / (n_params + 4))
+  
+  picked <- shape_params[sample(n_floods, n_sim, replace = TRUE), ]
+  noise  <- MASS::mvrnorm(n_sim, mu = rep(0, n_params),
+                          Sigma = noise_scale^2 * cov(shape_params))
+  picked + noise
+}
+
+# Simulate 1000 parameter vectors for each method, fitted to all floods
+n_sim <- 1000
+set.seed(2026)
+simulated_params <- list(
+  PCA      = list(Normal    = simulate_normal(pca_scores, n_sim),
+                  Bootstrap = simulate_bootstrap(pca_scores, n_sim)),
+  Wavelets = list(Normal    = simulate_normal(wav_params, n_sim),
+                  Bootstrap = simulate_bootstrap(wav_params, n_sim))
+)
+
+# Check 1: distribution of the first four parameters - observed (black)
+# against simulated (blue = Normal, red = bootstrap)
+compare_param_distributions <- function(observed, simulated, method_name) {
+  par(mfrow = c(1, 4), mar = c(4, 4, 2.5, 1))
+  for (j in 1:4) {
+    obs_density  <- density(observed[, j])
+    norm_density <- density(simulated$Normal[, j])
+    boot_density <- density(simulated$Bootstrap[, j])
+    plot(obs_density, lwd = 2, xlab = "", main = paste(method_name, colnames(observed)[j]),
+         ylim = c(0, max(obs_density$y, norm_density$y, boot_density$y)))
+    lines(norm_density, col = "#5298BC", lwd = 2, lty = 2)
+    lines(boot_density, col = "#AA1945", lwd = 2, lty = 3)
+  }
+  legend("topright", c("Observed", "Normal", "Bootstrap"),
+         col = c("black", "#5298BC", "#AA1945"), lty = 1:3, lwd = 2, cex = 0.7)
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+}
+
+compare_param_distributions(pca_scores, simulated_params$PCA, "PCA")
+compare_param_distributions(wav_params, simulated_params$Wavelets, "Wavelet")
+
+# Check 2: 20 simulated curves next to 20 observed ones. Do the simulated
+# floods look like real ones (one peak, no negative flow, similar spread)?
+plot_20_curves <- function(curves, title, colour) {
+  matplot(grid_u, t(curves[1:20, ]), type = "l", lty = 1, col = colour,
+          xlab = "Rescaled time u", ylab = "Flow / peak flow", main = title)
+}
+
+par(mfrow = c(2, 3))
+plot_20_curves(Y, "Observed", "grey40")
+plot_20_curves(pca_sim_curves(simulated_params$PCA$Normal),    "PCA - Normal",    "#5298BC")
+plot_20_curves(pca_sim_curves(simulated_params$PCA$Bootstrap), "PCA - Bootstrap", "#5298BC")
+plot_20_curves(Y, "Observed", "grey40")
+plot_20_curves(wav_sim_curves(simulated_params$Wavelets$Normal),    "Wavelets - Normal",    "#AA1945")
+plot_20_curves(wav_sim_curves(simulated_params$Wavelets$Bootstrap), "Wavelets - Bootstrap", "#AA1945")
+par(mfrow = c(1, 1))
+
+
+# ------------------------------------------------------------------------------
+# 19d. Out-of-sample check
+# ------------------------------------------------------------------------------
+# Lecture 5, slide 27: check whether the fitted distribution works well out
+# of sample. For a held-out flood:
+#   1. using the training floods only, find the PCA components / wavelet
+#      coefficients to keep, and fit the Normal or bootstrap to their
+#      shape parameters
+#   2. simulate n_sim shapes and turn them into floods using the held-out
+#      flood's own peak flow, width and peak time (so only SHAPE is tested)
+#   3. compare them with the real held-out flood:
+#        rmse, peak_error, timing_error, volume_error : the median simulated
+#            flood against the real one (flood_errors(), section 10)
+#        coverage90 : share of the real curve inside the simulated 90% band
+#            (should be about 0.90; lower = band too narrow)
+#        crps : average distance between the simulated and real flood, minus
+#            half the average distance between two simulated floods (m^3/s,
+#            lower is better). It rewards being close AND having the right
+#            spread; for a single curve (SEPA) it equals the mean absolute
+#            error.
+#        negative : share of simulated curves with negative flow
+#        peak_off : share whose highest point is not within 5% of the peak flow
+# Done for leave-one-out (every flood held out in turn) and for the training
+# and test floods from section 10.
+
+# A standardised curve as a flood in m^3/s and hours, using flood i's own
+# peak flow, width and peak time
+as_flood <- function(curve, i) {
+  reconstruct_hydrograph(curve, events$peak_position[i], events$width_h[i], events$peak_flow[i])
+}
+
+# Wavelet coefficients to keep, chosen from the training floods only, and the
+# shape parameters of a set of floods using those coefficients
+wav_kept_from <- function(train_rows) {
+  sizes <- unlist(average_detail_size(wav_all[train_rows]))
+  sizes >= sort(sizes, decreasing = TRUE)[keep_chosen]
+}
+
+wav_params_from <- function(rows, kept) {
+  t(sapply(wav_all[rows], function(wt) c(wt@V[[wav_levels]][, 1], unlist(wt@W)[kept])))
+}
+
+# Simulated shapes for a held-out flood, using only the training floods
+simulate_shapes <- function(train_rows, method, simulate) {
+  if (method == "PCA") {
+    pca_fit <- prcomp(Y[train_rows, ], center = TRUE, scale. = FALSE)
+    pca_sim_curves(simulate(pca_fit$x[, 1:k_chosen], n_sim), pca_fit)
+  } else {
+    kept <- wav_kept_from(train_rows)
+    wav_sim_curves(simulate(wav_params_from(train_rows, kept), n_sim), kept)
+  }
+}
+
+# Scores for one held-out flood i
+check_held_out <- function(i, train_rows, method, simulate) {
+  sim_shapes <- simulate_shapes(train_rows, method, simulate)
+  real_shape <- Y[i, ]
+  
+  real_flood   <- as_flood(real_shape, i)
+  median_flood <- as_flood(apply(sim_shapes, 2, median), i)
+  
+  band_low  <- apply(sim_shapes, 2, quantile, probs = 0.05)
+  band_high <- apply(sim_shapes, 2, quantile, probs = 0.95)
+  
+  half <- n_sim / 2   # compare simulations 1-500 with 501-1000 for the spread
+  crps_by_time <- sapply(1:n_grid, function(j) {
+    sims <- sim_shapes[, j]
+    mean(abs(sims - real_shape[j])) -
+      0.5 * mean(abs(sims[1:half] - sims[(half + 1):n_sim]))
+  })
+  
+  c(flood_errors(real_flood$hours, real_flood$discharge, median_flood$discharge),
+    crps       = events$peak_flow[i] * mean(crps_by_time),
+    coverage90 = mean(real_shape >= band_low & real_shape <= band_high),
+    negative   = mean(apply(sim_shapes, 1, min) < 0),
+    peak_off   = mean(abs(apply(sim_shapes, 1, max) - 1) > 0.05))
+}
+
+# SEPA's approach for comparison: one average shape of the training floods,
+# no shape uncertainty
+check_held_out_sepa <- function(i, train_rows) {
+  average <- colMeans(Y_unaligned[train_rows, ])
+  shape   <- baseline_curve(average / max(average), i)
+  real_flood <- as_flood(Y[i, ], i)
+  sepa_flood <- as_flood(shape, i)
+  c(flood_errors(real_flood$hours, real_flood$discharge, sepa_flood$discharge),
+    crps = events$peak_flow[i] * mean(abs(shape - Y[i, ])),
+    coverage90 = NA, negative = NA, peak_off = NA)
+}
+
+# Every model to check: check(i, train_rows) returns the scores for flood i
+models_to_check <- list(
+  "SEPA average shape" = check_held_out_sepa,
+  "PCA - Normal"       = function(i, train_rows) check_held_out(i, train_rows, "PCA", simulate_normal),
+  "PCA - Bootstrap"    = function(i, train_rows) check_held_out(i, train_rows, "PCA", simulate_bootstrap),
+  "Wavelets - Normal"    = function(i, train_rows) check_held_out(i, train_rows, "Wavelets", simulate_normal),
+  "Wavelets - Bootstrap" = function(i, train_rows) check_held_out(i, train_rows, "Wavelets", simulate_bootstrap)
+)
+
+# Scores for every held-out flood (one row per flood)
+leave_one_out_scores <- function(check) {
+  set.seed(2026)
+  t(sapply(1:nrow(Y), function(i) check(i, setdiff(1:nrow(Y), i))))
+}
+test_flood_scores <- function(check) {
+  set.seed(2026)
+  t(sapply(test_floods, function(i) check(i, train_floods)))
+}
+
+# Takes a minute or two
+held_out_scores <- cached("uncertainty_held_out",
+                          lapply(models_to_check, function(check) list(
+                            "leave-one-out" = leave_one_out_scores(check),
+                            "test floods"   = test_flood_scores(check))),
+                          key = list(k_chosen, wav_filter, wav_levels, keep_chosen, n_sim))
+
+# Summary: average over held-out floods. Errors are averaged as absolute
+# values, as in average_errors() (section 10).
+uncertainty_summary <- do.call(rbind, lapply(c("leave-one-out", "test floods"), function(type) {
+  do.call(rbind, lapply(names(held_out_scores), function(model) {
+    scores <- held_out_scores[[model]][[type]]
+    data.frame(model = model, check = type,
+               t(colMeans(abs(scores[, c("rmse", "peak_error", "timing_error",
+                                         "volume_error", "crps")]))),
+               t(colMeans(scores[, c("coverage90", "negative", "peak_off")])))
+  }))
+}))
+
+print(uncertainty_summary, digits = 3, row.names = FALSE)
+# ------------------------------------------------------------------------------
+# 19e. Plots of the out-of-sample check
+# ------------------------------------------------------------------------------
+# The simulated 90% band against the real flood, for the same six kinds of
+# flood as plot_example_fits() (section 10): earliest and latest peak,
+# shortest and longest, sharpest and flattest. Each flood is left out of the
+# fit (as in 19d), so this shows how well the model covers a flood it has
+# not seen. The real flood (black) should mostly sit inside the band.
+
+plot_held_out_bands <- function(method, simulate, title) {
+  examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
+                       which.min(events$width_h),       which.max(events$width_h),
+                       which.max(sharpness),            which.min(sharpness)))
+  set.seed(2026)
+  par(mfrow = c(2, 3))
+  for (i in examples) {
+    sim_shapes <- simulate_shapes(setdiff(1:nrow(Y), i), method, simulate)
+    
+    real_flood   <- as_flood(Y[i, ], i)
+    low_flood    <- as_flood(apply(sim_shapes, 2, quantile, probs = 0.05), i)
+    median_flood <- as_flood(apply(sim_shapes, 2, median), i)
+    high_flood   <- as_flood(apply(sim_shapes, 2, quantile, probs = 0.95), i)
+    
+    plot(real_flood$hours, real_flood$discharge, type = "n",
+         ylim = range(low_flood$discharge, high_flood$discharge, real_flood$discharge),
+         xlab = "Hours since start", ylab = "Discharge (m^3/s)",
+         main = paste(title, "- event", i))
+    polygon(c(low_flood$hours, rev(high_flood$hours)),
+            c(low_flood$discharge, rev(high_flood$discharge)),
+            col = "#DCEEF5", border = NA)
+    lines(median_flood$hours, median_flood$discharge, col = "#5298BC", lwd = 2, lty = 2)
+    lines(real_flood$hours, real_flood$discharge, lwd = 2)
+    legend("topright", c("Real flood", "Median simulated", "90% band"),
+           col = c("black", "#5298BC", NA), lty = c(1, 2, NA), lwd = 2,
+           fill = c(NA, NA, "#DCEEF5"), border = NA, cex = 0.7)
+  }
+  par(mfrow = c(1, 1))
+}
+
+plot_held_out_bands("PCA",      simulate_normal,    "PCA - Normal")
+plot_held_out_bands("PCA",      simulate_bootstrap, "PCA - Bootstrap")
+plot_held_out_bands("Wavelets", simulate_normal,    "Wavelets - Normal")
+plot_held_out_bands("Wavelets", simulate_bootstrap, "Wavelets - Bootstrap")
+
+
+# ------------------------------------------------------------------------------
+# 19f. Final simulations
+# ------------------------------------------------------------------------------
+# The chosen method and way of simulating, fitted to all 41 floods (19c).
+# Provisionally PCA with the multivariate Normal.
+
+chosen_method       <- "PCA"      # "PCA" or "Wavelets"   - UPDATE after 19d
+chosen_distribution <- "Normal"   # "Normal" or "Bootstrap" - UPDATE after 19d
+
+chosen_simulate <- list(Normal = simulate_normal,
+                        Bootstrap = simulate_bootstrap)[[chosen_distribution]]
+chosen_curves   <- if (chosen_method == "PCA") pca_sim_curves else wav_sim_curves
+chosen_params   <- params[[chosen_method]]
+
+# The n_sim simulated shapes from 19c for the chosen model
+final_shapes <- chosen_curves(simulated_params[[chosen_method]][[chosen_distribution]])
+
+# Fan chart: simulated 5-95% and 25-75% bands and median, with the real
+# floods in grey
+band <- apply(final_shapes, 2, quantile, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+
+plot(grid_u, band[3, ], type = "n", ylim = range(band, Y),
+     xlab = "Rescaled time u", ylab = "Flow / peak flow",
+     main = paste("Simulated flood shapes:", chosen_method, "-", chosen_distribution))
+polygon(c(grid_u, rev(grid_u)), c(band[1, ], rev(band[5, ])), col = "#DCEEF5", border = NA)
+polygon(c(grid_u, rev(grid_u)), c(band[2, ], rev(band[4, ])), col = "#9CC7DD", border = NA)
+matlines(grid_u, t(Y), col = adjustcolor("grey30", 0.3), lty = 1)
+lines(grid_u, band[3, ], col = "#174B67", lwd = 2)
+legend("topright", c("5-95%", "25-75%", "Median", "Real floods"),
+       fill = c("#DCEEF5", "#9CC7DD", NA, NA), border = NA,
+       col = c(NA, NA, "#174B67", "grey30"), lty = c(NA, NA, 1, 1), cex = 0.8)
+
+# Physical checks on the simulated shapes (as in 19d)
+cat("Share of simulated shapes with negative flow:",
+    round(mean(apply(final_shapes, 1, min) < 0), 3), "\n")
+cat("Share whose highest point is not within 5% of the peak flow:",
+    round(mean(abs(apply(final_shapes, 1, max) - 1) > 0.05), 3), "\n")
+
+# Simulating whole floods in m^3/s and hours: what would be fed to the flood
+# inundation model or emulator (Lecture 3). Each simulated flood combines
+#   - a simulated shape, divided by its own maximum so the flood peaks at
+#     exactly the drawn peak flow (as in SEPA's current approach)
+#   - a peak flow, width and peak position for that flood
+#
+# PLACEHOLDER: draw_flood_size_timing() currently resamples the observed
+# floods (which keeps the relationships between the three). REPLACE it with
+# the Part 1 distributions (e.g. the GPD for peak flow) for the final analysis.
+draw_flood_size_timing <- function(n) {
+  events[sample(nrow(events), n, replace = TRUE),
+         c("peak_flow", "width_h", "peak_position")]
+}
+
+simulate_floods <- function(n) {
+  shapes      <- chosen_curves(chosen_simulate(chosen_params, n))
+  shapes      <- shapes / apply(shapes, 1, max)
+  size_timing <- draw_flood_size_timing(n)
+  lapply(1:n, function(j) reconstruct_hydrograph(shapes[j, ], size_timing$peak_position[j],
+                                                 size_timing$width_h[j], size_timing$peak_flow[j]))
+}
+
+# Plot: 30 simulated floods next to the real floods, in m^3/s and hours
+set.seed(2026)
+simulated_floods <- simulate_floods(30)
+real_floods      <- lapply(1:nrow(Y), function(i) as_flood(Y[i, ], i))
+
+max_hours <- max(sapply(c(real_floods, simulated_floods), function(f) max(f$hours)))
+max_flow  <- max(sapply(c(real_floods, simulated_floods), function(f) max(f$discharge)))
+
+par(mfrow = c(1, 2))
+plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
+     xlab = "Hours since start", ylab = "Discharge (m^3/s)", main = "Real floods")
+for (f in real_floods) lines(f$hours, f$discharge, col = adjustcolor("grey30", 0.6))
+plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
+     xlab = "Hours since start", ylab = "Discharge (m^3/s)",
+     main = paste("Simulated floods:", chosen_method, "-", chosen_distribution))
+for (f in simulated_floods) lines(f$hours, f$discharge, col = adjustcolor("#5298BC", 0.6))
+par(mfrow = c(1, 1))
+
+
+# ------------------------------------------------------------------------------
+# 19g. Sampling uncertainty
+# ------------------------------------------------------------------------------
+# Lecture 5, slide 28: "sampling error, your dataset is limited in size".
+# Our simulations are based on only 41 floods; a different 41 floods would
+# give a slightly different model. To see how much this matters:
+#   1. resample the 41 floods with replacement (some floods appear more than
+#      once, some not at all)
+#   2. refit everything on the resampled floods (PCA components / wavelet
+#      coefficients to keep, and the Normal or bootstrap) and simulate shapes
+#   3. record the simulated 90% band
+# Repeated n_boot times. If the bands from the refits are close together,
+# the model does not depend much on which floods we happened to observe.
+
+# Uses chosen_distribution from 19f; both methods are shown for comparison.
+
+n_boot <- 100
+
+# Lower (5%) and upper (95%) edges of the simulated band for each refit,
+# one row per refit
+refitted_bands <- function(method) {
+  set.seed(2026)
+  lower <- matrix(NA, n_boot, n_grid)
+  upper <- matrix(NA, n_boot, n_grid)
+  for (b in 1:n_boot) {
+    resampled  <- sample(nrow(Y), replace = TRUE)
+    sim_shapes <- simulate_shapes(resampled, method, chosen_simulate)
+    lower[b, ] <- apply(sim_shapes, 2, quantile, probs = 0.05)
+    upper[b, ] <- apply(sim_shapes, 2, quantile, probs = 0.95)
+  }
+  list(lower = lower, upper = upper)
+}
+
+# Takes a minute or two
+bootstrap_bands <- cached("uncertainty_sampling",
+                          list(PCA      = refitted_bands("PCA"),
+                               Wavelets = refitted_bands("Wavelets")),
+                          key = list(k_chosen, wav_filter, wav_levels, keep_chosen,
+                                     n_sim, n_boot, chosen_distribution))
+
+# Band from all 41 floods (19c), for comparison
+full_band <- list(
+  PCA      = pca_sim_curves(simulated_params$PCA[[chosen_distribution]]),
+  Wavelets = wav_sim_curves(simulated_params$Wavelets[[chosen_distribution]])
+)
+
+# Plot: band edges from every refit (blue = lower, red = upper), with the
+# band from all floods in black
+par(mfrow = c(1, 2))
+for (method in names(bootstrap_bands)) {
+  bands <- bootstrap_bands[[method]]
+  matplot(grid_u, t(rbind(bands$lower, bands$upper)), type = "l", lty = 1,
+          col = c(rep(adjustcolor("#5298BC", 0.2), n_boot),
+                  rep(adjustcolor("#AA1945", 0.2), n_boot)),
+          xlab = "Rescaled time u", ylab = "Flow / peak flow",
+          main = paste0(method, ": 90% band, ", n_boot, " refits"))
+  lines(grid_u, apply(full_band[[method]], 2, quantile, probs = 0.05), lwd = 2)
+  lines(grid_u, apply(full_band[[method]], 2, quantile, probs = 0.95), lwd = 2)
+}
+par(mfrow = c(1, 1))
+
+# Summary (fractions of the peak flow, averaged over the curve):
+#   band_width : average width of the 90% band
+#   lower_sd, upper_sd : how much each edge of the band moves between refits
+# If lower_sd and upper_sd are small compared with band_width, sampling
+# error is a small part of the overall uncertainty.
+sampling_summary <- sapply(bootstrap_bands, function(bands) c(
+  band_width = mean(bands$upper - bands$lower),
+  lower_sd   = mean(apply(bands$lower, 2, sd)),
+  upper_sd   = mean(apply(bands$upper, 2, sd))
+))
+print(round(sampling_summary, 3))

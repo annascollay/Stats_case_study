@@ -164,7 +164,7 @@ The resulting data were arranged into a matrix (Y), with one row per flood event
 
 Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
 
-# Statistical methodology
+# Methods for representing hydrograph shape
 
 SEPA's emulator must be fitted to pairs of inputs and outputs obtained from runs of the flood inundation model, and since each run is slow, the number of inputs must be kept small, as every additional input increases the number of runs needed to fit the emulator. After standardisation (Section \@ref(standardising-the-hydrogpraphs)), each flood $i = 1, \dots, N$ ($N =$ `r nrow(Y)`) is described by its standardised discharge $y_i(u_j)$ at the `r n_grid` grid times $u_j$, together with its peak discharge $Q_i^{\text{peak}}$, duration $W_i$ and relative peak position $\tau_i$, giving `r n_grid + 3` numbers per flood, which is far too many to use directly as emulator inputs. Most of the methods below approximate the standardised curve by a weighted sum of $K$ basis functions,
 
@@ -377,11 +377,23 @@ Methods taken forward (two?)
 
 # Uncertainty analysis {#uncertainty}
 
+We explored three kinds of uncertainty in Lecture 3: parametric uncertainty, function uncertainty, and structural discrepancy. Function uncertainty and structural discrepancy both relate to the emulator, so we explore them in \@ref{emulator}, and here we focus on parametric uncertainty in $x_i$.
+
+## Distribution, correlation, and dependency of parameters
+
+## Simulating: statistical model and a sampling scheme
+
+## Out-of-sample check
+
+## Final simulations (for chosen only)
+
+## Other uncertainties (sampling in code while reconstruction, peak detection and cleaning choices and any others from lecture 5 final slide to be explored in words)
+
 # Recommendation
 
 - Recommend the best method and justify, alongside advantages and disadvantages
 
-# Emulator application
+# Emulator application {#emulator}
 
 - Give a brief explanation of how the emulator would be used
 - e.g, explain the two separate phases,
