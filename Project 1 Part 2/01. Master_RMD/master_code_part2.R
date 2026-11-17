@@ -1217,56 +1217,6 @@ par(mfrow = c(1, 1))
 cat("\nCorrelation between B-spline shape parameters:\n")
 print(round(cor(bspline_coefs), 2))
 
-
-# ------------------------------------------------------------------------------
-# 17. Method 6: PCA on log flow
-# ------------------------------------------------------------------------------
-# Ramsay & Silverman represent curves that must stay positive through their
-# logarithm. PCA (as in section 9) is fitted to log(y), and rebuilt curves
-# are exponentiated, so rebuilt (and later simulated) flows can never be
-# negative.
-
-log_pca <- make_pca(Y, log = TRUE)
-log_pca_result <- log_pca$fit
-log_pca_rebuild <- log_pca$rebuild
-log_pca_left_out <- log_pca$left_out
-
-# Choosing k: in-sample and leave-one-out errors
-log_pca_choice <- cached("log_pca_choice",
-                         insample_loo_choice(k_values, log_pca_rebuild, log_pca_left_out),
-                         key = k_values)
-
-print(log_pca_choice, digits = 3)
-plot_choice(log_pca_choice, "Number of components k (log flow)")
-
-# Fit at the chosen k and check the fit
-# UPDATE after looking at section 14a
-
-log_k_chosen <- 3
-
-# Rebuilt curves, one row per flood
-Y_log_pca <- log_pca_rebuild(log_k_chosen)
-
-# Shape parameters (scores), one row per flood
-log_pca_scores <- log_pca_result$x[, 1:log_k_chosen, drop = FALSE]
-
-log_pca_errors       <- method_errors(Y_log_pca)
-log_pca_errors_loocv <- cached("log_pca_loocv",
-                               method_errors(loocv(function(i) log_pca_left_out(i, log_k_chosen))),
-                               key = log_k_chosen)
-
-cat("\nPCA on log flow (k =", log_k_chosen, "), average errors:\n")
-print(rbind(in_sample     = average_errors(log_pca_errors),
-            leave_one_out = average_errors(log_pca_errors_loocv)))
-
-plot_example_fits(Y_log_pca, "Log-flow PCA")
-plot_residuals(Y_log_pca, "Log-flow PCA")
-
-# Variance of each score (scores are uncorrelated by construction)
-cat("\nVariance of each log-flow PCA score:\n")
-print(round(apply(log_pca_scores, 2, var), 4))
-
-
 # ------------------------------------------------------------------------------
 # 18. Comparing all methods (Lecture 5)
 # ------------------------------------------------------------------------------
