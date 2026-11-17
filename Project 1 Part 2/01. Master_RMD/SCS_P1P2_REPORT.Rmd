@@ -363,7 +363,11 @@ plot_residuals(Y_bspline, "B-spline")
 
 ### A known hydrograph function {#method-gamma}
 
-The lectures suggest that a known function which approximates hydrographs may give parameters that can be interpreted. We therefore fitted a gamma-type hydrograph (Nash, 1957) with an added baseflow to each flood by nonlinear least squares, giving three parameters with a physical meaning: the baseflow as a fraction of the peak flow (median `r sprintf("%.2f", median(gamma_params[gamma_ok, "b"]))`), the time of the peak, and the sharpness of the peak. These parameters are close to uncorrelated, but as the curve has a single peak and the same baseflow at the start and end of the event, it misses the second peak of floods with two peaks entirely and fits the start and end of most floods poorly, so we did not consider it further.
+The lectures suggest that a known function which approximates hydrographs may give parameters that can be interpreted. We therefore fitted a gamma-type hydrograph (Nash, 1957) with an added baseflow to each flood by nonlinear least squares, giving three parameters with a physical meaning: the baseflow as a fraction of the peak flow (median `r sprintf("%.2f", median(gamma_params[gamma_ok, "b"]))`), the time of the peak, and the sharpness of the peak. These parameters are close to uncorrelated, but as the curve has a single peak and the same baseflow at the start and end of the event, it misses the second peak of floods with two peaks entirely and fits the start and end of most floods poorly (Figure \@ref(fig:gammafits)), so we did not consider it further.
+
+```{r gammafits, echo=FALSE, fig.height=4, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, gamma."}
+plot_example_fits(Y_gamma, "Gamma-type")
+```
 
 # Comparison and validation of methods
 
