@@ -377,22 +377,22 @@ Gamma-type parameters are close to uncorrelated.
 
 # Comparison of methods
 
-```{r allcomparison}
+```{r allcomparison, echo=FALSE}
 knitr::kable(
   all_comparison, 
   digits = 3, 
   col.names = c("Method", "# Parameters", "Type", "RMSE", "Peak Error", "Timing Error", "Volume Error", "Negative Points"),
-  caption = "Comparison of Model Performance"
-)
+  caption = "Comparison of Model Performance") |>
+  kable_styling(latex_options = c("scale_down", "hold_position"))
 ```
 
-Accuracy compared with SEPA's approach
+Accuracy and fitness for purpose compared with SEPA's approach (RMSE, and other 3 errors in table)
 
-Number and behaviour of the parameters 
+Number and behaviour of the parameters (parsimony)
 
-Unusual events (events every method struggles with)
+Comparison of methods from validation (already kind of done throughout that section, so bringing that together explicitly).
 
-Methods taken forward (two?)
+Conclude we’ll take PCA and wavelets forward.
 
 # Uncertainty analysis {#uncertainty}
 
