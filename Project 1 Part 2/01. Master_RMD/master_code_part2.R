@@ -1205,6 +1205,73 @@ cat("\nCorrelation between B-spline shape parameters:\n")
 print(round(cor(bspline_coefs), 2))
 
 # ------------------------------------------------------------------------------
+# 18. Validation of methods
+# ------------------------------------------------------------------------------
+
+# Fitted curves from every method on same six contrasting floods
+
+# Same six floods as plot_example_fits() (section 10), with all five methods
+# drawn on each flood so they can be compared directly.
+
+fits_to_compare <- list(Y_poly, Y_pca, Y_wav, Y_gamma, Y_bspline)
+method_names    <- c("Polynomial", "PCA", "Wavelets", "Gamma-type", "B-spline")
+method_colours <- c("#D55E00", "#0072B2", "#E69F00", "#009E73", "#CC79A7")
+
+# Fitted curves from every method on the same six floods as plot_example_fits()
+# (section 10). One row per method, one column per flood.
+plot_all_methods <- function() {
+  examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
+                       which.min(events$width_h),       which.max(events$width_h),
+                       which.max(sharpness),            which.min(sharpness)))
+  par(mfrow = c(5, length(examples)), mar = c(2, 2, 2, 0.5), oma = c(3, 3, 0, 0))
+  for (j in 1:5) {
+    for (i in examples) {
+      observed <- as_flood(Y[i, ], i)
+      plot(observed$hours, observed$discharge, type = "l", lwd = 1.5, col = "black",
+           xlab = "", ylab = "", main = paste(method_names[j], "- event", i),
+           cex.main = 0.9)
+      # skip the gamma-type curve if its fit failed for this flood
+      if (j == 4 && !(i %in% gamma_ok)) next
+      fitted <- as_flood(fits_to_compare[[j]][i, ], i)
+      lines(fitted$hours, fitted$discharge, col = method_colours[j], lwd = 2)
+    }
+  }
+  mtext("Hours since start",   side = 1, outer = TRUE, line = 1)
+  mtext("Discharge (m^3/s)",   side = 2, outer = TRUE, line = 1)
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0))
+}
+
+# Residuals against time for every method on same figure
+
+plot_all_residuals <- function() {
+  # residuals for each method (only floods where the gamma-type fit worked)
+  residuals_by_method <- list()
+  for (j in 1:5) {
+    rows <- if (j == 4) gamma_ok else 1:nrow(Y)
+    residuals_by_method[[j]] <- Y[rows, ] - fits_to_compare[[j]][rows, ]
+  }
+  y_range <- range(unlist(residuals_by_method))   # same y-axis on every panel
+  
+  par(mfrow = c(2, 3))
+  # one panel per method: every flood faint, average bold
+  for (j in 1:5) {
+    matplot(grid_u, t(residuals_by_method[[j]]), type = "l", lty = 1,
+            col = adjustcolor("grey40", alpha.f = 0.3), ylim = y_range,
+            xlab = "Rescaled time u", ylab = "Observed - fitted", main = method_names[j])
+    lines(grid_u, colMeans(residuals_by_method[[j]]), col = method_colours[j], lwd = 2.5)
+    abline(h = 0, lty = 2)
+  }
+  # sixth panel: the five averages together, on their own scale
+  averages <- sapply(residuals_by_method, colMeans)
+  matplot(grid_u, averages, type = "l", lty = 1, lwd = 2, col = method_colours,
+          xlab = "Rescaled time u", ylab = "Average residual", main = "Averages compared")
+  abline(h = 0, lty = 2)
+  legend("bottomright", method_names, col = method_colours, lwd = 2, cex = 0.7)
+  par(mfrow = c(1, 1))
+}
+
+
+# ------------------------------------------------------------------------------
 # 18. Comparing all methods
 # ------------------------------------------------------------------------------
 # Accuracy (average errors), parsimony (number of shape parameters) and the

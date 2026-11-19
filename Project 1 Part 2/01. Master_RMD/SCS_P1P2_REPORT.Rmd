@@ -337,57 +337,33 @@ The lectures suggest that a known function which approximates hydrographs may gi
 
 Now that we have chosen the number of parameters for each method, we validate their fits, by checking how well the fitted curves reproduce the observed floods. In particular, we consider how the methods perform on contrasting floods (the earliest and latest peaks, the shortest and longest durations, and the flattest and sharpest peaks), as well as considering their residuals against time, and parameter correlation.
 
-## Contrasting floods
+## Contrasting floods {#validation-contrast}
 
-We observe that the polynomial underestimates sharp peaks, with the residuals positive at the peak and negative on either side for almost every flood, so the fitted peak is systematically too low and too broad. It also cannot reproduce floods with two peaks, such as events 19, 29 and 41, instead fitting a single broad peak across them, and it bends away from the observed flow at the start and end of the event.
-
-```{r polyfits, echo=FALSE, fig.height=6, fig.cap="Observed and fitted hydrographs for six contrasting floods, polynomial method."}
-plot_example_fits(Y_poly, "Polynomial")
+```{r all-methods-plot, echo = FALSE, fig.width = 11, fig.height = 10}
+plot_all_methods()
 ```
 
-We observe that, unlike the polynomial, PCA reproduces both the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks closely, with the main differences being an underestimate of the earlier of two peaks, as for events 19 and 41, and small differences in the recession tail.
+We observe that the polynomial method underestimates sharp peaks and cannot reproduce floods with two peaks, such as events 19, 29 and 41, instead fitting a single peak that is too low and too broad. This is because each polynomial term acts over the whole event, so a sharp change at the peak cannot be made without disrupting the rest of the curve, and a smooth, wide curve is settled on instead. The fitted curve also drifts away from the observed flow at the start and end of the event, because the higher-order terms dominate near the ends of the interval.
 
-```{r pcafits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, PCA."}
-plot_example_fits(Y_pca, "PCA")
-```
+The closely related B-spline method fits the recession and the ends of the event closely, but around the peak it shows the same pattern as the polynomial, underestimating sharp peaks and offering only a marginal improvement in capturing floods with two peaks. The gamma-type method performs the poorest of the five. This is because, although it matches the height and timing of the main peak, each curve has only a single peak and the same baseflow at the start and end of the event, so it misses one of the peaks of two-peaked floods entirely and fits the start and end of most floods poorly.
 
-We observe that wavelets reproduce the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks, such as events 19, 29 and 41, closely. However, the reconstructions show small, unrealistic dips and steps, such as for events 2, 19 and 41, likely where a detail coefficient that matters for that flood is not among those kept, and they move away from the observed flow at the start and end of the event, most clearly for events 2, 26 and 41.
-
-```{r wavfits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, wavelets."}
-plot_example_fits(Y_wav, "Wavelets")
-```
-
-We observe that it fits the recession closely, with the residuals close to zero after $u \approx 0.6$ (Figure \@ref(fig:bsplineresid)), but around the peak it shows the same pattern as the polynomial, so it still underestimates sharp peaks and cannot reproduce floods with two peaks.
-
-as the curve has a single peak and the same baseflow at the start and end of the event, it misses the second peak of floods with two peaks entirely and fits the start and end of most floods poorly (Figure \@ref(fig:gammafits)).
-
-```{r gammafits, echo=FALSE, fig.height=4, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, gamma."}
-plot_example_fits(Y_gamma, "Gamma-type")
-```
+Unlike these three methods, PCA reproduces the single-peak events, 3 and 26, almost exactly, and reproduces floods with two peaks closely. For these, the main differences are an underestimate of one of the two peaks, the earlier peak in events 19 and 41 and the later peak in events 2 and 29, and small differences in the recession tail. The wavelet method also reproduces the main body of single-peak floods almost exactly, and floods with two peaks very closely. However, its fitted curves are jagged in places and show some unrealistic dips and jumps, such as in events 2, 19 and 41. We expect this is because the same detail coefficients are kept for every flood, so a coefficient that matters for a particular flood may be discarded. There are also sharp deviations at the ends of the interval, likely due to the periodic boundary, which treats the start and end of the curve as joined.
 
 ## Residuals
 
-Since the residuals at neighbouring times are correlated, they are not independent, and they need not be normally distributed, but this does not affect our use of the model, as the fitted curve is used as a basis rather than for inference.
-
-```{r polyresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), polynomial method."}
-plot_residuals(Y_poly, "Polynomial")
+```{r residuals-all, echo = FALSE, fig.width = 8, fig.height = 5}
+plot_all_residuals()
 ```
+
+The residual against time plots (Figure \@ref(fig:residuals-all)) confirm our observations from Subsection \@ref{validation-contrast} across all 41 events. For the polynomial method, the residuals are positive at the peak and negative on either side for most flood, reinforcing that the fitted peak is systematically too low and too broad, and the drift away from the observed flow at the ends of the interval is clearly visible. The B-spline method shows very similar results around, and at, the peak, however, the residuals are close to zero after $u \approx 0.6$, confirming that the recessions are fitted closely. The gamma-type method has ...
+
+On the other hand, the residuals for PCA are small throughout, and are largest on the rising limb, partly corresponding to underestimates of earlier peaks, such as events 19 and 41. The average residual error is exactly 0 throughout, but this is by construction, because PCA resbuilds each flood around the mean curve. The wavelet method also has small residuals throughout, but it is jagged around zero across the whole interval, again reflecting the detail lost when coefficients are not included. The drifting at the ends of the interval is also evident. 
+
+Since the residuals at neighbouring times are correlated, they are not independent, and they need not be normally distributed, but this does not affect our use of the model, as the fitted curve is used as a basis rather than for inference.
 
 The residuals show no systematic pattern, with the average residual close to zero throughout, and are largest on the rising limb, where some floods have an earlier, smaller peak. The scores showed no flood far from the rest, although on the fourth and sixth components most floods lie close to zero with a few lying well away from the centre, which will need to be considered when modelling the variation in the scores between floods (Section \@ref(uncertainty)).
 
-```{r pcaresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), PCA."}
-plot_residuals(Y_pca, "PCA")
-```
-
 In the residuals, the average residual is close to zero except at the end of the event, while a few individual floods have larger residuals on the falling limb. The behaviour at the start and end is consistent with the periodic boundaries, which treat the start and end of the hydrograph as joined, even though the flow is different at each.
-
-```{r wavresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), wavelets."}
-plot_residuals(Y_wav, "Wavelets")
-```
-
-```{r bsplineresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), B-splines."}
-plot_residuals(Y_bspline, "B-spline")
-```
 
 ## Correlation of parameters
 
