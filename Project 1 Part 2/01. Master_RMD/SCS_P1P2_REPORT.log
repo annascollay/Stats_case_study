@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  19 NOV 2026 15:13
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  19 NOV 2026 18:59
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -482,11 +482,7 @@ Package hyperref Info: Option `colorlinks' set `true' on input line 108.
 LaTeX Font Info:    Trying to load font information for T1+lmr on input line 113.
 (c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) (./SCS_P1P2_REPORT.aux
-
-LaTeX Warning: Label `eq:basis' multiply defined.
-
-)
+) (./SCS_P1P2_REPORT.aux)
 \openout1 = `SCS_P1P2_REPORT.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 113.
@@ -600,113 +596,124 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has b
                    \relax 
 l.150 \clearpage
                  [1]
-Overfull \hbox (9.2588pt too wide) in paragraph at lines 209--210
+Overfull \hbox (1.53712pt too wide) in paragraph at lines 208--209
+[]\T1/lmr/m/n/10.95 Burst  
+ []
+
+
+Overfull \hbox (15.08067pt too wide) in paragraph at lines 214--215
  []\T1/lmr/m/n/10.95 Readings
  []
 
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 213.
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 218.
 (c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-Overfull \hbox (9.2588pt too wide) in paragraph at lines 227--228
+Overfull \hbox (1.53712pt too wide) in paragraph at lines 228--229
+[]\T1/lmr/m/n/10.95 Burst  
+ []
+
+
+Overfull \hbox (15.08067pt too wide) in paragraph at lines 234--235
  []\T1/lmr/m/n/10.95 Readings
  []
 
 [2
 
 {c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}]
-<SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf, id=93, 469.755pt x 325.215pt>
+<SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf, id=99, 469.755pt x 325.215pt>
 File: SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf  used on input line 250.
-(pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-<SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf, id=95, 469.755pt x 325.215pt>
-File: SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf Graphic file (type pdf)
-<use SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf  used on input line 264.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf  used on input line 263.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
 [3 <./SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf, id=109, 650.43pt x 722.7pt>
+<SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf, id=114, 469.755pt x 325.215pt>
+File: SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf Graphic file (type pdf)
+<use SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf>
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf  used on input line 283.
+(pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
+[4]
+<SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf, id=119, 650.43pt x 722.7pt>
 File: SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf  used on input line 274.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf  used on input line 293.
 (pdftex.def)             Requested size: 650.4284pt x 722.69823pt.
-[4 <./SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf>] [5 <./SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf>] [6{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}] [7] [8]
-<SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf, id=171, 469.755pt x 433.62pt>
+[5 <./SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf>] [6 <./SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf>] [7{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}] [8] [9]
+<SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf, id=182, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf  used on input line 391.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf  used on input line 407.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
-[9 <./SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf, id=182, 469.755pt x 289.08pt>
+[10 <./SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf, id=193, 469.755pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf  used on input line 409.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf  used on input line 424.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
-[10 <./SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf, id=198, 469.755pt x 289.08pt>
+[11 <./SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf, id=209, 469.755pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf  used on input line 419.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf  used on input line 434.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
-<SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf, id=199, 469.755pt x 433.62pt>
+<SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf, id=210, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf  used on input line 425.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf  used on input line 440.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
-[11 <./SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf>] [12 <./SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf, id=224, 469.755pt x 433.62pt>
+[12 <./SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf>] [13 <./SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf, id=235, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf  used on input line 443.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf  used on input line 457.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
-[13 <./SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf, id=239, 469.755pt x 433.62pt>
+[14 <./SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf, id=250, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf  used on input line 451.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf  used on input line 465.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
 
-Overfull \hbox (6.09811pt too wide) in paragraph at lines 468--469
+Overfull \hbox (6.09811pt too wide) in paragraph at lines 482--483
 []\T1/lmr/m/n/10.95 Wavelet  
  []
 
 
-Overfull \hbox (1.47229pt too wide) in paragraph at lines 470--471
+Overfull \hbox (1.47229pt too wide) in paragraph at lines 484--485
  []\T1/lmr/m/n/10.95 Levels
  []
 
 
-Overfull \hbox (6.09811pt too wide) in paragraph at lines 486--487
+Overfull \hbox (6.09811pt too wide) in paragraph at lines 500--501
 []\T1/lmr/m/n/10.95 Wavelet  
  []
 
 
-Overfull \hbox (1.47229pt too wide) in paragraph at lines 488--489
+Overfull \hbox (1.47229pt too wide) in paragraph at lines 502--503
  []\T1/lmr/m/n/10.95 Levels
  []
 
-[14 <./SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf, id=252, 794.97pt x 722.7pt>
+[15 <./SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf, id=263, 794.97pt x 722.7pt>
 File: SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf  used on input line 533.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf  used on input line 547.
 (pdftex.def)             Requested size: 794.96806pt x 722.69823pt.
-[15] [16 <./SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf, id=267, 578.16pt x 361.35pt>
+[16] [17 <./SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf, id=279, 578.16pt x 361.35pt>
 File: SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf  used on input line 543.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf  used on input line 557.
 (pdftex.def)             Requested size: 578.15858pt x 361.34912pt.
 
-LaTeX Warning: Reference `fig:residuals-all' on page 17 undefined on input line 545.
+LaTeX Warning: Reference `fig:residuals-all' on page 18 undefined on input line 559.
 
 
-Underfull \hbox (badness 1132) in paragraph at lines 545--546
+Underfull \hbox (badness 1132) in paragraph at lines 559--560
 []\T1/lmr/m/n/10.95 The resid-ual against time plots (Fig-ure []) con-firm our ob-ser-va-tions from Sub-sec-tion
  []
 
-[17 <./SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf>] [18] [19] (./SCS_P1P2_REPORT.aux)
+[18 <./SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf>] [19] [20] (./SCS_P1P2_REPORT.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
@@ -714,23 +721,20 @@ L3 programming layer <2026-09-09>
 
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: There were multiply-defined labels.
-
  ) 
 Here is how much of TeX's memory you used:
- 14595 strings out of 469040
- 241223 string characters out of 5455508
- 694493 words of memory out of 5000000
- 43384 multiletter control sequences out of 15000+600000
+ 14602 strings out of 469040
+ 241318 string characters out of 5455508
+ 697636 words of memory out of 5000000
+ 43388 multiletter control sequences out of 15000+600000
  685854 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 88i,11n,93p,1930b,612s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 88i,11n,93p,1930b,614s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb>
-Output written on SCS_P1P2_REPORT.pdf (20 pages, 609921 bytes).
+Output written on SCS_P1P2_REPORT.pdf (21 pages, 1013513 bytes).
 PDF statistics:
- 465 PDF objects out of 1000 (max. 8388607)
- 386 compressed objects within 4 object streams
- 73 named destinations out of 1000 (max. 500000)
- 293 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 483 PDF objects out of 1000 (max. 8388607)
+ 402 compressed objects within 5 object streams
+ 76 named destinations out of 1000 (max. 500000)
+ 309 words of extra memory for PDF output out of 10000 (max. 10000000)
 

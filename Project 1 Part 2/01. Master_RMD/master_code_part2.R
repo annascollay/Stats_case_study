@@ -19,12 +19,12 @@ options(timeout = 300)
 cache_file <- "river_don_parkhill_flow.rds"
 
 # ------------------------------------------------------------------------------
-# 2. Load Data & Retain Unchecked Quality Codes (50, 100, 200, 254)
+# 2. Load Data, Keep Codes 50/100/200/254, Set Aside Suspect (150)
 # ------------------------------------------------------------------------------
 if (file.exists(cache_file)) {
   river_data <- readRDS(cache_file)
 } else {
-  start_years <- seq(2016, 2025, by = 1)
+  start_years <- seq(2001, 2025, by = 1)
   
   fetch_chunk <- function(yr) {
     from_date <- paste0(yr, "-10-01T00:00:00")
@@ -49,11 +49,18 @@ if (file.exists(cache_file)) {
   saveRDS(river_data, cache_file)
 }
 
-# Key Modification: Include Unchecked codes (200 & 254) along with 50 & 100
-river_data <- river_data %>%
+# Quality codes kept for modelling, and the Suspect code checked separately (section 5)
+retained_codes <- c(50, 100, 200, 254)   # Good, Estimated, Unchecked (legacy), Unchecked
+suspect_code   <- 150                    # Suspect: beyond the acceptable extrapolation limit
+
+# Full record before quality filtering, kept so the excluded Suspect readings
+# can be checked against the event windows (section 5b)
+river_data_raw <- river_data %>%
   arrange(Timestamp) %>%
-  mutate(QualityCode = as.numeric(QualityCode)) %>%
-  filter(QualityCode %in% c(50, 100, 200, 254)) %>%
+  mutate(QualityCode = as.numeric(QualityCode))
+
+river_data <- river_data_raw %>%
+  filter(QualityCode %in% retained_codes) %>%
   mutate(
     is_unchecked = QualityCode %in% c(200, 254),
     month = month(Timestamp, label = TRUE),
@@ -71,6 +78,96 @@ river_data <- river_data %>%
 q <- river_data$Discharge
 t <- river_data$Timestamp
 n_years <- n_distinct(river_data$water_year)
+
+# Subsection 2.1
+#-------------------------------------------------------------------------------
+
+# Data Description
+
+# Count the number of missing readings by comparing our river data against a
+# complete 15-minute sequence
+complete_sequence <- seq(min(river_data$Timestamp), 
+                         max(river_data$Timestamp), by = "15 min")
+number_missing <- sum(!complete_sequence %in% river_data$Timestamp)
+
+# Create data description table
+data_description_table <- tibble(
+  Item = c("Station", "Source", "Measurement", "Catchment area",
+           "Resolution", "Station type", "Period", "Readings",
+           "Missing readings"),
+  Value = c(
+    "Don at Parkhill",
+    "SEPA time series data service",
+    "River discharge ($m^3/s$)",
+    "1,273 $km^2$",
+    "15 minutes",
+    "Velocity-area",
+    paste(format(min(river_data$Timestamp), "%d %B %Y"), "–",
+          format(max(river_data$Timestamp), "%d %B %Y")),
+    format(nrow(river_data), big.mark = ","),
+    format(number_missing, big.mark = ",")
+  )
+)
+
+# Data Quality
+
+# Create quality code table from SEPA guidance, recording which codes we use
+quality_code_table <- tibble(
+  `Code number` = c(50, 100, 140, 150, 200, 254),
+  `Code name` = c(
+    "Good",
+    "Estimated",
+    "Provisional",
+    "Suspect",
+    "Unchecked (imported from legacy database)",
+    "Unchecked"
+  ),
+  `Abbreviated code name` = c("G", "E", "Prov", "S", "V", "U"),
+  Used = 
+    c("retained", "retained", "excluded", "excluded", "excluded", "excluded")
+)
+
+# Join quality code table with the number of readings for each code
+quality_combined <- quality_code_table %>%
+  left_join(
+    river_data %>% count(QualityCode = as.numeric(QualityCode), name = "Count"),
+    by = c("Code number" = "QualityCode")
+  ) %>%
+  mutate(
+    Count = coalesce(Count, 0L),
+    Percentage = sprintf("%.2f\\%%", Count / sum(Count) * 100)
+  )
+
+# Combine into one table, with one row per quality code below the data description
+data_table <- bind_rows(
+  data_description_table,
+  quality_combined %>%
+    transmute(
+      Item  = paste0(
+        `Code number`, " – ", `Code name`, " (", `Abbreviated code name`, ")"),
+      Value = paste0(format(Count, big.mark = ",", trim = TRUE), " readings (",
+                     Percentage, "), ", Used)
+    )
+)
+
+# Combined table
+
+# Create a table describing the data
+tidy_data_table <- kable(
+  data_table, col.names = c("", ""),
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = "Data used in this analysis, and the quality codes assigned to each reading",
+  label = "tidyingthedata") %>%
+  kable_styling(
+    latex_options = c("striped", "hold_position"),
+    font_size = 9,
+    full_width = FALSE,
+    position = "left"
+  ) %>%
+  pack_rows("Data description", 1, 9) %>%
+  pack_rows("Quality codes", 10, nrow(data_table))
 
 # ------------------------------------------------------------------------------
 # 3. Peak Identification (Robson & Reed 1999 Criteria, u = 65 m³/s)
@@ -159,7 +256,7 @@ extract_event_hydrograph <- function(event_idx, peak_row) {
 N_events  <- nrow(peaks)
 peak_rows <- match(peaks$Timestamp, t)
 
-# Construct N x m matrix Y_raw (41 x 481)
+# Construct N x m matrix Y_raw (118 x 481)
 Y_raw <- t(sapply(1:N_events, function(i) extract_event_hydrograph(i, peak_rows[i])))
 rownames(Y_raw) <- paste0("Event_", 1:N_events)
 colnames(Y_raw) <- paste0("t_", sprintf("%+.2fh", rel_time_hours))
@@ -202,7 +299,7 @@ compare_unchecked <- function(data, unchecked_codes = c(200, 254)) {
     out[[length(out) + 1]] <- tibble(
       Burst_ID            = b,
       Timestamp           = d$Timestamp[bi],
-      Discharge_Unchecked = d$Discharge[bi],
+      Discharge_Recorded = d$Discharge[bi],
       Discharge_Interp    = interp,
       Diff                = d$Discharge[bi] - interp,
       Burst_Length_Mins   = length(bi) * 15
@@ -213,11 +310,13 @@ compare_unchecked <- function(data, unchecked_codes = c(200, 254)) {
 
 unchecked_all <- compare_unchecked(river_data)
 
-# Unchecked readings falling inside a set of windows. starts/ends/peak_times
-# are POSIXct vectors with one element per event.
-unchecked_in_windows <- function(starts, ends, peak_times) {
+# Flagged readings falling inside a set of windows. starts/ends/peak_times
+# are POSIXct vectors with one element per event. readings defaults to the
+# Unchecked readings; pass suspect_all for the Suspect readings.
+unchecked_in_windows <- function(starts, ends, peak_times, readings = unchecked_all) {
+  if (nrow(readings) == 0) return(tibble())
   map_dfr(seq_along(starts), function(i) {
-    unchecked_all %>%
+    readings %>%
       filter(Timestamp >= starts[i], Timestamp <= ends[i]) %>%
       mutate(Event_ID = i,
              Hours_From_Peak = as.numeric(difftime(Timestamp, peak_times[i],
@@ -226,14 +325,16 @@ unchecked_in_windows <- function(starts, ends, peak_times) {
 }
 
 # Statistics, combined table and scatter plot for one set of windows.
-# Returns NULL if there are no unchecked readings in the windows.
-summarise_unchecked_readings <- function(in_windows, n_events) {
+# label is used in the plot ("Unchecked" or "Suspect").
+# Returns NULL if there are no flagged readings in the windows.
+summarise_unchecked_readings <- function(in_windows, n_events, label = "Unchecked") {
   if (nrow(in_windows) == 0) return(NULL)
   
   # each reading counted once even if two event windows overlap
   unique_readings <- distinct(in_windows, Timestamp, .keep_all = TRUE)
   rmse   <- sqrt(mean(unique_readings$Diff^2))
   max_ad <- max(abs(unique_readings$Diff))
+  max_q  <- max(unique_readings$Discharge_Recorded)
   
   events_lookup <- in_windows %>%
     group_by(Burst_ID) %>%
@@ -246,6 +347,7 @@ summarise_unchecked_readings <- function(in_windows, n_events) {
       Start         = format(min(Timestamp), "%Y-%m-%d %H:%M"),
       Readings      = n(),
       Duration_Mins = first(Burst_Length_Mins),
+      Max_Flow      = max(Discharge_Recorded),
       RMSE          = sqrt(mean(Diff^2)),
       Max_Abs_Diff  = max(abs(Diff)),
       .groups = "drop"
@@ -257,6 +359,7 @@ summarise_unchecked_readings <- function(in_windows, n_events) {
       Start,
       Readings     = as.character(Readings),
       Duration_Min = as.character(Duration_Mins),
+      Max_Flow     = sprintf("%.1f", Max_Flow),
       RMSE         = sprintf("%.3f", RMSE),
       Max_Abs_Diff = sprintf("%.3f", Max_Abs_Diff)
     )
@@ -267,29 +370,63 @@ summarise_unchecked_readings <- function(in_windows, n_events) {
     Start        = "—",
     Readings     = sprintf("**%d**", nrow(unique_readings)),
     Duration_Min = "—",
+    Max_Flow     = sprintf("**%.1f**", max_q),
     RMSE         = sprintf("**%.3f**", rmse),
     Max_Abs_Diff = sprintf("**%.3f**", max_ad)
   )
   
-  lims <- range(c(unique_readings$Discharge_Interp, unique_readings$Discharge_Unchecked))
+  lims <- range(c(unique_readings$Discharge_Interp, unique_readings$Discharge_Recorded))
   
-  plot <- ggplot(unique_readings, aes(x = Discharge_Interp, y = Discharge_Unchecked)) +
+  plot <- ggplot(unique_readings, aes(x = Discharge_Interp, y = Discharge_Recorded)) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", colour = "#AA1945") +
     geom_point(colour = "#5298BC", alpha = 0.7, size = 2) +
     coord_equal(xlim = lims, ylim = lims) +
     labs(
-      title = "Unchecked readings vs linear interpolation",
+      title = paste(label, "readings vs linear interpolation"),
       subtitle = sprintf("n = %d | RMSE = %.3f m³/s | dashed line = 1:1",
                          nrow(unique_readings), rmse),
       x = expression("Interpolated discharge (" * m^3 * "/s)"),
-      y = expression("Unchecked discharge (" * m^3 * "/s)")
+      y = paste(label, "discharge (m³/s)")
     ) +
     theme_minimal()
   
   list(in_windows = in_windows, unique_readings = unique_readings,
-       rmse = rmse, max_ad = max_ad,
+       rmse = rmse, max_ad = max_ad, max_q = max_q,
        burst_tbl = burst_tbl, overall_row = overall_row,
        table = bind_rows(burst_tbl, overall_row), plot = plot)
+}
+
+# Hydrographs of the events containing flagged readings. Line = readings used
+# in the model (across a gap this is exactly the linear interpolation used);
+# points = flagged readings. One panel per affected event.
+plot_flagged_events <- function(flagged, starts, ends, peak_times, label,
+                                colour = "#AA1945") {
+  if (is.null(flagged)) return(NULL)
+  affected <- sort(unique(flagged$in_windows$Event_ID))
+  panel    <- paste0("Event ", affected, " (", format(peak_times[affected], "%d %b %Y"), ")")
+  
+  hydro <- map_dfr(seq_along(affected), function(k) {
+    i <- affected[k]
+    river_data %>%
+      filter(Timestamp >= starts[i], Timestamp <= ends[i]) %>%
+      mutate(Event = panel[k])
+  }) %>% mutate(Event = factor(Event, levels = panel))
+  
+  pts <- flagged$in_windows %>%
+    mutate(Event = factor(panel[match(Event_ID, affected)], levels = panel))
+  
+  ggplot(hydro, aes(Timestamp, Discharge)) +
+    geom_line(colour = "#5298BC", linewidth = 0.5) +
+    geom_point(data = pts, aes(y = Discharge_Recorded), colour = colour, size = 1.2) +
+    geom_hline(yintercept = u_final, linetype = "dotted") +
+    facet_wrap(~ Event, scales = "free") +
+    labs(
+      title    = paste(label, "readings within event hydrographs"),
+      subtitle = sprintf("Line: readings used in the model; points: %s readings; dotted: u = %g m³/s",
+                         tolower(label), u_final),
+      x = NULL, y = expression("Discharge (" * m^3 * "/s)")
+    ) +
+    theme_minimal()
 }
 
 # Fixed [-48h, +72h] windows
@@ -313,6 +450,46 @@ if (!is.null(unchecked_fixed)) {
   cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
 }
 
+# Suspect readings are EXCLUDED from river_data. Wherever one falls inside an
+# event, the model bridges the gap by linear interpolation between the
+# retained readings either side, which is what compare_unchecked() computes.
+# The same table and plots therefore show (a) whether any Suspect reading
+# falls in an event window, (b) how large it is relative to u, and (c) how far
+# the excluded value is from the interpolated value the model uses instead.
+
+# Record-wide summary (for the report text, whatever the window results)
+suspect_readings <- river_data_raw %>% filter(QualityCode == suspect_code)
+n_suspect        <- nrow(suspect_readings)
+pct_suspect      <- 100 * n_suspect / nrow(river_data_raw)
+n_suspect_above  <- sum(suspect_readings$Discharge > u_final)
+max_suspect      <- if (n_suspect > 0) max(suspect_readings$Discharge) else NA_real_
+
+# Each Suspect reading against the interpolation between its retained neighbours
+suspect_all <- compare_unchecked(
+  river_data_raw %>% filter(QualityCode %in% c(retained_codes, suspect_code)),
+  unchecked_codes = suspect_code
+)
+# Bursts at the very start/end of the record have no anchor and are skipped
+cat(sprintf("Suspect readings: %d in record (%.2f%%), %d above u, max %.1f m3/s; %d compared with interpolation\n",
+            n_suspect, pct_suspect, n_suspect_above, max_suspect, nrow(suspect_all)))
+
+# Fixed [-48h, +72h] windows
+suspect_in_events <- unchecked_in_windows(
+  starts     = peaks$Timestamp - win_before_h * 3600,
+  ends       = peaks$Timestamp + win_after_h * 3600,
+  peak_times = peaks$Timestamp,
+  readings   = suspect_all
+)
+suspect_fixed <- summarise_unchecked_readings(suspect_in_events, N_events, label = "Suspect")
+
+if (is.null(suspect_fixed)) {
+  cat("No Suspect readings within the 120-hour peak event windows.\n\n")
+} else {
+  cat(sprintf("Fixed windows: %d Suspect readings in %d events\n\n",
+              nrow(suspect_fixed$unique_readings),
+              n_distinct(suspect_fixed$in_windows$Event_ID)))
+}
+
 # ------------------------------------------------------------------------------
 # 6. Master Hydrograph Overlay Plot Generation
 # ------------------------------------------------------------------------------
@@ -330,14 +507,14 @@ df_mean <- tibble(
   Discharge = mean_hydrograph
 )
 
-# Plot: All 41 hydrographs centered at peak arrival (greyed out + bold black mean)
+# Plot: All 118 hydrographs centered at peak arrival (greyed out + bold black mean)
 hydrograph_overlay_plot <- ggplot() +
   geom_line(
     data = df_events_long,
     aes(x = hours_from_peak, y = Discharge, group = event_id),
     colour = "#5298BC",
     linewidth = 0.4,
-    alpha = 0.5
+    alpha = 0.25
   ) +
   geom_line(
     data = df_mean,
@@ -353,8 +530,8 @@ hydrograph_overlay_plot <- ggplot() +
            colour = "black", hjust = 0, size = 3.2) +
   scale_x_continuous(breaks = seq(-48, 72, by = 12)) +
   labs(
-    title = "River Don Hydrograph Shape Variability (N = 41 Events)",
-    subtitle = "Centered at peak arrival (t = 0) [-48h, +72h]. Bold black: Mean curve Q̄(t). Unchecked values retained.",
+    title = "River Don Hydrograph Shape Variability (N = 118 Events)",
+    subtitle = "Centered at peak arrival (t = 0) [-48h, +72h]. Bold black: Mean curve Q̄(t). Unchecked values retaine; Suspect (code 150) excluded.",
     x = "Hours from Peak Arrival (t = 0)",
     y = expression("Discharge (" * m^3 * "/s)")
   ) +
@@ -368,7 +545,7 @@ hydrograph_overlay_plot <- ggplot() +
 # Display master plot
 print(hydrograph_overlay_plot)
 
-#Heat map comparing flood events
+#Heat map comparing extreme flow events
 heat_map_plot <- ggplot(df_events_long,
                         aes(x = hours_from_peak,
                             y = event_id,
@@ -379,12 +556,13 @@ heat_map_plot <- ggplot(df_events_long,
     high = "#174B67"
   ) +
   labs(
-    title = "Heatmap of Flood Hydrograph Events",
+    title = "Heatmap of Extreme Flow Event Hydrograph",
     x = "Hours Relative to Peak",
-    y = "Flood Event",
+    y = "Extreme Flow Event",
     fill = "Discharge"
   ) +
-  theme_minimal()
+  theme_minimal() +
+  scale_y_discrete(breaks = levels(df_events_long$event_id)[seq(1, N_events, 10)])
 
 # ------------------------------------------------------------------------------
 # 7. Event start, end and width (trough to trough)
@@ -448,6 +626,31 @@ if (!is.null(unchecked_model)) {
   cat("No unchecked quality codes within the modelling events.\n\n")
 }
 
+# Suspect readings within the modelling events (trough to trough)
+suspect_model_in_events <- unchecked_in_windows(
+  starts     = events$start_time,
+  ends       = events$end_time,
+  peak_times = events$peak_time,
+  readings   = suspect_all
+)
+suspect_model      <- summarise_unchecked_readings(suspect_model_in_events, nrow(events),
+                                                   label = "Suspect")
+suspect_model_plot <- plot_flagged_events(suspect_model, events$start_time,
+                                          events$end_time, events$peak_time, "Suspect")
+
+# Quantities for the report text
+n_suspect_model_readings <- if (is.null(suspect_model)) 0 else nrow(suspect_model$unique_readings)
+n_suspect_model_events   <- if (is.null(suspect_model)) 0 else n_distinct(suspect_model$in_windows$Event_ID)
+n_suspect_model_bursts   <- if (is.null(suspect_model)) 0 else nrow(suspect_model$burst_tbl)
+
+if (is.null(suspect_model)) {
+  cat("No Suspect readings within the modelling events.\n\n")
+} else {
+  cat(sprintf("Modelling events: %d Suspect readings (%d bursts) in %d events | max %.1f m3/s | RMSE vs interpolation %.3f m3/s\n\n",
+              n_suspect_model_readings, n_suspect_model_bursts, n_suspect_model_events,
+              suspect_model$max_q, suspect_model$rmse))
+}
+
 # ------------------------------------------------------------------------------
 # 8. Standardise each event and make the Y matrix
 # ------------------------------------------------------------------------------
@@ -488,8 +691,8 @@ cat("Y:", nrow(Y), "events x", ncol(Y), "points; peaks aligned at u =", round(u_
 # ------------------------------------------------------------------------------
 # 9. Reconstruct a real hydrograph
 # ------------------------------------------------------------------------------
-# Reverses section 5: turns a standardised curve back into a real flood.
-#   1. undo the realignment: move the peak from u_star back to the flood's
+# Reverses section 5: turns a standardised curve back into a real extreme flow event.
+#   1. undo the realignment: move the peak from u_star back to the event's
 #      own peak position
 #   2. undo the time rescaling: hours since start = u x width
 #   3. undo the flow scaling: discharge (m^3/s) = y x peak flow
@@ -512,8 +715,8 @@ reconstruct_hydrograph <- function(y, peak_position, width_h, peak_flow) {
 # 10. Shared functions for checking every method
 # ------------------------------------------------------------------------------
 # Every method is checked in the same way, so they can be compared fairly:
-# each fitted curve is turned back into a real flood and compared
-# with the observed flood in m^3/s and hours.
+# each fitted curve is turned back into a real extreme flow event and compared
+# with the observed event in m^3/s and hours.
 
 # Set use_cache <- FALSE to force everything to be recomputed.
 use_cache <- TRUE
@@ -538,13 +741,13 @@ cached <- function(name, expr, key = NULL) {
   result
 }
 
-# Trapezium rule used for flood volume. Needed because
+# Trapezium rule used for extreme flow volume. Needed because
 # after undoing the realignment the points are not evenly spaced in hours.
 area_under <- function(hours, flow) {
   sum(diff(hours) * (head(flow, -1) + tail(flow, -1)) / 2)
 }
 
-# Errors for one flood:
+# Errors for one extreme flow event:
 #   rmse         : overall closeness of the curve (m^3/s)
 #   peak_error   : fitted peak minus observed peak (m^3/s)
 #   timing_error : fitted peak time minus observed peak time (hours)
@@ -559,7 +762,7 @@ flood_errors <- function(hours, observed, fitted) {
   )
 }
 
-# Errors for every flood, for a matrix of fitted curves laid out like Y
+# Errors for every extreme flow event, for a matrix of fitted curves laid out like Y
 method_errors <- function(Y_fit) {
   errors <- matrix(NA, nrow = nrow(Y), ncol = 4)
   for (i in 1:nrow(Y)) {
@@ -573,16 +776,16 @@ method_errors <- function(Y_fit) {
   errors
 }
 
-# Average size of each error across floods
+# Average size of each error across extreme flow events
 average_errors <- function(errors) {
   colMeans(abs(errors))
 }
 
-# Leave-one-out cross-validation: each flood is left out in turn,
-# the method is fitted to the other floods, and the left-out flood is
-# predicted. fit_left_out(i) must return the method's curve for flood i
-# using only the other floods. u_star is the average over all floods; its
-# effect on the left-out flood is negligible
+# Leave-one-out cross-validation: each event is left out in turn,
+# the method is fitted to the other events, and the left-out event is
+# predicted. fit_left_out(i) must return the method's curve for event i
+# using only the other events. u_star is the average over all events; its
+# effect on the left-out event is negligible
 loocv <- function(fit_left_out) {
   Y_pred <- Y
   for (i in 1:nrow(Y)) {
@@ -591,21 +794,22 @@ loocv <- function(fit_left_out) {
   Y_pred
 }
 
-# Fixed training and test floods: about 20% held out, chosen once
+# Fixed training and test events: about 20% held out, chosen once
 # with a fixed seed so same split always used
 set.seed(2026)
 test_floods  <- sort(sample(1:nrow(Y), size = round(0.2 * nrow(Y))))
 train_floods <- setdiff(1:nrow(Y), test_floods)
 
-# Plot observed vs fitted floods in real units for six kinds of flood
+# Plot observed vs fitted events in real units for six kinds of event
 sharpness <- rowMeans(Y > 0.5)   # share of the event spent above half the peak
 
+example_events <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
+                     which.min(events$width_h),       which.max(events$width_h),
+                     which.max(sharpness),            which.min(sharpness)))
+
 plot_example_fits <- function(Y_fit, title) {
-  examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
-                       which.min(events$width_h),       which.max(events$width_h),
-                       which.max(sharpness),            which.min(sharpness)))
   par(mfrow = c(2, 3))
-  for (i in examples) {
+  for (i in example_events) {
     observed <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                        events$width_h[i], events$peak_flow[i])
     fitted   <- reconstruct_hydrograph(Y_fit[i, ], events$peak_position[i],
@@ -621,7 +825,7 @@ plot_example_fits <- function(Y_fit, title) {
   par(mfrow = c(1, 1))
 }
 
-# Plot residuals against time for every flood. Red line is average residual.
+# Plot residuals against time for every event. Red line is average residual.
 plot_residuals <- function(Y_fit, title) {
   residuals <- Y - Y_fit
   matplot(grid_u, t(residuals), type = "l", lty = 1, col = "grey",
@@ -648,7 +852,7 @@ plot_choice <- function(choice_table, setting_name) {
   par(mfrow = c(1, 1))
 }
 
-# Fitted curves for every flood, for any per-flood linear model
+# Fitted curves for every event, for any per-event linear model
 fit_all_with <- function(fit_model, setting) {
   t(sapply(1:nrow(Y), function(i) fitted(fit_model(Y[i, ], setting))))
 }
@@ -682,14 +886,20 @@ cmp_row <- function(method, n_params, type, errors, negative = NA) {
              t(average_errors(errors)), negative_points = negative)
 }
 
+# A standardised curve as an event in m^3/s and hours, using event i's own
+# peak flow, width and peak time
+as_flood <- function(curve, i) {
+  reconstruct_hydrograph(curve, events$peak_position[i], events$width_h[i], events$peak_flow[i])
+}
+
 # ------------------------------------------------------------------------------
 # 11. SEPA's current approach
 # -----------------------------------------------------------------------------
-# SEPA uses one average shape for every flood, scaled by peak flow. SEPA does
-# not realign peaks, so the average is taken over the floods on their own
+# SEPA uses one average shape for every event, scaled by peak flow. SEPA does
+# not realign peaks, so the average is taken over the events on their own
 # timing. Every method is compared against this.
 
-# Each flood's curve on its own timing on the 64 points
+# Each event's curve on its own timing on the 64 points
 unaligned_curve <- function(i) {
   real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                  events$width_h[i], events$peak_flow[i])
@@ -698,21 +908,21 @@ unaligned_curve <- function(i) {
 
 Y_unaligned <- t(sapply(1:nrow(Y), unaligned_curve))
 
-# Average shape given to flood i, laid out like Y so it can be checked in the same way as every method
+# Average shape given to event i, laid out like Y so it can be checked in the same way as every method
 baseline_curve <- function(average_shape, i) {
   real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
                                  events$width_h[i], events$peak_flow[i])
   approx(grid_u, average_shape, xout = real$hours / events$width_h[i], rule = 2)$y
 }
 
-# In-sample: every flood gets the average of all floods
+# In-sample: every event gets the average of all events
 average_shape <- colMeans(Y_unaligned)
 average_shape <- average_shape / max(average_shape)   # rescale so the peak equals the max flow, as SEPA does
 Y_baseline    <- t(sapply(1:nrow(Y), function(i) baseline_curve(average_shape, i)))
 
 baseline_errors <- method_errors(Y_baseline)
 
-# Leave-one-out: every flood gets the average of the other floods
+# Leave-one-out: every event gets the average of the other events
 baseline_errors_loocv <- cached("baseline_loocv",
                                 method_errors(loocv(function(i) {
                                   s <- colMeans(Y_unaligned[-i, ])
@@ -727,29 +937,29 @@ print(rbind(in_sample     = average_errors(baseline_errors),
 # ------------------------------------------------------------------------------
 # 12. Method 1: polynomial fitting
 # ------------------------------------------------------------------------------
-# Each flood's curve is fitted with a polynomial in time, separately for each flood, using lm():
+# Each event's curve is fitted with a polynomial in time, separately for each event, using lm():
 #   y(u) = theta_0 + theta_1 u + theta_2 u^2 + ... + theta_p u^p + error
-# The fitted coefficients theta_0, ..., theta_p are the flood's shape
-# parameters. Each flood is fitted on its own, so leave-one-out errors are the
-# same as in-sample errors. degree is checked on training and test floods.
+# The fitted coefficients theta_0, ..., theta_p are the event's shape
+# parameters. Each event is fitted on its own, so leave-one-out errors are the
+# same as in-sample errors. degree is checked on training and test events.
 
 # Formula y ~ I(u^1) + I(u^2) + ... + I(u^p), written as in the handout
 poly_formula <- function(p) {
   as.formula(paste("y ~", paste0("I(u^", 1:p, ")", collapse = " + ")))
 }
 
-# Fit one flood's curve with a degree-p polynomial
+# Fit one event's curve with a degree-p polynomial
 fit_poly_model <- function(y, p) {
   lm(poly_formula(p), data = data.frame(y = y, u = grid_u))
 }
 
-# Fitted curves for every flood at degree p
+# Fitted curves for every event at degree p
 poly_fit_all <- function(p) fit_all_with(fit_poly_model, p)
 
 # Choosing the degree
-degrees <- 2:10
+degrees <- 2:15
 
-# Significance of the highest term: proportion of floods where the highest term has p < 0.05.
+# Significance of the highest term: proportion of events where the highest term has p < 0.05.
 # Neighbouring points on a curve are correlated, so these p-values are too optimistic
 prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
                     mean(sapply(1:nrow(Y), function(i) {
@@ -761,8 +971,8 @@ prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
 
 print(data.frame(degree = degrees, prop_significant = prop_significant))
 
-# Errors by degree on training and test floods. the chosen degree
-# should work as well on the test floods as on the training floods
+# Errors by degree on training and test events. the chosen degree
+# should work as well on the test events as on the training events
 poly_choice <- cached("poly_choice",
                       train_test_choice(degrees, poly_fit_all), key = degrees)
 
@@ -774,10 +984,10 @@ p_chosen <- 7
 
 poly_models <- lapply(1:nrow(Y), function(i) fit_poly_model(Y[i, ], p_chosen))
 
-# Fitted curves, one row per flood
+# Fitted curves, one row per event
 Y_poly <- t(sapply(poly_models, fitted))
 
-# Shape parameters, one row per flood
+# Shape parameters, one row per event
 poly_coefs <- t(sapply(poly_models, coef))
 colnames(poly_coefs) <- paste0("theta_", 0:p_chosen)
 
@@ -805,7 +1015,7 @@ for (k in 1:p_chosen) {
 }
 par(mfrow = c(1, 1))
 
-# Standard diagnostic plots for the worst-fitted flood:
+# Standard diagnostic plots for the worst-fitted event:
 # residuals vs fitted, Q-Q, scale-location, leverage. Normality and
 # independence matter less here: the aim is a good basis, not inference.
 worst_poly <- which.max(poly_errors[, "rmse"])
@@ -814,10 +1024,10 @@ par(mfrow = c(2, 2))
 plot(poly_models[[worst_poly]])
 par(mfrow = c(1, 1))
 
-# Coefficient table for the same flood
+# Coefficient table for the same event
 print(summary(poly_models[[worst_poly]]))
 
-# Correlation between shape parameters across floods: strong
+# Correlation between shape parameters across events: strong
 # correlations make modelling their uncertainty harder later
 cat("\nCorrelation between polynomial shape parameters:\n")
 print(round(cor(poly_coefs), 2))
@@ -826,12 +1036,12 @@ print(round(cor(poly_coefs), 2))
 # ------------------------------------------------------------------------------
 # 13. Method 2: principal component analysis (PCA)
 # ------------------------------------------------------------------------------
-# PCA finds the main shapes in the floods from the data itself.
-# Each flood's curve is rebuilt as the mean curve plus k component curves:
+# PCA finds the main shapes in the extreme flow events from the data itself.
+# Each event's curve is rebuilt as the mean curve plus k component curves:
 #   y_i(u) = mean curve(u) + C_i1 a_1(u) + ... + C_ik a_k(u)
 #   a_j  : loadings of component j (a curve over the 64 grid points)
-#   C_ij : score of flood i on component j
-# The scores C_i1, ..., C_ik are the flood's shape parameters.
+#   C_ij : score of event i on component j
+# The scores C_i1, ..., C_ik are the event's shape parameters.
 # Curves are centred but not scaled, as all points are on the same scale
 
 make_pca <- function(data, log = FALSE) {
@@ -839,14 +1049,14 @@ make_pca <- function(data, log = FALSE) {
   back <- if (log) exp else identity
   fit  <- prcomp(X, center = TRUE, scale. = FALSE)
   
-  # Rebuilt curves for all floods using the first k components
+  # Rebuilt curves for all events using the first k components
   rebuild <- function(k) {
     scores   <- fit$x[, 1:k, drop = FALSE]
     loadings <- fit$rotation[, 1:k, drop = FALSE]
     back(sweep(scores %*% t(loadings), 2, colMeans(X), FUN = "+"))
   }
   
-  # Flood i rebuilt from components found without it
+  # event i rebuilt from components found without it
   left_out <- function(i, k) {
     fit_train  <- prcomp(X[-i, ], center = TRUE, scale. = FALSE)
     mean_train <- colMeans(X[-i, ])
@@ -889,7 +1099,7 @@ abline(h = 0.95, lty = 2, col = "red")
 cat("Smallest k explaining at least 95% of variance:", which(cum_var >= 0.95)[1], "\n")
 
 # Choosing k: In-sample errors always fall as k grows; leave-one-out errors show whether
-# extra components still help for a new flood
+# extra components still help for a new event
 k_values <- 1:min(10, nrow(Y) - 2)
 
 pca_choice <- cached("pca_choice",
@@ -904,10 +1114,10 @@ plot_choice(pca_choice, "Number of components k")
 
 k_chosen <- 6
 
-# Rebuilt curves, one row per flood
+# Rebuilt curves, one row per event
 Y_pca <- pca_rebuild(k_chosen)
 
-# Shape parameters (scores), one row per flood
+# Shape parameters (scores), one row per event
 pca_scores <- pca_result$x[, 1:k_chosen, drop = FALSE]
 
 pca_errors       <- method_errors(Y_pca)
@@ -925,7 +1135,7 @@ cat("Grid points with negative rebuilt flow:", sum(Y_pca < 0), "\n")
 plot_example_fits(Y_pca, "PCA")
 plot_residuals(Y_pca, "PCA")
 
-# Outliers in the scores: floods far from the rest are unusual
+# Outliers in the scores: events far from the rest are unusual
 pairs(pca_scores, pch = 19, main = "Scores on the kept components")
 
 # Variance and correlation of the scores. Scores are
@@ -939,15 +1149,15 @@ print(round(cor(pca_scores), 2))
 # ------------------------------------------------------------------------------
 # 14. Method 3: wavelets
 # ------------------------------------------------------------------------------
-# Each flood's curve is split by the discrete wavelet transform into a smooth
+# Each event's curve is split by the discrete wavelet transform into a smooth
 # trend plus detail at several scales. Most detail coefficients
 # are tiny, so only the largest few are kept and the rest set to zero.
-# The same detail coefficients are kept for every flood, chosen
-# as those that are largest on average across floods.
-# Daubechies "d4" filter, 3 levels, periodic boundaries. Y has 64 = 2^6 points, so no padding is needed.
+# The same detail coefficients are kept for every event, chosen
+# as those that are largest on average across events.
+# Daubechies "la8" filter, 3 levels, periodic boundaries. Y has 64 = 2^6 points, so no padding is needed.
 # Shape parameters: the smooth coefficients plus the kept detail coefficients.
 
-wav_filter <- "d4"   # wavelet filter
+wav_filter <- "la8"   # wavelet filter
 wav_levels <- 3      # number of levels
 
 # Wavelet transform of one curve
@@ -955,7 +1165,7 @@ wavelet_transform <- function(y, filter = wav_filter, levels = wav_levels) {
   dwt(as.numeric(y), filter = filter, n.levels = levels, boundary = "periodic")
 }
 
-# Average size of each detail coefficient across a set of floods, by level
+# Average size of each detail coefficient across a set of events, by level
 average_detail_size <- function(wav_list) {
   lapply(1:length(wav_list[[1]]@W), function(j) {
     rowMeans(sapply(wav_list, function(wt) abs(wt@W[[j]][, 1])))
@@ -972,21 +1182,21 @@ wavelet_rebuild <- function(wt, avg_size, keep) {
   as.numeric(idwt(wt))
 }
 
-# Wavelet transform of every flood
+# Wavelet transform of every event
 wav_all  <- lapply(1:nrow(Y), function(i) wavelet_transform(Y[i, ]))
 avg_size <- average_detail_size(wav_all)
 
-# Rebuilt curves for every flood, keeping "keep" detail coefficients
+# Rebuilt curves for every event, keeping "keep" detail coefficients
 wavelet_fit_all <- function(keep) {
   t(sapply(wav_all, function(wt) wavelet_rebuild(wt, avg_size, keep)))
 }
 
-# Left-out flood i, keeping the coefficients chosen from the other floods
+# Left-out event i, keeping the coefficients chosen from the other events
 wavelet_left_out <- function(i, keep) {
   wavelet_rebuild(wav_all[[i]], average_detail_size(wav_all[-i]), keep)
 }
 
-# Decomposition of one flood
+# Decomposition of one event
 wt_example <- wav_all[[1]]
 
 par(mfrow = c(4, 1), mar = c(2, 4, 2, 1))
@@ -1013,7 +1223,7 @@ plot_choice(wav_choice, "Detail coefficients kept")
 # Update after looking at section 10b
 keep_chosen <- 5
 
-# Rebuilt curves, one row per flood
+# Rebuilt curves, one row per event
 Y_wav <- wavelet_fit_all(keep_chosen)
 
 # Shape parameters: smooth coefficients + kept detail coefficients
@@ -1023,7 +1233,7 @@ wav_params <- t(sapply(wav_all, function(wt) {
   c(wt@V[[wav_levels]][, 1], unlist(wt@W)[kept_coefs])
 }))
 
-cat("Wavelet shape parameters per flood:", ncol(wav_params), "\n")
+cat("Wavelet shape parameters per event:", ncol(wav_params), "\n")
 
 wav_errors       <- method_errors(Y_wav)
 wav_errors_loocv <- cached("wav_loocv",
@@ -1078,15 +1288,15 @@ print(round(cor(wav_params), 2))
 #   u_p : time of the peak on [0, 1]
 #   m   : sharpness (larger m = narrower, sharper peak)
 # The curve equals 1 at u_p. It is not linear in its parameters, so it is
-# fitted by nonlinear least squares with nls(), separately for each flood.
-# Each flood is fitted on its own, so leave-one-out errors are the same as
+# fitted by nonlinear least squares with nls(), separately for each event.
+# Each event is fitted on its own, so leave-one-out errors are the same as
 # in-sample errors.
 
 gamma_curve <- function(u, b, up, m) {
   b + (1 - b) * (u / up)^m * exp(m * (1 - u / up))
 }
 
-# Fit one flood's curve
+# Fit one event's curve
 fit_gamma_model <- function(y) {
   tryCatch(
     nls(y ~ gamma_curve(u, b, up, m),
@@ -1101,17 +1311,17 @@ fit_gamma_model <- function(y) {
 
 gamma_models <- lapply(1:nrow(Y), function(i) fit_gamma_model(Y[i, ]))
 
-# Floods where the fit worked
+# events where the fit worked
 gamma_ok <- which(!sapply(gamma_models, is.null))
 cat("Gamma fits that failed to converge:", nrow(Y) - length(gamma_ok), "\n")
 
-# Fitted curves, one row per flood (failed fits left as the observed curve, and excluded from the errors below)
+# Fitted curves, one row per event (failed fits left as the observed curve, and excluded from the errors below)
 Y_gamma <- Y
 for (i in gamma_ok) {
   Y_gamma[i, ] <- fitted(gamma_models[[i]])
 }
 
-# Shape parameters, one row per flood
+# Shape parameters, one row per event
 gamma_params <- matrix(NA, nrow = nrow(Y), ncol = 3,
                        dimnames = list(NULL, c("b", "up", "m")))
 for (i in gamma_ok) {
@@ -1133,7 +1343,7 @@ plot_residuals(Y_gamma, "Gamma-type")
 cat("\nSummary of gamma-type parameters:\n")
 print(summary(gamma_params))
 
-pairs(gamma_params[gamma_ok, ], pch = 19, main = "Gamma-type parameters across floods")
+pairs(gamma_params[gamma_ok, ], pch = 19, main = "Gamma-type parameters across events")
 
 cat("\nCorrelation between gamma-type parameters:\n")
 print(round(cor(gamma_params[gamma_ok, ]), 2))
@@ -1148,15 +1358,15 @@ print(round(cor(gamma_params[gamma_ok, ]), 2))
 # still being a linear model fitted with lm(), like the polynomial:
 #   y(u) = theta_0 + theta_1 B_1(u) + ... + theta_df B_df(u) + error
 # df (the number of basis functions) plays the role of the polynomial degree.
-# Each flood is fitted on its own, so the number of basis functions is
-# checked on training and test floods, as for the polynomial.
+# Each event is fitted on its own, so the number of basis functions is
+# checked on training and test events, as for the polynomial.
 
-# Fit one flood's curve with n_basis B-spline basis functions
+# Fit one event's curve with n_basis B-spline basis functions
 fit_bspline_model <- function(y, n_basis) {
   lm(y ~ bs(u, df = n_basis), data = data.frame(y = y, u = grid_u))
 }
 
-# Fitted curves for every flood with n_basis basis functions
+# Fitted curves for every event with n_basis basis functions
 bspline_fit_all <- function(n_basis) fit_all_with(fit_bspline_model, n_basis)
 
 # Choosing the number of basis functions
@@ -1176,10 +1386,10 @@ n_basis_chosen <- 8
 
 bspline_models <- lapply(1:nrow(Y), function(i) fit_bspline_model(Y[i, ], n_basis_chosen))
 
-# Fitted curves, one row per flood
+# Fitted curves, one row per event
 Y_bspline <- t(sapply(bspline_models, fitted))
 
-# Shape parameters, one row per flood
+# Shape parameters, one row per event
 bspline_coefs <- t(sapply(bspline_models, coef))
 colnames(bspline_coefs) <- paste0("theta_", 0:n_basis_chosen)
 
@@ -1194,14 +1404,14 @@ cat("Grid points with negative fitted flow:", sum(Y_bspline < 0), "\n")
 plot_example_fits(Y_bspline, "B-spline")
 plot_residuals(Y_bspline, "B-spline")
 
-# Standard diagnostic plots for the worst-fitted flood
+# Standard diagnostic plots for the worst-fitted event
 worst_bspline <- which.max(bspline_errors[, "rmse"])
 
 par(mfrow = c(2, 2))
 plot(bspline_models[[worst_bspline]])
 par(mfrow = c(1, 1))
 
-# Correlation between shape parameters across floods
+# Correlation between shape parameters across events
 cat("\nCorrelation between B-spline shape parameters:\n")
 print(round(cor(bspline_coefs), 2))
 
@@ -1209,29 +1419,26 @@ print(round(cor(bspline_coefs), 2))
 # 18. Validation of methods
 # ------------------------------------------------------------------------------
 
-# Fitted curves from every method on same six contrasting floods
+# Fitted curves from every method on same six contrasting events
 
-# Same six floods as plot_example_fits() (section 10), with all five methods
-# drawn on each flood so they can be compared directly.
+# Same six events as plot_example_fits() (section 10), with all five methods
+# drawn on each event so they can be compared directly.
 
 fits_to_compare <- list(Y_poly, Y_pca, Y_wav, Y_gamma, Y_bspline)
 method_names    <- c("Polynomial", "PCA", "Wavelets", "Gamma-type", "B-spline")
 method_colours <- c("#D55E00", "#0072B2", "#E69F00", "#009E73", "#CC79A7")
 
-# Fitted curves from every method on the same six floods as plot_example_fits()
-# (section 10). One row per method, one column per flood.
+# Fitted curves from every method on the same six events as plot_example_fits()
+# (section 10). One row per method, one column per event.
 plot_all_methods <- function() {
-  examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
-                       which.min(events$width_h),       which.max(events$width_h),
-                       which.max(sharpness),            which.min(sharpness)))
-  par(mfrow = c(5, length(examples)), mar = c(2, 2, 2, 0.5), oma = c(3, 3, 0, 0))
+  par(mfrow = c(5, length(example_events)), mar = c(2, 2, 2, 0.5), oma = c(3, 3, 0, 0))
   for (j in 1:5) {
-    for (i in examples) {
+    for (i in example_events) {
       observed <- as_flood(Y[i, ], i)
       plot(observed$hours, observed$discharge, type = "l", lwd = 1.5, col = "black",
            xlab = "", ylab = "", main = paste(method_names[j], "- event", i),
            cex.main = 0.9)
-      # skip the gamma-type curve if its fit failed for this flood
+      # skip the gamma-type curve if its fit failed for this event
       if (j == 4 && !(i %in% gamma_ok)) next
       fitted <- as_flood(fits_to_compare[[j]][i, ], i)
       lines(fitted$hours, fitted$discharge, col = method_colours[j], lwd = 2)
@@ -1245,7 +1452,7 @@ plot_all_methods <- function() {
 # Residuals against time for every method on same figure
 
 plot_all_residuals <- function() {
-  # residuals for each method (only floods where the gamma-type fit worked)
+  # residuals for each method (only events where the gamma-type fit worked)
   residuals_by_method <- list()
   for (j in 1:5) {
     rows <- if (j == 4) gamma_ok else 1:nrow(Y)
@@ -1254,7 +1461,7 @@ plot_all_residuals <- function() {
   y_range <- range(unlist(residuals_by_method))   # same y-axis on every panel
   
   par(mfrow = c(2, 3))
-  # one panel per method: every flood faint, average bold
+  # one panel per method: every event faint, average bold
   for (j in 1:5) {
     matplot(grid_u, t(residuals_by_method[[j]]), type = "l", lty = 1,
             col = adjustcolor("grey40", alpha.f = 0.3), ylim = y_range,
@@ -1276,7 +1483,7 @@ plot_all_residuals <- function() {
 # 18. Comparing all methods
 # ------------------------------------------------------------------------------
 # Accuracy (average errors), parsimony (number of shape parameters) and the
-# physical check (negative flows). For methods fitted to each flood on its
+# physical check (negative flows). For methods fitted to each event on its
 # own (polynomial, gamma-type, B-spline), leave-one-out errors are the same
 # as in-sample errors.
 
@@ -1300,21 +1507,19 @@ print(all_comparison, digits = 3, row.names = FALSE)
 # Uncertainty analysis of the two chosen methods: PCA (k_chosen components)
 # and wavelets (la8, 3 levels, 8 smooth + 5 detail = 13 shape parameters).
 #
-# BEFORE RUNNING: in section 14 set wav_filter <- "la8", wav_levels <- 3 and
-# keep_chosen <- 5, so that wav_params holds the 13 la8 parameters.
 #
 # The shape parameters themselves come from earlier sections:
-#   PCA      : pca_scores  (section 13, one row per flood, k_chosen columns)
-#   Wavelets : wav_params  (section 14, one row per flood, 13 columns)
-# To simulate new floods we need a probability distribution for these
+#   PCA      : pca_scores  (section 13, one row per event, k_chosen columns)
+#   Wavelets : wav_params  (section 14, one row per event, 13 columns)
+# To simulate new events we need a probability distribution for these
 # parameters.
 #
 #   19a. Curves from simulated parameters
 #   19b. Looking at the shape parameters: distributions, correlations, and
-#        dependence on the size and timing of the flood
+#        dependence on the size and timing of the event
 #   19c. Simulating new shape parameters: a statistical model and a sampling 
 #   scheme
-#   19d. Out-of-sample check of the simulated shapes against held-out floods
+#   19d. Out-of-sample check of the simulated shapes against held-out events
 #   19e. Plots of the out-of-sample check
 #   19f. Final simulations (provisionally PCA with the Normal)
 #   19g. Sampling uncertainty
@@ -1337,10 +1542,10 @@ params <- list(PCA = pca_scores, Wavelets = wav_params)
 # ------------------------------------------------------------------------------
 # 19a. Curves from simulated parameters
 # ------------------------------------------------------------------------------
-# Sections 13 and 14 rebuild the observed floods only. These two functions
-# turn any shape parameters (one row per flood), e.g. simulated ones from
+# Sections 13 and 14 rebuild the observed events only. These two functions
+# turn any shape parameters (one row per event), e.g. simulated ones from
 # 19c, into curves laid out like Y. By default they use the components / kept coefficients found from all
-# floods. 19d passes in ones found from training floods.
+# events. 19d passes in ones found from training events.
 
 # PCA: mean curve + scores x loadings
 pca_sim_curves <- function(scores, pca_fit = pca_result) {
@@ -1374,7 +1579,7 @@ cat("Wavelets check:", max(abs(wav_sim_curves(wav_params) - Y_wav)), "\n")
 # Distributions (1): histogram of each parameter with a Normal curve (same mean
 # and standard deviation) drawn on top. The multivariate Normal in 19c
 # assumes each parameter roughly follows this curve: look for skew, long
-# tails or outlying floods.
+# tails or outlying events.
 plot_param_histograms <- function(shape_params, method_name) {
   par(mfrow = c(ceiling(ncol(shape_params) / 4), 4), mar = c(4, 4, 2, 1))
   for (j in 1:ncol(shape_params)) {
@@ -1408,15 +1613,15 @@ plot_param_qq(wav_params, "Wavelet")
 # Correlations between the parameters (printed in sections 13 and 14). PCA
 # scores are uncorrelated by construction; the wavelet parameters are not,
 # which the multivariate Normal in 19c has to capture (13 x 14 / 2 = 91
-# correlations estimated from 41 floods).
+# correlations estimated from 118 events).
 wav_correlations <- cor(wav_params)
-image(1:13, 1:13, wav_correlations, zlim = c(-1, 1),
-      col = colorRampPalette(c("#AA1945", "white", "#174B67"))(41),
+image(1:ncol(wav_params), 1:ncol(wav_params), wav_correlations, zlim = c(-1, 1),
+      col = colorRampPalette(c("#AA1945", "white", "#174B67"))(118),
       axes = FALSE, xlab = "", ylab = "", main = "Correlation between wavelet parameters")
-axis(1, 1:13, colnames(wav_correlations), las = 2)
-axis(2, 1:13, colnames(wav_correlations), las = 2)
+axis(1, 1:ncol(wav_params), colnames(wav_correlations), las = 2)
+axis(2, 1:ncol(wav_params), colnames(wav_correlations), las = 2)
 
-# Dependence on the size and timing of the flood. We divided by peak flow and
+# Dependence on the size and timing of the event. We divided by peak flow and
 # rescaled time, so shape is modelled separately from Part 1's peak flow and
 # time to peak. That is only justified if the shape parameters are (roughly)
 # unrelated to them.
@@ -1425,9 +1630,9 @@ flood_size_timing <- cbind(log_peak_flow = log(events$peak_flow),
                            peak_position = events$peak_position)
 
 # Spearman correlation (based on ranks, so not driven by a few extreme
-# floods). With 41 floods, a correlation above about 0.31 in size would arise
+# events). With 118 events, a correlation above about 0.18 in size would arise
 # by chance less than 1 time in 20; with this many correlations a few will
-# pass by chance, so look for strong, consistent relationships.
+# pass by chance, so look for strong, consistent relationships. [REMOVE AFTER INTERPRETATION]
 size_timing_correlations <- lapply(params, function(shape_params)
   round(cor(shape_params, flood_size_timing, method = "spearman"), 2))
 print(size_timing_correlations)
@@ -1447,24 +1652,24 @@ par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
 # ------------------------------------------------------------------------------
 # 19c. Simulating new shape parameters
 # ------------------------------------------------------------------------------
-# Two ways to simulate shape parameters for new floods.
-# Each takes the parameters of a set of floods (one row per flood)
+# Two ways to simulate shape parameters for new extreme flow events.
+# Each takes the parameters of a set of events (one row per event)
 # and returns n_sim simulated parameter vectors (one per row).
 # MASS::mvrnorm() draws from a multivariate Normal (MASS comes with R).
 
 # 1. Statistical model - multivariate Normal: each parameter is Normal, with
-#    the means and correlations estimated from the floods
+#    the means and correlations estimated from the events
 simulate_normal <- function(shape_params, n_sim) {
   MASS::mvrnorm(n_sim, mu = colMeans(shape_params), Sigma = cov(shape_params))
 }
 
-# 2. Sampling scheme - smoothed bootstrap: pick one of the observed floods at
-#    random and add a little Normal noise, so new floods are similar to, but
+# 2. Sampling scheme - smoothed bootstrap: pick one of the observed events at
+#    random and add a little Normal noise, so new events are similar to, but
 #    not copies of, observed ones. No Normality assumption.
 #    noise_scale sets the size of the noise relative to the spread of the
-#    floods. It uses Silverman's rule of thumb, the standard default choice
+#    events. It uses Silverman's rule of thumb, the standard default choice
 #    (the same rule R's density() uses): less noise when there are more
-#    floods. Here it is about 0.65 for PCA and 0.75 for wavelets.
+#    events.
 simulate_bootstrap <- function(shape_params, n_sim) {
   n_floods    <- nrow(shape_params)
   n_params    <- ncol(shape_params)
@@ -1476,7 +1681,7 @@ simulate_bootstrap <- function(shape_params, n_sim) {
   picked + noise
 }
 
-# Simulate 1000 parameter vectors for each method, fitted to all floods
+# Simulate 1000 parameter vectors for each method, fitted to all events
 n_sim <- 1000
 set.seed(2026)
 simulated_params <- list(
@@ -1508,7 +1713,7 @@ compare_param_distributions(pca_scores, simulated_params$PCA, "PCA")
 compare_param_distributions(wav_params, simulated_params$Wavelets, "Wavelet")
 
 # Check 2: 20 simulated curves next to 20 observed ones. Do the simulated
-# floods look like real ones (one peak, no negative flow, similar spread)?
+# events look like real ones (one peak, no negative flow, similar spread)?
 plot_20_curves <- function(curves, title, colour) {
   matplot(grid_u, t(curves[1:20, ]), type = "l", lty = 1, col = colour,
           xlab = "Rescaled time u", ylab = "Flow / peak flow", main = title)
@@ -1528,35 +1733,29 @@ par(mfrow = c(1, 1))
 # 19d. Out-of-sample check
 # ------------------------------------------------------------------------------
 # Check whether the fitted distribution works well out
-# of sample. For a held-out flood:
-#   1. using the training floods only, find the PCA components / wavelet
+# of sample. For a held-out event:
+#   1. using the training events only, find the PCA components / wavelet
 #      coefficients to keep, and fit the Normal or bootstrap to their
 #      shape parameters
-#   2. simulate n_sim shapes and turn them into floods using the held-out
-#      flood's own peak flow, width and peak time (so only SHAPE is tested)
-#   3. compare them with the real held-out flood:
+#   2. simulate n_sim shapes and turn them into events using the held-out
+#      event's own peak flow, width and peak time (so only SHAPE is tested)
+#   3. compare them with the real held-out event:
 #        rmse, peak_error, timing_error, volume_error : the median simulated
-#            flood against the real one (flood_errors(), section 10)
+#            event against the real one (event_errors(), section 10)
 #        coverage90 : share of the real curve inside the simulated 90% band
 #            (should be about 0.90; lower = band too narrow)
-#        crps : average distance between the simulated and real flood, minus
-#            half the average distance between two simulated floods (m^3/s,
+#        crps : average distance between the simulated and real event, minus
+#            half the average distance between two simulated events (m^3/s,
 #            lower is better). It rewards being close AND having the right
 #            spread; for a single curve (SEPA) it equals the mean absolute
 #            error.
 #        negative : share of simulated curves with negative flow
 #        peak_off : share whose highest point is not within 5% of the peak flow
-# Done for leave-one-out (every flood held out in turn) and for the training
-# and test floods from section 10.
+# Done for leave-one-out (every event held out in turn) and for the training
+# and test events from section 10.
 
-# A standardised curve as a flood in m^3/s and hours, using flood i's own
-# peak flow, width and peak time
-as_flood <- function(curve, i) {
-  reconstruct_hydrograph(curve, events$peak_position[i], events$width_h[i], events$peak_flow[i])
-}
-
-# Wavelet coefficients to keep, chosen from the training floods only, and the
-# shape parameters of a set of floods using those coefficients
+# Wavelet coefficients to keep, chosen from the training events only, and the
+# shape parameters of a set of events using those coefficients
 wav_kept_from <- function(train_rows) {
   sizes <- unlist(average_detail_size(wav_all[train_rows]))
   sizes >= sort(sizes, decreasing = TRUE)[keep_chosen]
@@ -1566,7 +1765,7 @@ wav_params_from <- function(rows, kept) {
   t(sapply(wav_all[rows], function(wt) c(wt@V[[wav_levels]][, 1], unlist(wt@W)[kept])))
 }
 
-# Simulated shapes for a held-out flood, using only the training floods
+# Simulated shapes for a held-out event, using only the training events
 simulate_shapes <- function(train_rows, method, simulate) {
   if (method == "PCA") {
     pca_fit <- prcomp(Y[train_rows, ], center = TRUE, scale. = FALSE)
@@ -1577,7 +1776,7 @@ simulate_shapes <- function(train_rows, method, simulate) {
   }
 }
 
-# Scores for one held-out flood i
+# Scores for one held-out event i
 check_held_out <- function(i, train_rows, method, simulate) {
   sim_shapes <- simulate_shapes(train_rows, method, simulate)
   real_shape <- Y[i, ]
@@ -1602,7 +1801,7 @@ check_held_out <- function(i, train_rows, method, simulate) {
     peak_off   = mean(abs(apply(sim_shapes, 1, max) - 1) > 0.05))
 }
 
-# SEPA's approach for comparison: one average shape of the training floods,
+# SEPA's approach for comparison: one average shape of the training events,
 # no shape uncertainty
 check_held_out_sepa <- function(i, train_rows) {
   average <- colMeans(Y_unaligned[train_rows, ])
@@ -1614,7 +1813,7 @@ check_held_out_sepa <- function(i, train_rows) {
     coverage90 = NA, negative = NA, peak_off = NA)
 }
 
-# Every model to check: check(i, train_rows) returns the scores for flood i
+# Every model to check: check(i, train_rows) returns the scores for event i
 models_to_check <- list(
   "SEPA average shape" = check_held_out_sepa,
   "PCA - Normal"       = function(i, train_rows) check_held_out(i, train_rows, "PCA", simulate_normal),
@@ -1623,7 +1822,7 @@ models_to_check <- list(
   "Wavelets - Bootstrap" = function(i, train_rows) check_held_out(i, train_rows, "Wavelets", simulate_bootstrap)
 )
 
-# Scores for every held-out flood (one row per flood)
+# Scores for every held-out event (one row per event)
 leave_one_out_scores <- function(check) {
   set.seed(2026)
   t(sapply(1:nrow(Y), function(i) check(i, setdiff(1:nrow(Y), i))))
@@ -1637,12 +1836,12 @@ test_flood_scores <- function(check) {
 held_out_scores <- cached("uncertainty_held_out",
                           lapply(models_to_check, function(check) list(
                             "leave-one-out" = leave_one_out_scores(check),
-                            "test floods"   = test_flood_scores(check))),
+                            "test events"   = test_flood_scores(check))),
                           key = list(k_chosen, wav_filter, wav_levels, keep_chosen, n_sim))
 
-# Summary: average over held-out floods. Errors are averaged as absolute
+# Summary: average over held-out events. Errors are averaged as absolute
 # values, as in average_errors() (section 10).
-uncertainty_summary <- do.call(rbind, lapply(c("leave-one-out", "test floods"), function(type) {
+uncertainty_summary <- do.call(rbind, lapply(c("leave-one-out", "test events"), function(type) {
   do.call(rbind, lapply(names(held_out_scores), function(model) {
     scores <- held_out_scores[[model]][[type]]
     data.frame(model = model, check = type,
@@ -1656,19 +1855,16 @@ print(uncertainty_summary, digits = 3, row.names = FALSE)
 # ------------------------------------------------------------------------------
 # 19e. Plots of the out-of-sample check
 # ------------------------------------------------------------------------------
-# The simulated 90% band against the real flood, for the same six kinds of
-# flood as plot_example_fits() (section 10): earliest and latest peak,
-# shortest and longest, sharpest and flattest. Each flood is left out of the
-# fit (as in 19d), so this shows how well the model covers a flood it has
-# not seen. The real flood (black) should mostly sit inside the band.
+# The simulated 90% band against the real extreme flow event, for the same six kinds of
+# event as plot_example_fits() (section 10): earliest and latest peak,
+# shortest and longest, sharpest and flattest. Each event is left out of the
+# fit (as in 19d), so this shows how well the model covers a event it has
+# not seen. The real event (black) should mostly sit inside the band.
 
 plot_held_out_bands <- function(method, simulate, title) {
-  examples <- unique(c(which.min(events$peak_position), which.max(events$peak_position),
-                       which.min(events$width_h),       which.max(events$width_h),
-                       which.max(sharpness),            which.min(sharpness)))
   set.seed(2026)
   par(mfrow = c(2, 3))
-  for (i in examples) {
+  for (i in example_events) {
     sim_shapes <- simulate_shapes(setdiff(1:nrow(Y), i), method, simulate)
     
     real_flood   <- as_flood(Y[i, ], i)
@@ -1685,7 +1881,7 @@ plot_held_out_bands <- function(method, simulate, title) {
             col = "#DCEEF5", border = NA)
     lines(median_flood$hours, median_flood$discharge, col = "#5298BC", lwd = 2, lty = 2)
     lines(real_flood$hours, real_flood$discharge, lwd = 2)
-    legend("topright", c("Real flood", "Median simulated", "90% band"),
+    legend("topright", c("Real extreme flow event", "Median simulated", "90% band"),
            col = c("black", "#5298BC", NA), lty = c(1, 2, NA), lwd = 2,
            fill = c(NA, NA, "#DCEEF5"), border = NA, cex = 0.7)
   }
@@ -1701,7 +1897,7 @@ plot_held_out_bands("Wavelets", simulate_bootstrap, "Wavelets - Bootstrap")
 # ------------------------------------------------------------------------------
 # 19f. Final simulations
 # ------------------------------------------------------------------------------
-# The chosen method and way of simulating, fitted to all 41 floods (19c).
+# The chosen method and way of simulating, fitted to all 118 extreme flow events (19c).
 # Provisionally PCA with the multivariate Normal.
 
 chosen_method       <- "PCA"      # "PCA" or "Wavelets"   - UPDATE after 19d
@@ -1716,17 +1912,17 @@ chosen_params   <- params[[chosen_method]]
 final_shapes <- chosen_curves(simulated_params[[chosen_method]][[chosen_distribution]])
 
 # Fan chart: simulated 5-95% and 25-75% bands and median, with the real
-# floods in grey
+# extreme flow events in grey
 band <- apply(final_shapes, 2, quantile, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
 
 plot(grid_u, band[3, ], type = "n", ylim = range(band, Y),
      xlab = "Rescaled time u", ylab = "Flow / peak flow",
-     main = paste("Simulated flood shapes:", chosen_method, "-", chosen_distribution))
+     main = paste("Simulated extreme flow event shapes:", chosen_method, "-", chosen_distribution))
 polygon(c(grid_u, rev(grid_u)), c(band[1, ], rev(band[5, ])), col = "#DCEEF5", border = NA)
 polygon(c(grid_u, rev(grid_u)), c(band[2, ], rev(band[4, ])), col = "#9CC7DD", border = NA)
 matlines(grid_u, t(Y), col = adjustcolor("grey30", 0.3), lty = 1)
 lines(grid_u, band[3, ], col = "#174B67", lwd = 2)
-legend("topright", c("5-95%", "25-75%", "Median", "Real floods"),
+legend("topright", c("5-95%", "25-75%", "Median", "Real extreme flow events"),
        fill = c("#DCEEF5", "#9CC7DD", NA, NA), border = NA,
        col = c(NA, NA, "#174B67", "grey30"), lty = c(NA, NA, 1, 1), cex = 0.8)
 
@@ -1736,14 +1932,14 @@ cat("Share of simulated shapes with negative flow:",
 cat("Share whose highest point is not within 5% of the peak flow:",
     round(mean(abs(apply(final_shapes, 1, max) - 1) > 0.05), 3), "\n")
 
-# Simulating whole floods in m^3/s and hours: what would be fed to the flood
-# inundation model or emulator. Each simulated flood combines
-#   - a simulated shape, divided by its own maximum so the flood peaks at
+# Simulating whole events in m^3/s and hours: what would be fed to the event
+# inundation model or emulator. Each simulated event combines
+#   - a simulated shape, divided by its own maximum so the event peaks at
 #     exactly the drawn peak flow (as in SEPA's current approach)
-#   - a peak flow, width and peak position for that flood
+#   - a peak flow, width and peak position for that event
 #
 # PLACEHOLDER: draw_flood_size_timing() currently resamples the observed
-# floods (which keeps the relationships between the three). REPLACE it with
+# events (which keeps the relationships between the three). REPLACE it with
 # the Part 1 distributions (e.g. the GPD for peak flow) for the final analysis.
 draw_flood_size_timing <- function(n) {
   events[sample(nrow(events), n, replace = TRUE),
@@ -1758,7 +1954,7 @@ simulate_floods <- function(n) {
                                                  size_timing$width_h[j], size_timing$peak_flow[j]))
 }
 
-# Plot: 30 simulated floods next to the real floods, in m^3/s and hours
+# Plot: 30 simulated events next to the real events, in m^3/s and hours
 set.seed(2026)
 simulated_floods <- simulate_floods(30)
 real_floods      <- lapply(1:nrow(Y), function(i) as_flood(Y[i, ], i))
@@ -1768,11 +1964,11 @@ max_flow  <- max(sapply(c(real_floods, simulated_floods), function(f) max(f$disc
 
 par(mfrow = c(1, 2))
 plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
-     xlab = "Hours since start", ylab = "Discharge (m^3/s)", main = "Real floods")
+     xlab = "Hours since start", ylab = "Discharge (m^3/s)", main = "Real events")
 for (f in real_floods) lines(f$hours, f$discharge, col = adjustcolor("grey30", 0.6))
 plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
      xlab = "Hours since start", ylab = "Discharge (m^3/s)",
-     main = paste("Simulated floods:", chosen_method, "-", chosen_distribution))
+     main = paste("Simulated events:", chosen_method, "-", chosen_distribution))
 for (f in simulated_floods) lines(f$hours, f$discharge, col = adjustcolor("#5298BC", 0.6))
 par(mfrow = c(1, 1))
 
@@ -1780,15 +1976,15 @@ par(mfrow = c(1, 1))
 # ------------------------------------------------------------------------------
 # 19g. Sampling uncertainty
 # ------------------------------------------------------------------------------
-# Our simulations are based on only 41 floods; a different 41 floods would
+# Our simulations are based on only 118 events; a different 118 events would
 # give a slightly different model. To see how much this matters:
-#   1. resample the 41 floods with replacement (some floods appear more than
+#   1. resample the 118 events with replacement (some events appear more than
 #      once, some not at all)
-#   2. refit everything on the resampled floods (PCA components / wavelet
+#   2. refit everything on the resampled events (PCA components / wavelet
 #      coefficients to keep, and the Normal or bootstrap) and simulate shapes
 #   3. record the simulated 90% band
 # Repeated n_boot times. If the bands from the refits are close together,
-# the model does not depend much on which floods we happened to observe.
+# the model does not depend much on which events we happened to observe.
 
 # Uses chosen_distribution from 19f; both methods are shown for comparison.
 
@@ -1816,14 +2012,14 @@ bootstrap_bands <- cached("uncertainty_sampling",
                           key = list(k_chosen, wav_filter, wav_levels, keep_chosen,
                                      n_sim, n_boot, chosen_distribution))
 
-# Band from all 41 floods (19c), for comparison
+# Band from all 118 events (19c), for comparison
 full_band <- list(
   PCA      = pca_sim_curves(simulated_params$PCA[[chosen_distribution]]),
   Wavelets = wav_sim_curves(simulated_params$Wavelets[[chosen_distribution]])
 )
 
 # Plot: band edges from every refit (blue = lower, red = upper), with the
-# band from all floods in black
+# band from all events in black
 par(mfrow = c(1, 2))
 for (method in names(bootstrap_bands)) {
   bands <- bootstrap_bands[[method]]

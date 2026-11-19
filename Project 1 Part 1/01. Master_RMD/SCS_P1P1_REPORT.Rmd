@@ -74,7 +74,7 @@ knitr::opts_chunk$set(
 	warning = FALSE
   )
 
-source("master_code_2.R")
+source("master_code_p1p1.R")
 ```
 
 ```{r loading packages for plotting, message=FALSE, warning=FALSE, include=FALSE}
@@ -87,7 +87,7 @@ library(gridExtra)
 
 Current flood models assume flood patterns are fixed, adjusting only for maximum flow. This report investigates the uncertainty in both the peak flow rate and the time it takes to reach that maximum from the start of the rise.
 
-Using 10 years of river flow data from the River Don at Parkhill gauging station, we identified `r nrow(peaks)` major flood events. Both factors varied significantly, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Floods primarily occurred in Autumn and Winter, with Autumn events typically taking longer to reach their peak.
+Using 25 years of river flow data from the River Don at Parkhill gauging station, we identified `r nrow(peaks)` major flood events. Both factors varied significantly, with median values of c.`r round(max_flow_q[2])` $\text{m}^3/\text{s}$ and c.`r round(ttp_q[2])` hours respectively. Floods primarily occurred in Autumn and Winter, with Autumn events typically taking longer to reach their peak.
 
 We found that larger floods generally take longer to reach maximum flow, though this timing varies considerably between events. Assuming all floods follow a standard pattern may overlook real-world uncertainty. Consequently, SEPA should factor in both peak flow rate and time to peak when assessing flood risk.
 
@@ -99,13 +99,15 @@ We found that larger floods generally take longer to reach maximum flow, though 
 tidy_data_table
 ```
 
-The subsequent analysis uses discharge readings ($\text{m}^3/\text{s}$) covering 10 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, applies a single peak flow rating curve to all measurements.
+The subsequent analysis uses discharge readings ($\text{m}^3/\text{s}$) covering 25 [water years](https://en.wikipedia.org/wiki/Water_year). Parkhill, the lowest gauging station on the Don, applies a single peak flow rating curve to all measurements.
 
 Each reading is assigned a SEPA quality code (Table \@ref(tab:tidyingthedata)).
 
-- Estimated ($n=14,915$): Retained. @sepa2026 defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit at which Good readings are capped (Figure \@ref(fig:dischargeqc)). These are the largest flow readings, so we retain to preserve the extremes.
+- Estimated ($n=21,962$): Retained. @sepa2026 defines these as acceptable rating curve extrapolations where the river level exceeds the 3.7 m gauging limit at which Good readings are capped (Figure \@ref(fig:dischargeqc)). These are the largest flow readings, so we retain to preserve the extremes.
 
-- Unchecked ($n=30$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and sporadic 2017–2018 occurrences of at most 45 minutes. Only two coincide with extreme flows, so their removal leaves a fully verified data-set with negligible impact.
+- Suspect ($n=852$)
+
+- Unchecked ($n=71$): Excluded. These are restricted to recent entries (29 September 2026, 16:15 onward) and sporadic 2017–2018 occurrences of at most 45 minutes. Only two coincide with extreme flows, so their removal leaves a fully verified data-set with negligible impact.
 
 \begin{minipage}{0.48\textwidth}
 \centering
