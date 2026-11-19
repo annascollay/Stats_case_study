@@ -166,25 +166,29 @@ Importantly, the original peak discharge, event duration and relative peak posit
 
 # Methods for representing hydrograph shape
 
-SEPA's emulator must be fitted to pairs of inputs and outputs obtained from runs of the flood inundation model, and since each run is slow, the number of inputs must be kept small, as every additional input increases the number of runs needed to fit the emulator. After standardisation (Section \@ref(standardising-the-hydrogpraphs)), each flood $i = 1, \dots, N$ ($N =$ `r nrow(Y)`) is described by its standardised discharge $y_i(u_j)$ at the `r n_grid` grid times $u_j$, together with its peak discharge $Q_i^{\text{peak}}$, duration $W_i$ and relative peak position $\tau_i$, giving `r n_grid + 3` numbers per flood, which is far too many to use directly as emulator inputs. Most of the methods below approximate the standardised curve by a weighted sum of $K$ basis functions,
+SEPA's emulator is fitted to input and output pairs of the flood inundation model, and since every additional input increases the number of runs needed to fit it, and each run is slow, we aim to keep the number of inputs as low as possible. However, after standardisation (Section \@ref{#standardising-the-hydrogpraphs}), each of our floods $i = 1, \dots, N$ ($N =$ `r nrow(Y)`) is described by its standardised discharge $y_i(u_j)$ at each of the `r n_grid` time points $u_j$, plus its peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$, giving `r n_grid + 3` numbers per flood. This is far too many to use as inputs to the emulator, so we explore the polynomial regression, Principal Component Analysis (PCA), and wavelet dimension-reduction methods from lectures, alongside two additional methods from our further reading.
+
+Most of these methods approximate the standardised curve $y_i(u)$ by a weighted sum of $K$ basis functions,
 
 \begin{equation}
 y_i(u) \approx \sum_{k=1}^{K} \theta_{ik}\,\phi_k(u),
 (\#eq:basis)
 \end{equation}
-and differ only in their choice of basis functions $\phi_k$, the exceptions being PCA, which first subtracts the mean curve, and the gamma-type curve, which is a nonlinear function of its parameters. In every case, the shape of flood $i$ is summarised by $K$ shape parameters $\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})$, far fewer than `r n_grid`. The three event quantities are retained as they are, so each flood is then described by
+
+and differ only in their choice of basis functions $\phi_k$. The exceptions are PCA, which first subtracts the mean curve before applying \@ref(#eq:basis), and the gamma-type curve from our further reading, which is a nonlinear function of its parameters. In every case, the coefficients $\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})$ for flood $i$ become our $K$ shape parameters, while the peak discharge, duration, and relative peak position are kept seperately as they are, so that flood $i$ is now described by
 
 \begin{equation}
-\mathbf{x}_i = \left(Q_i^{\text{peak}},\; W_i,\; \tau_i,\; \boldsymbol{\theta}_i\right),
+\mathbf{x}_i = \left(Q_i^{\text{peak}},\; W_i,\; \tau_i,\; \boldsymbol{\theta}_i\right).
 (\#eq:inputs)
 \end{equation}
-which has $3 + K$ elements rather than `r n_grid + 3`.
 
-## SEPA's current approach {#method-SEPA}
+The emulator therefore only needs $3 + K$ inputs, where $K$ is significantly smaller than the previous `r n_grid + 3`.
 
-We introduce SEPA's current approach as a baseline against which every other method is compared. Their approach treats the shape of the hydrograph as fixed, and scales it up or down using only its maximum flow.
+## SEPA's Approach {#method-SEPA}
 
-To implement this, each flood's discharge is divided by its maximum flow and its time rescaled to $v \in [0,1]$ by its duration; however, we do not realign the peaks, as SEPA does not do so. We obtain curves $\tilde{y}_i(v)$, which are averaged across floods and rescaled to have a peak value of one,
+We introduce SEPA's current approach as a baseline against which every other method can be compared. Their approach treats the shape of the hydrograph as fixed, and scales it up or down using only its peak discharge.
+
+To implement this, each flood's discharge is divided by its peak discharge and its time rescaled to $v \in [0,1]$ by its duration; however, we do not realign the peaks, as SEPA does not do so. We obtain curves $\tilde{y}_i(v)$, which are averaged across floods and rescaled to have a peak value of one,
 
 \begin{equation}
 \bar{y}(v) = \frac{1}{N}\sum_{l=1}^{N} \tilde{y}_l(v), \qquad \hat{y}(v) = \frac{\bar{y}(v)}{\max_v \bar{y}(v)}.
@@ -193,11 +197,13 @@ To implement this, each flood's discharge is divided by its maximum flow and its
 
 The fitted hydrograph for flood $i$ is obtained by stretching $\hat{y}$ to the flood's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$, so that every flood shares the same shape and differs only in its height and length. To test how well this shape predicts a flood it has not seen, each flood is also compared with the average of the other $N - 1$ floods only. Finally, each flood here is given its own observed duration $W_i$, as it is for every method, whereas SEPA's approach uses the same duration for every flood, so this version of SEPA's approach may fit the observed floods slightly better than the real one.
 
-## How the methods are evaluated and validated {#methods-comparison}
+## Evaluation criteria {#methods-comparison}
 
-Following the lectures, we compare the methods on three criteria, which may trade off against each other: accuracy, parsimony and fitness for purpose. All methods, including SEPA's approach, are evaluated in the same way. Since flood inundation depends on real flows rather than standardised ones, each fitted curve is first converted back into a hydrograph in m³/s and hours by reversing the standardisation with the flood's own peak discharge, duration and peak position, and is then compared with the observed hydrograph at the same `r n_grid` times $t_1, \dots, t_{`r n_grid`}$. We write $Q_i(t)$ and $\hat{Q}_i(t)$ for the observed and fitted hydrographs of flood $i$, and summarise each error below by its average absolute value across floods.
+Following the lectures, we evaluate each method on three criteria: accuracy, parsimony, and fitness for purpose. These are initially used to choose the number of parameters for each method (Sections 3.3-3.6) and then, to compare the methods at these choices (Section 5). 
 
-**Accuracy.** How closely each method reproduces the whole hydrograph is measured by the root mean squared error,
+Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each flood's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for flood $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all 41 floods.
+
+**Accuracy:** How closely each method reproduces the whole hydrograph is measured by the root mean squared error,
 
 \begin{equation}
 \text{RMSE}_i = \sqrt{\tfrac{1}{`r n_grid`}\textstyle\sum_{j}\big(\hat{Q}_i(t_j) - Q_i(t_j)\big)^2}.
@@ -205,9 +211,9 @@ Following the lectures, we compare the methods on three criteria, which may trad
 \end{equation}
 Where possible, the errors are calculated both within and out of sample. For methods whose basis or average shape is estimated from all floods together (SEPA's approach, PCA and the choice of wavelet coefficients), we use leave-one-out cross-validation, in which each flood in turn is removed, the method is refitted to the remaining $N - 1$ floods, and the removed flood is predicted. For methods fitted to each flood separately (polynomial, B-spline and gamma-type), leaving a flood out does not change the fit to the others, so the in-sample and leave-one-out errors are identical; for these, the floods were instead split once at random into `r length(train_floods)` training and `r length(test_floods)` test floods, which is used to choose each method's settings.
 
-**Parsimony.** The number of parameters needed to achieve that accuracy matters because the parameters become the emulator's inputs, and fewer, less correlated parameters make both the emulator and the modelling of their uncertainty easier. We therefore compare the number of shape parameters of each method and the correlation between them across floods.
+**Parsimony:** The number of parameters needed to achieve that accuracy matters because the parameters become the emulator's inputs, and fewer, less correlated parameters make both the emulator and the modelling of their uncertainty easier. We therefore compare the number of shape parameters of each method and the correlation between them across floods.
 
-**Fitness for purpose.** A small RMSE can hide a poorly fitted peak, so we also measure how well each method reconstructs the features of the hydrograph that matter most for flooding,
+**Fitness for purpose:** A small RMSE can hide a poorly fitted peak, so we also measure how well each method reconstructs the features of the hydrograph that matter most for flooding,
 
 \begin{align}
 \text{Peak error}_i &= \max_j \hat{Q}_i(t_j) - \max_j Q_i(t_j), (\#eq:peak)\\
@@ -244,21 +250,9 @@ plot_choice(poly_choice, "Polynomial degree")
 
 We observe that the proportion of significant highest-order terms does not decrease steadily with the degree, but is much higher at odd degrees than at even ones, and that every error continues to fall as the degree increases, with the test errors following the training errors closely. The largest improvements also occur when moving to an odd degree, with the step from degree 6 to 7 giving the largest single reduction in the peak error, while further increases give smaller gains for each additional parameter, so we chose $p =$ `r p_chosen`. Additionally, degree 8 gave similar errors, whereas degree 6 was noticeably less accurate at the peak, so the choice is not sensitive to a small increase in $p$.
 
-To validate the fit, we compared the observed and fitted hydrographs for floods of different types, namely those with the earliest and latest peaks, the shortest and longest durations, and the flattest and sharpest peaks (Figure \@ref(fig:polyfits)), and plotted the residuals against time for every flood (Figure \@ref(fig:polyresid)), looking for systematic patterns rather than simply their size. We observe that the polynomial underestimates sharp peaks, with the residuals positive at the peak and negative on either side for almost every flood, so the fitted peak is systematically too low and too broad. It also cannot reproduce floods with two peaks, such as events 19, 29 and 41, instead fitting a single broad peak across them, and it bends away from the observed flow at the start and end of the event. Since the residuals at neighbouring times are correlated, they are not independent, and they need not be normally distributed, but this does not affect our use of the model, as the fitted curve is used as a basis rather than for inference.
-
-```{r polyfits, echo=FALSE, fig.height=6, fig.cap="Observed and fitted hydrographs for six contrasting floods, polynomial method."}
-plot_example_fits(Y_poly, "Polynomial")
-```
-
-```{r polyresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), polynomial method."}
-plot_residuals(Y_poly, "Polynomial")
-```
-
-Finally, we observe that the coefficients are strongly correlated across floods, with correlations of up to `r sprintf("%.3f", max(abs(cor(poly_coefs)[upper.tri(cor(poly_coefs))])))` in absolute value, as the powers of $u$ are themselves highly correlated on $[0, 1]$. This means that the coefficients are difficult to interpret and their joint variation between floods harder to model, which is a disadvantage of this method for use with an emulator.
-
 ## Principal component analysis {#method-pca}
 
-Next, we consider principal component analysis (PCA). Unlike the polynomial, where the basis is fixed before looking at the data, PCA estimates the basis from the floods themselves, finding the curves that best describe how the floods differ from one another. To do this, we arrange the standardised hydrographs into the `r nrow(Y)` $\times$ `r n_grid` matrix $Y$, with one row per flood, and centre each column by subtracting the mean curve $\bar{y}(u_j)$. We do not scale the columns, as every column is already on the same standardised scale. PCA then finds the principal components $\phi_1, \phi_2, \dots$, which are the eigenvectors of the sample covariance matrix of $Y$, ordered so that the first explains the most variation between floods, the second the most of what remains, and so on. Each standardised hydrograph is then approximated by
+Unlike the polynomial, where the basis is fixed before looking at the data, PCA estimates the basis from the floods themselves, finding the curves that best describe how the floods differ from one another. To do this, we arrange the standardised hydrographs into the `r nrow(Y)` $\times$ `r n_grid` matrix $Y$, with one row per flood, and centre each column by subtracting the mean curve $\bar{y}(u_j)$. We do not scale the columns, as every column is already on the same standardised scale. PCA then finds the principal components $\phi_1, \phi_2, \dots$, which are the eigenvectors of the sample covariance matrix of $Y$, ordered so that the first explains the most variation between floods, the second the most of what remains, and so on. Each standardised hydrograph is then approximated by
 
 \begin{equation}
 y_i(u_j) \approx \bar{y}(u_j) + \sum_{k=1}^{K} \xi_{ik}\,\phi_k(u_j), \qquad \xi_{ik} = \sum_{j=1}^{`r n_grid`} \big(y_i(u_j) - \bar{y}(u_j)\big)\,\phi_k(u_j),
@@ -287,16 +281,6 @@ abline(h = 0.95, lty = 2, col = "#AA1945")
 
 ```{r pcachoice, echo=FALSE, fig.height=6, fig.cap="Average absolute errors, in-sample and leave-one-out, by number of principal components."}
 plot_choice(pca_choice, "Number of components K")
-```
-
-To validate the fit, we compared the observed and reconstructed hydrographs for the same six floods as for the polynomial (Figure \@ref(fig:pcafits)), plotted the residuals against time for every flood (Figure \@ref(fig:pcaresid)), and checked the scores for any unusual floods. We observe that, unlike the polynomial, PCA reproduces both the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks closely, with the main differences being an underestimate of the earlier of two peaks, as for events 19 and 41, and small differences in the recession tail. The residuals show no systematic pattern, with the average residual close to zero throughout, and are largest on the rising limb, where some floods have an earlier, smaller peak. The scores showed no flood far from the rest, although on the fourth and sixth components most floods lie close to zero with a few lying well away from the centre, which will need to be considered when modelling the variation in the scores between floods (Section \@ref(uncertainty)).
-
-```{r pcafits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, PCA."}
-plot_example_fits(Y_pca, "PCA")
-```
-
-```{r pcaresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), PCA."}
-plot_residuals(Y_pca, "PCA")
 ```
 
 ## Wavelets {#method-wavelets}
@@ -337,39 +321,85 @@ knitr::kable(
 )
 ```
 
-To validate the fit, we compared the observed and reconstructed hydrographs for the same six floods as before (Figure \@ref(fig:wavfits)), and plotted the residuals against time for every flood (Figure \@ref(fig:wavresid)). We observe that wavelets reproduce the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks, such as events 19, 29 and 41, closely. However, the reconstructions show small, unrealistic dips and steps, such as for events 2, 19 and 41, likely where a detail coefficient that matters for that flood is not among those kept, and they move away from the observed flow at the start and end of the event, most clearly for events 2, 26 and 41. In the residuals, the average residual is close to zero except at the end of the event, while a few individual floods have larger residuals on the falling limb. The behaviour at the start and end is consistent with the periodic boundaries, which treat the start and end of the hydrograph as joined, even though the flow is different at each.
-
-```{r wavfits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, wavelets."}
-plot_example_fits(Y_wav, "Wavelets")
-```
-
-```{r wavresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), wavelets."}
-plot_residuals(Y_wav, "Wavelets")
-```
-
-Finally, we observe that the shape parameters are correlated across floods, with correlations of up to `r sprintf("%.2f", max(abs(cor(wav_params)[upper.tri(cor(wav_params))])))` in absolute value. The strongest correlations are between neighbouring smooth coefficients, since these describe neighbouring parts of the hydrograph, which tend to rise and fall together, while the correlations between the smooth and detail coefficients are mostly weaker. These correlations are smaller than for the polynomial, but unlike the PCA scores, the parameters are not uncorrelated, which makes their joint variation between floods harder to model.
-
 ## Other methods {#method-other}
 
 As well as the three methods suggested in the lectures, we considered two further methods, each addressing a weakness found above.
 
 ### B-splines {#method-bspline}
 
-The polynomial's weaknesses all stem from using a single curve across the whole event, so we also considered a B-spline basis, which joins short cubic pieces smoothly together so that each basis function only affects one part of the hydrograph (Ramsay and Silverman, 2005). The standardised hydrograph is approximated by $y_i(u_j) \approx \theta_{i0} + \sum_{l=1}^{L} \theta_{il}\,B_l(u_j)$, where $B_1, \dots, B_L$ are cubic B-splines with equally spaced knots, and it is fitted and validated in the same way as the polynomial. We chose $L =$ `r n_basis_chosen`, giving `r n_basis_chosen + 1` shape parameters, close to the `r p_chosen + 1` of the polynomial, so that the two can be compared at a similar number of parameters, and at this size the B-spline has a lower RMSE and peak error than the polynomial. We observe that it fits the recession closely, with the residuals close to zero after $u \approx 0.6$ (Figure \@ref(fig:bsplineresid)), but around the peak it shows the same pattern as the polynomial, so it still underestimates sharp peaks and cannot reproduce floods with two peaks. Its coefficients are also less strongly correlated than the polynomial's, with correlations of up to `r sprintf("%.2f", max(abs(cor(bspline_coefs)[upper.tri(cor(bspline_coefs))])))` in absolute value.
-
-```{r bsplineresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), B-splines."}
-plot_residuals(Y_bspline, "B-spline")
-```
+The polynomial's weaknesses all stem from using a single curve across the whole event, so we also considered a B-spline basis, which joins short cubic pieces smoothly together so that each basis function only affects one part of the hydrograph (Ramsay and Silverman, 2005). The standardised hydrograph is approximated by $y_i(u_j) \approx \theta_{i0} + \sum_{l=1}^{L} \theta_{il}\,B_l(u_j)$, where $B_1, \dots, B_L$ are cubic B-splines with equally spaced knots, and it is fitted and validated in the same way as the polynomial. We chose $L =$ `r n_basis_chosen`, giving `r n_basis_chosen + 1` shape parameters, close to the `r p_chosen + 1` of the polynomial, so that the two can be compared at a similar number of parameters.
 
 ### A known hydrograph function {#method-gamma}
 
-The lectures suggest that a known function which approximates hydrographs may give parameters that can be interpreted. We therefore fitted a gamma-type hydrograph (Nash, 1957) with an added baseflow to each flood by nonlinear least squares, giving three parameters with a physical meaning: the baseflow as a fraction of the peak flow (median `r sprintf("%.2f", median(gamma_params[gamma_ok, "b"]))`), the time of the peak, and the sharpness of the peak. These parameters are close to uncorrelated, but as the curve has a single peak and the same baseflow at the start and end of the event, it misses the second peak of floods with two peaks entirely and fits the start and end of most floods poorly (Figure \@ref(fig:gammafits)), so we did not consider it further.
+The lectures suggest that a known function which approximates hydrographs may give parameters that can be interpreted. We therefore fitted a gamma-type hydrograph (Nash, 1957) with an added baseflow to each flood by nonlinear least squares, giving three parameters with a physical meaning: the baseflow as a fraction of the peak flow (median `r sprintf("%.2f", median(gamma_params[gamma_ok, "b"]))`), the time of the peak, and the sharpness of the peak.
+
+# Validation of methods
+
+Now that we have chosen the number of parameters for each method, we validate their fits, by checking how well the fitted curves reproduce the observed floods. In particular, we consider how the methods perform on contrasting floods (the earliest and latest peaks, the shortest and longest durations, and the flattest and sharpest peaks), as well as considering their residuals against time, and parameter correlation.
+
+## Contrasting floods
+
+We observe that the polynomial underestimates sharp peaks, with the residuals positive at the peak and negative on either side for almost every flood, so the fitted peak is systematically too low and too broad. It also cannot reproduce floods with two peaks, such as events 19, 29 and 41, instead fitting a single broad peak across them, and it bends away from the observed flow at the start and end of the event.
+
+```{r polyfits, echo=FALSE, fig.height=6, fig.cap="Observed and fitted hydrographs for six contrasting floods, polynomial method."}
+plot_example_fits(Y_poly, "Polynomial")
+```
+
+We observe that, unlike the polynomial, PCA reproduces both the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks closely, with the main differences being an underestimate of the earlier of two peaks, as for events 19 and 41, and small differences in the recession tail.
+
+```{r pcafits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, PCA."}
+plot_example_fits(Y_pca, "PCA")
+```
+
+We observe that wavelets reproduce the sharpest peak (event `r which.min(sharpness)`) and floods with two peaks, such as events 19, 29 and 41, closely. However, the reconstructions show small, unrealistic dips and steps, such as for events 2, 19 and 41, likely where a detail coefficient that matters for that flood is not among those kept, and they move away from the observed flow at the start and end of the event, most clearly for events 2, 26 and 41.
+
+```{r wavfits, echo=FALSE, fig.height=6, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, wavelets."}
+plot_example_fits(Y_wav, "Wavelets")
+```
+
+We observe that it fits the recession closely, with the residuals close to zero after $u \approx 0.6$ (Figure \@ref(fig:bsplineresid)), but around the peak it shows the same pattern as the polynomial, so it still underestimates sharp peaks and cannot reproduce floods with two peaks.
+
+as the curve has a single peak and the same baseflow at the start and end of the event, it misses the second peak of floods with two peaks entirely and fits the start and end of most floods poorly (Figure \@ref(fig:gammafits)).
 
 ```{r gammafits, echo=FALSE, fig.height=4, fig.cap="Observed and reconstructed hydrographs for six contrasting floods, gamma."}
 plot_example_fits(Y_gamma, "Gamma-type")
 ```
 
-# Comparison and validation of methods
+## Residuals
+
+Since the residuals at neighbouring times are correlated, they are not independent, and they need not be normally distributed, but this does not affect our use of the model, as the fitted curve is used as a basis rather than for inference.
+
+```{r polyresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), polynomial method."}
+plot_residuals(Y_poly, "Polynomial")
+```
+
+The residuals show no systematic pattern, with the average residual close to zero throughout, and are largest on the rising limb, where some floods have an earlier, smaller peak. The scores showed no flood far from the rest, although on the fourth and sixth components most floods lie close to zero with a few lying well away from the centre, which will need to be considered when modelling the variation in the scores between floods (Section \@ref(uncertainty)).
+
+```{r pcaresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), PCA."}
+plot_residuals(Y_pca, "PCA")
+```
+
+In the residuals, the average residual is close to zero except at the end of the event, while a few individual floods have larger residuals on the falling limb. The behaviour at the start and end is consistent with the periodic boundaries, which treat the start and end of the hydrograph as joined, even though the flow is different at each.
+
+```{r wavresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), wavelets."}
+plot_residuals(Y_wav, "Wavelets")
+```
+
+```{r bsplineresid, echo=FALSE, fig.height=4, fig.cap="Residuals against standardised time for all floods (grey) and their average (red), B-splines."}
+plot_residuals(Y_bspline, "B-spline")
+```
+
+## Correlation of parameters
+
+Finally, we observe that the coefficients are strongly correlated across floods, with correlations of up to `r sprintf("%.3f", max(abs(cor(poly_coefs)[upper.tri(cor(poly_coefs))])))` in absolute value, as the powers of $u$ are themselves highly correlated on $[0, 1]$. This means that the coefficients are difficult to interpret and their joint variation between floods harder to model, which is a disadvantage of this method for use with an emulator.
+
+Finally, we observe that the shape parameters are correlated across floods, with correlations of up to `r sprintf("%.2f", max(abs(cor(wav_params)[upper.tri(cor(wav_params))])))` in absolute value. The strongest correlations are between neighbouring smooth coefficients, since these describe neighbouring parts of the hydrograph, which tend to rise and fall together, while the correlations between the smooth and detail coefficients are mostly weaker. These correlations are smaller than for the polynomial, but unlike the PCA scores, the parameters are not uncorrelated, which makes their joint variation between floods harder to model.
+
+Its coefficients are also less strongly correlated than the polynomial's, with correlations of up to `r sprintf("%.2f", max(abs(cor(bspline_coefs)[upper.tri(cor(bspline_coefs))])))` in absolute value.
+
+Gamma-type parameters are close to uncorrelated.
+
+# Comparison of methods
 
 ```{r allcomparison}
 knitr::kable(
