@@ -12,6 +12,7 @@ library(knitr)
 library(patchwork) # For combining diagnostic plots if installed
 library(wavelets)
 library(splines)   # part of base R; provides bs()
+library(kableExtra)
 
 # Set HTTP timeout limit for SEPA API fetch if local RDS is absent
 options(timeout = 300)
