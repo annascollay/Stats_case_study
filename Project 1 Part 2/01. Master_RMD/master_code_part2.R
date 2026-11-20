@@ -1499,7 +1499,385 @@ all_comparison <- rbind(
   cmp_row("B-spline", n_basis_chosen + 1, "in-sample", bspline_errors, sum(Y_bspline < 0))
 )
 
-print(all_comparison, digits = 3, row.names = FALSE)
+n_smooth_cmp <- length(wav_all[[1]]@V[[wav_levels]])   # 64 / 2^levels smooth coefficients
+
+# Methods that learn from other events (SEPA average, PCA basis, wavelet
+# coefficient choice) are rebuilt by leave-one-out. Per-event methods
+# (polynomial, B-spline, gamma-type) learn nothing from other events, so their
+# held-out curves are their in-sample fits.
+Y_sepa_loo <- cached("cmp_sepa_loo_curves", loocv(function(i) {
+  s <- colMeans(Y_unaligned[-i, ])
+  baseline_curve(s / max(s), i)
+}))
+Y_pca_loo <- cached("cmp_pca_loo_curves",
+                    loocv(function(i) pca_left_out(i, k_chosen)), key = k_chosen)
+Y_wav_loo <- cached("cmp_wav_loo_curves",
+                    loocv(function(i) wavelet_left_out(i, keep_chosen)),
+                    key = list(keep_chosen, wav_filter, wav_levels))
+
+all_rows <- seq_len(nrow(Y))
+
+# One entry per method
+# fit_in / fit_out : in-sample and held-out curves, laid out like Y
+# rows             : events used (gamma-type: converged fits only)
+# K                : number of shape parameters
+# inputs           : emulator inputs = K + peak flow, duration, peak position
+#                    (SEPA: peak flow and duration only)
+# params           : shape parameters, one row per event (for correlations)
+cmp <- list(
+  "SEPA (average shape)" = list(fit_in = Y_baseline, fit_out = Y_sepa_loo, rows = all_rows,
+                                K = 0, inputs = 2, params = NULL),
+  "Gamma-type" = list(fit_in = Y_gamma, fit_out = Y_gamma, rows = gamma_ok,
+                      K = 3, inputs = 3 + 3, params = gamma_params[gamma_ok, ]),
+  "Polynomial" = list(fit_in = Y_poly, fit_out = Y_poly, rows = all_rows,
+                      K = p_chosen + 1, inputs = p_chosen + 1 + 3, params = poly_coefs),
+  "B-spline"   = list(fit_in = Y_bspline, fit_out = Y_bspline, rows = all_rows,
+                      K = n_basis_chosen + 1, inputs = n_basis_chosen + 1 + 3,
+                      params = bspline_coefs),
+  "PCA"        = list(fit_in = Y_pca, fit_out = Y_pca_loo, rows = all_rows,
+                      K = k_chosen, inputs = k_chosen + 3, params = pca_scores),
+  "Wavelets"   = list(fit_in = Y_wav, fit_out = Y_wav_loo, rows = all_rows,
+                      K = ncol(wav_params), inputs = ncol(wav_params) + 3,
+                      params = wav_params)
+)
+cmp_order   <- names(cmp)
+cmp_colours <- c("SEPA (average shape)" = "grey40", setNames(method_colours, method_names))
+
+# Per-event errors (section 10 definitions)
+cmp_err <- map(cmp, function(m) list(
+  in_s = method_errors(m$fit_in)[m$rows, , drop = FALSE],
+  out  = method_errors(m$fit_out)[m$rows, , drop = FALSE]
+))
+
+# Extra event-relevant features (max, width, rise, fall)
+# Both curves are put on a regular 15-minute grid in real hours, then:
+#   duration_error : hours above u (fitted - observed)
+#   excess_error   : volume above u, million m^3 (fitted - observed)
+#   rise_rmse      : RMSE on the rising limb (up to the observed peak), m^3/s
+#   fall_rmse      : RMSE on the falling limb, m^3/s
+flood_features <- function(hours, observed, fitted, u = u_final, dt = 0.25) {
+  grid_h <- seq(0, max(hours), by = dt)
+  obs    <- approx(hours, observed, xout = grid_h, rule = 2)$y
+  fit    <- approx(hours, fitted,   xout = grid_h, rule = 2)$y
+  rising <- grid_h <= hours[which.max(observed)]
+  c(
+    duration_error = dt * (sum(fit > u) - sum(obs > u)),
+    excess_error   = (sum(pmax(fit - u, 0)) - sum(pmax(obs - u, 0))) * dt * 3600 / 1e6,
+    rise_rmse      = sqrt(mean((fit[rising]  - obs[rising])^2)),
+    fall_rmse      = sqrt(mean((fit[!rising] - obs[!rising])^2))
+  )
+}
+
+feature_errors <- function(Y_fit) {
+  t(sapply(seq_len(nrow(Y)), function(i) {
+    observed <- as_flood(Y[i, ], i)
+    fitted   <- as_flood(Y_fit[i, ], i)
+    flood_features(observed$hours, observed$discharge, fitted$discharge)
+  }))
+}
+
+cmp_feat <- map(cmp, function(m) feature_errors(m$fit_out)[m$rows, , drop = FALSE])
+
+# Summary: one row per method
+max_abs_cor <- function(p) {
+  if (is.null(p) || ncol(p) < 2) return(NA_real_)
+  r <- cor(p)
+  max(abs(r[upper.tri(r)]))
+}
+
+cmp_summary <- imap_dfr(cmp, function(m, name) {
+  e_in  <- cmp_err[[name]]$in_s
+  e_out <- cmp_err[[name]]$out
+  f     <- cmp_feat[[name]]
+  tibble(
+    method      = name,
+    K           = m$K,
+    inputs      = m$inputs,
+    n_events    = length(m$rows),
+    rmse_in     = mean(e_in[, "rmse"]),
+    rmse_out    = mean(e_out[, "rmse"]),
+    nrmse_out   = mean(100 * e_out[, "rmse"] / events$peak_flow[m$rows]),
+    peak_out    = mean(abs(e_out[, "peak_error"])),
+    timing_out  = mean(abs(e_out[, "timing_error"])),
+    volume_out  = mean(abs(e_out[, "volume_error"])),
+    peak_bias   = mean(e_out[, "peak_error"]),
+    timing_bias = mean(e_out[, "timing_error"]),
+    volume_bias = mean(e_out[, "volume_error"]),
+    rmse_p90    = unname(quantile(e_out[, "rmse"], 0.9)),
+    rmse_max    = max(e_out[, "rmse"]),
+    duration    = mean(abs(f[, "duration_error"])),
+    excess      = mean(abs(f[, "excess_error"])),
+    excess_bias = mean(f[, "excess_error"]),
+    rise        = mean(f[, "rise_rmse"]),
+    fall        = mean(f[, "fall_rmse"]),
+    neg_events  = sum(apply(m$fit_out[m$rows, , drop = FALSE], 1, min) < 0),
+    max_cor     = max_abs_cor(m$params)
+  )
+})
+
+# Worst-fitted (held-out) event for each method, for the text on unusual events
+worst_events <- imap_dfr(cmp_err, function(e, name) {
+  rows <- cmp[[name]]$rows
+  w    <- rows[which.max(e$out[, "rmse"])]
+  tibble(method = name, event = w, rmse = max(e$out[, "rmse"]),
+         peak_flow = events$peak_flow[w], width_h = events$width_h[w])
+})
+
+# Accuracy-parsimony trade-off:
+# Errors over ALL events at every setting tried in Section 3. For the
+# per-event methods the train/test averages are recombined (weighted by size),
+# for PCA and wavelets the leave-one-out errors are used. PCA is extended to
+# K = 15 so it can be compared with wavelets at the same number of parameters.
+split_to_all <- function(choice) {
+  n_tr <- length(train_floods); n_te <- length(test_floods)
+  choice %>%
+    group_by(setting) %>%
+    summarise(across(c(rmse, peak_error, timing_error, volume_error),
+                     ~ (n_tr * .x[type == "train"] + n_te * .x[type == "test"]) / (n_tr + n_te)),
+              .groups = "drop")
+}
+
+extra_k   <- setdiff(1:15, pca_choice$setting)
+pca_extra <- cached("cmp_pca_extra_k", map_dfr(extra_k, function(k) {
+  data.frame(setting = k, type = "leave-one-out",
+             t(average_errors(method_errors(loocv(function(i) pca_left_out(i, k))))))
+}), key = extra_k)
+
+tradeoff <- bind_rows(
+  split_to_all(poly_choice)    %>% mutate(method = "Polynomial", K = setting + 1),
+  split_to_all(bspline_choice) %>% mutate(method = "B-spline",   K = setting + 1),
+  bind_rows(pca_choice, pca_extra) %>% filter(type == "leave-one-out") %>%
+    mutate(method = "PCA", K = setting),
+  wav_choice %>% filter(type == "leave-one-out") %>%
+    mutate(method = "Wavelets", K = n_smooth_cmp + setting),
+  as_tibble(t(average_errors(gamma_errors))) %>% mutate(method = "Gamma-type", K = 3)
+) %>%
+  select(method, K, rmse, peak_error, volume_error) %>%
+  arrange(method, K)
+
+chosen_K <- c("Polynomial" = p_chosen + 1, "B-spline" = n_basis_chosen + 1,
+              "PCA" = k_chosen, "Wavelets" = ncol(wav_params), "Gamma-type" = 3)
+tradeoff <- tradeoff %>% mutate(chosen = K == chosen_K[method])
+
+metric_labels <- c(rmse = "RMSE (m³/s)", peak_error = "Peak error (m³/s)",
+                   volume_error = "Volume error (%)")
+tradeoff_long <- tradeoff %>%
+  pivot_longer(c(rmse, peak_error, volume_error), names_to = "metric") %>%
+  mutate(metric = factor(metric_labels[metric], levels = metric_labels),
+         method = factor(method, levels = cmp_order))
+sepa_ref <- tibble(metric = names(metric_labels),
+                   value  = average_errors(baseline_errors_loocv)[names(metric_labels)]) %>%
+  mutate(metric = factor(metric_labels[metric], levels = metric_labels))
+
+# Are the differences real? Paired comparisons over events.
+# Events are independent by construction (Robson & Reed criteria), so the
+# per-event differences in absolute error are resampled (bootstrap 95% CI for
+# the mean difference) and tested with a Wilcoxon signed-rank test.
+pairs_to_test <- list(c("PCA", "SEPA (average shape)"),
+                      c("Wavelets", "SEPA (average shape)"),
+                      c("Wavelets", "PCA"),
+                      c("PCA", "B-spline"))
+paired_metrics <- c(rmse = "RMSE (m$^3$/s)", peak_error = "Peak error (m$^3$/s)",
+                    volume_error = "Volume error (\\%)")
+
+set.seed(2026)
+paired_results <- map_dfr(pairs_to_test, function(p) {
+  map_dfr(names(paired_metrics), function(mt) {
+    a <- abs(cmp_err[[p[1]]]$out[, mt])
+    b <- abs(cmp_err[[p[2]]]$out[, mt])
+    d <- a - b
+    boots <- replicate(2000, mean(sample(d, replace = TRUE)))
+    tibble(comparison   = paste(p[1], "minus", p[2]),
+           metric       = paired_metrics[[mt]],
+           diff         = mean(d),
+           lower        = unname(quantile(boots, 0.025)),
+           upper        = unname(quantile(boots, 0.975)),
+           first_better = 100 * mean(a < b),
+           p_value      = suppressWarnings(
+             wilcox.test(a, b, paired = TRUE, exact = FALSE)$p.value))
+  })
+})
+
+# Numbers for the text
+S <- function(m, col) cmp_summary[[col]][cmp_summary$method == m]
+cmp_text <- list(
+  rmse_sepa      = S("SEPA (average shape)", "rmse_out"),
+  rmse_pca       = S("PCA", "rmse_out"),
+  rmse_wav       = S("Wavelets", "rmse_out"),
+  rmse_pca_in    = S("PCA", "rmse_in"),
+  red_pca        = 100 * (1 - S("PCA", "rmse_out") / S("SEPA (average shape)", "rmse_out")),
+  red_wav        = 100 * (1 - S("Wavelets", "rmse_out") / S("SEPA (average shape)", "rmse_out")),
+  timing_sepa    = S("SEPA (average shape)", "timing_out"),
+  volume_sepa    = S("SEPA (average shape)", "volume_bias"),   # signed: + = overestimates
+  excess_sepa    = S("SEPA (average shape)", "excess_bias"),
+  peak_poly      = S("Polynomial", "peak_out"),
+  peak_bspline   = S("B-spline", "peak_out"),
+  pca_at_wav_K   = tradeoff$rmse[tradeoff$method == "PCA" & tradeoff$K == ncol(wav_params)],
+  gamma_failed   = nrow(Y) - length(gamma_ok),
+  wav_minus_pca  = paired_results$diff[paired_results$comparison == "Wavelets minus PCA" &
+                                         paired_results$metric == paired_metrics[["rmse"]]]
+)
+
+# Formatting helper: bold the best (lowest) value in a column
+fmt_best <- function(x, digits = 2) {
+  out <- formatC(x, format = "f", digits = digits)
+  out[is.na(x)] <- "--"
+  best <- which(x == min(x, na.rm = TRUE))
+  out[best] <- paste0("\\textbf{", out[best], "}")
+  out
+}
+
+cmp_main_tbl <- cmp_summary %>%
+  transmute(
+    Method   = method,
+    K        = as.character(K),
+    Inputs   = as.character(inputs),
+    rmse_in  = fmt_best(rmse_in, 2),
+    rmse_out = fmt_best(rmse_out, 2),
+    nrmse    = fmt_best(nrmse_out, 1),
+    peak     = fmt_best(peak_out, 2),
+    timing   = fmt_best(timing_out, 2),
+    volume   = fmt_best(volume_out, 2),
+    neg      = as.character(neg_events),
+    cor      = ifelse(is.na(max_cor), "--", formatC(max_cor, format = "f", digits = 2))
+  )
+
+cmp_feat_tbl <- cmp_summary %>%
+  transmute(
+    Method      = method,
+    peak_bias   = sprintf("%+.2f", peak_bias),
+    volume_bias = sprintf("%+.1f", volume_bias),
+    p90         = fmt_best(rmse_p90, 1),
+    worst       = fmt_best(rmse_max, 1),
+    duration    = fmt_best(duration, 1),
+    excess      = fmt_best(excess, 2),
+    excess_bias = sprintf("%+.2f", excess_bias),
+    rise        = fmt_best(rise, 2),
+    fall        = fmt_best(fall, 2)
+  )
+
+per_event_long <- imap_dfr(cmp_err, function(e, name) {
+  rows <- cmp[[name]]$rows
+  tibble(method = name,
+         `RMSE (% of peak flow)`                = 100 * e$out[, "rmse"] / events$peak_flow[rows],
+         `Absolute peak error (% of peak flow)` = 100 * abs(e$out[, "peak_error"]) / events$peak_flow[rows],
+         `Absolute volume error (%)`            = abs(e$out[, "volume_error"]))
+}) %>%
+  pivot_longer(-method, names_to = "metric") %>%
+  mutate(method = factor(method, levels = cmp_order),
+         metric = factor(metric, levels = unique(metric)))
+
+per_event_long_plot <- ggplot(per_event_long, aes(method, value, fill = method)) +
+  geom_boxplot(outlier.size = 0.8, alpha = 0.8, linewidth = 0.3) +
+  scale_y_log10() +
+  scale_fill_manual(values = cmp_colours, guide = "none") +
+  facet_wrap(~ metric, scales = "free_y") +
+  labs(x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1),
+        panel.grid.minor = element_blank())
+
+tradeoff_long_plot <- ggplot(tradeoff_long, aes(K, value, colour = method)) +
+  geom_hline(data = sepa_ref, aes(yintercept = value), inherit.aes = FALSE,
+             linetype = "dashed", colour = "grey40") +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 1.3) +
+  geom_point(data = filter(tradeoff_long, chosen), size = 3.5, shape = 21,
+             fill = NA, stroke = 1.3) +
+  scale_y_log10() +
+  scale_colour_manual(values = cmp_colours, name = NULL) +
+  facet_wrap(~ metric, scales = "free_y") +
+  labs(x = "Number of shape parameters K", y = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank())
+
+paired_tbl <- paired_results %>%
+  transmute(
+    Metric     = metric,
+    Difference = sprintf("%+.2f", diff),
+    CI         = sprintf("(%+.2f, %+.2f)", lower, upper),
+    Better     = sprintf("%.0f", first_better),
+    p          = ifelse(p_value < 0.001, "$<$0.001", sprintf("%.3f", p_value))
+  )
+
+paired_kable <- kable(paired_tbl, format = "latex", booktabs = TRUE, escape = FALSE,
+                      align = "lrrrr",
+                      col.names = c("Metric", "Mean difference", "95\\% bootstrap CI",
+                                    "Events where first is better (\\%)", "Wilcoxon $p$"),
+                      caption = "Paired comparison of held-out absolute errors over the same extreme flow events. A negative difference means the first method has smaller errors.") %>%
+  kable_styling(latex_options = c("hold_position"), font_size = 9)
+
+groups <- unique(paired_results$comparison)
+for (g in seq_along(groups)) {
+  rows_g <- which(paired_results$comparison == groups[g])
+  paired_kable <- pack_rows(paired_kable, groups[g], min(rows_g), max(rows_g))
+}
+
+f1 <- function(x, d = 1) formatC(x, format = "f", digits = d)
+
+synthesis <- tribble(
+  ~Method, ~Accuracy, ~Features, ~Unusual, ~Parsimony, ~Behaviour, ~Valid, ~Interpret,
+  
+  "SEPA (average shape)",
+  sprintf("Poor: %s m$^3$/s", f1(S("SEPA (average shape)", "rmse_out"))),
+  sprintf("Peak matched; timing %s h; volume %+.0f\\%%",
+          f1(S("SEPA (average shape)", "timing_out"), 0), S("SEPA (average shape)", "volume_bias")),
+  "One shape for every event",
+  "0 shape parameters",
+  "None to model",
+  "Valid",
+  "High",
+  
+  "Gamma-type",
+  sprintf("Moderate: %s m$^3$/s", f1(S("Gamma-type", "rmse_out"))),
+  sprintf("Peak %s m$^3$/s; volume %s\\%%", f1(S("Gamma-type", "peak_out"), 2),
+          f1(S("Gamma-type", "volume_out"))),
+  "Single peak only; same baseflow at start and end",
+  "3",
+  sprintf("Weakly correlated (max %s)", f1(S("Gamma-type", "max_cor"), 2)),
+  sprintf("Valid; %d fits failed", cmp_text$gamma_failed),
+  "High (baseflow, peak time, sharpness)",
+  
+  "Polynomial",
+  sprintf("Moderate: %s m$^3$/s", f1(S("Polynomial", "rmse_out"))),
+  sprintf("Peak too low by %s m$^3$/s", f1(S("Polynomial", "peak_out"))),
+  "Fails multi-peak events; drifts at ends",
+  as.character(S("Polynomial", "K")),
+  sprintf("Near-collinear (max %s)", f1(S("Polynomial", "max_cor"), 2)),
+  sprintf("%d events negative", S("Polynomial", "neg_events")),
+  "Low",
+  
+  "B-spline",
+  sprintf("Moderate: %s m$^3$/s", f1(S("B-spline", "rmse_out"))),
+  sprintf("Peak too low by %s m$^3$/s", f1(S("B-spline", "peak_out"))),
+  "Good tails; peaks flattened",
+  as.character(S("B-spline", "K")),
+  sprintf("Correlated (max %s)", f1(S("B-spline", "max_cor"), 2)),
+  sprintf("%d events negative", S("B-spline", "neg_events")),
+  "Low",
+  
+  "PCA",
+  sprintf("Very good: %s m$^3$/s", f1(S("PCA", "rmse_out"), 2)),
+  sprintf("Peak %s m$^3$/s; volume %s\\%%", f1(S("PCA", "peak_out"), 2),
+          f1(S("PCA", "volume_out"), 2)),
+  "Close on multi-peak; smaller peaks underestimated",
+  as.character(S("PCA", "K")),
+  "Uncorrelated by construction",
+  sprintf("%d events negative", S("PCA", "neg_events")),
+  "Moderate (breadth, rise vs recession)",
+  
+  "Wavelets",
+  sprintf("Very good: %s m$^3$/s", f1(S("Wavelets", "rmse_out"), 2)),
+  sprintf("Peak %s m$^3$/s; volume %s\\%%", f1(S("Wavelets", "peak_out"), 2),
+          f1(S("Wavelets", "volume_out"), 2)),
+  "Close, but jagged dips and end artefacts",
+  as.character(S("Wavelets", "K")),
+  sprintf("Smooth coefficients correlated (max %s)", f1(S("Wavelets", "max_cor"), 2)),
+  sprintf("%d events negative", S("Wavelets", "neg_events")),
+  "Low"
+)
+# Qualitative wording (Unusual, Interpret) summarises Sections 4.1-4.3:
+# re-check it if the results change.
 
 # ------------------------------------------------------------------------------
 # 19. Uncertainty in the shape parameters
