@@ -31,7 +31,7 @@ if (file.exists(cache_file)) {
   
 } else {
   # If no local cache exists, fetch from SEPA in 1-year chunks
-  start_years <- seq(2016, 2025, by = 1)
+  start_years <- seq(2001, 2025, by = 1)
   
   fetch_chunk <- function(yr) {
     from_date <- paste0(yr, "-10-01T00:00:00")
@@ -154,10 +154,10 @@ tidy_data_table <- kable(
   pack_rows("Data description", 1, 9) %>%
   pack_rows("Quality codes", 10, nrow(data_table))
 
-# Filter for Quality Codes 50 and 100, joining with quality_code_table labels
+# Filter for Quality Codes 50, 100 and 150, joining with quality_code_table labels
 qc_plot_data <- river_data %>%
   mutate(QualityCode = as.numeric(QualityCode)) %>%
-  filter(QualityCode %in% c(50, 100)) %>%
+  filter(QualityCode %in% c(50, 100, 150)) %>%
   left_join(
     quality_code_table %>% select(`Code number`, `Code name`),
     by = c("QualityCode" = "Code number")
@@ -165,7 +165,7 @@ qc_plot_data <- river_data %>%
   mutate(
     Quality_Label = factor(
       paste0("Code ", QualityCode, " (", `Code name`, ")"),
-      levels = c("Code 50 (Good)", "Code 100 (Estimated)")
+      levels = c("Code 50 (Good)", "Code 100 (Estimated)", "Code 150 (Suspect)")
     )
   )
 
@@ -176,11 +176,13 @@ qc_plot <- ggplot(qc_plot_data,
   geom_boxplot(alpha = 0.7, outlier.size = 1, outlier.alpha = 0.3) +
   scale_fill_manual(values = c(
     "Code 50 (Good)" = "#5298BC",
-    "Code 100 (Estimated)" = "#D0436A"
+    "Code 100 (Estimated)" = "#D0436A",
+    "Code 150 (Suspect)" = "#7067DF"
   )) +
   scale_colour_manual(values = c(
     "Code 50 (Good)" = "#2A5267",
-    "Code 100 (Estimated)" = "#AA1945"
+    "Code 100 (Estimated)" = "#AA1945",
+    "Code 150 (Suspect)" = "#7000BB"
   )) +
   labs(
     title = "Discharge distribution by quality code",
@@ -449,19 +451,7 @@ annual_peak_shapes <- map_dfr(1:nrow(annual_peaks), function(i) {
 })
 
 # Plot visualising largest peaks by water year
-year_colours <- c(
-  "#8ECFE0",  
-  "#5298BC",  
-  "#247C91",
-  "#6BBED1",
-  "#168F91",
-  "#174B67",
-  "#4285C5",
-  "#2764A5",
-  "#4169E1",
-  "#2445A2",
-  "#142D59"  
-)
+year_colours <- grDevices::hcl.colors(n_years, palette = "Dark 3")
 
 peak_wateryear_plot <- ggplot(annual_peak_shapes, 
                               aes(x = hours_from_peak, y = scaled_flow,

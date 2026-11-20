@@ -15,8 +15,6 @@ link-citations: true
 linkcolor: blue
 citecolor: blue
 urlcolor: blue
-nocite: |
-  @*
 
 header-includes:
   - \usepackage{graphicx}
@@ -81,11 +79,15 @@ source("master_code_part2.R")
 
 # Data and Exploratory Data Analysis {#initial-analysis}
 
-In part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten water years (2016-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events, and form the basis of our analysis of hydrograph shape uncertainty.
+In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten [water years](https://en.wikipedia.org/wiki/Water_year) (2016-2026). For Part 2, we have expanded this dataset to `r n_years` [water years](https://en.wikipedia.org/wiki/Water_year) (2001-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events with the quality codes reconsidered in Section \@ref(unchecked-readings) – \@ref(suspect-readings), and form the basis of our analysis of hydrograph shape uncertainty.
+
+```{r tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
+tidy_data_table
+```
 
 ## Robson & Reed (1999) Independence Criteria Results
 
-Using the threshold of `r u_final` $\text{m}^3 / \text{s}$ established in part 1, we identified `r nrow(peaks)` independent extreme flow events across the ten-year observation period, corresponding to an average of `r sprintf("%.2f", nrow(peaks) / n_years)` events per year.
+Having re-run our Part 1 analysis on the expanded dataset, we keep the threshold of `r u_final` $\text{m}^3 / \text{s}$ we established having obtained satisfactory results. We identified `r nrow(peaks)` independent extreme flow events across the `r n_years`-year observation period, corresponding to an average of `r sprintf("%.2f", nrow(peaks) / n_years)` events per year.
 
 | Metric | Value | Unit |
 |:-----------------------|:-----------------------|:-----------------------|
@@ -96,37 +98,70 @@ Using the threshold of `r u_final` $\text{m}^3 / \text{s}$ established in part 1
 
 ## Checking the data
 
-Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending 48 hours before and 72 hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be [standardised](#standardising-the-hydrographs), forming the set of peak windows used throughout the rest of the report.
+Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending `r win_before_h`` hours before and `r win_after_h` hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be [standardised](#standardising-the-hydrographs), forming the set of event windows used throughout the rest of the report.
 
-Having excluded Unchecked readings in the data cleaning section of Part 1 (SEPA quality codes 200 and 254), we identified 8 missing Unchecked readings falling within two of the standardised event windows, Events 5 and 6 (Table \@ref(tab:uncheckeddata)).
+In Part 1 we kept only Good (code 50) and Estimated (code 100) readings. Since Part 2 models the whole hydrograph of each event rather than only its peak, we reconsider the two groups of readings that were excluded: Unchecked readings (code 254), which we retain after the check below, and Suspect readings (code 150), which remain excluded.
 
-```{r uncheckeddata, results= "asis", echo=FALSE}
-knitr::kable(
+### Unchecked readings {#unchecked-readings}
+
+We identified `r nrow(unchecked_model$unique_readings)` Unchecked readings falling within `r n_distinct(unchecked_model$in_windows$Event_ID)` of the standardised event windows (Table \@ref(tab:uncheckeddata)).
+
+```{r uncheckeddata, results="asis", echo=FALSE}
+if (!is.null(unchecked_model)) {
+  knitr::kable(
     unchecked_model$table,
     format    = "markdown",
-    align     = "llrrrrr",
-    col.names = c("Burst", "Event(s)", "Start", "Readings",
-                  "Duration (min)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
-    caption   = "Unchecked readings (codes 200/254) within peak windows compared with linear interpolation between checked readings."
+    align     = "llrrrrrr",
+    col.names = c("Burst", "Event(s)", "Start", "Readings", "Duration (min)",
+                  "Max flow (m³/s)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
+    caption   = "Unchecked readings (code 254) within the event windows, compared with linear interpolation between the neighbouring checked readings."
   )
+}
 ```
 
 To fix this, we compared the original Unchecked readings with estimated values to decide whether retaining these Unchecked readings was reasonable. The estimated values were obtained by linear interpolation of the nearest checked readings by assuming a constant rate of change.
 
-```{r uncheckedscatter, echo=FALSE, fig.cap="An assesment of unchecked values"}
-if (nrow(unchecked_in_events) > 0) {
-  unchecked_model$plot
-  
-} else {
-  cat("No Unchecked quality codes detected within the 120-hour peak event windows.\n\n")
-}
+```{r uncheckedscatter, echo=FALSE, fig.cap="Unchecked readings against the linear interpolation between neighbouring checked readings."}
+if (!is.null(unchecked_model)) unchecked_model$plot
 ```
 
-Figure \@ref(fig:uncheckedscatter) compares the Unchecked and interpolated values, with a dashed 1:1 line that represents perfect agreement. Since all Unchecked readings lie close to this line with a RMSE of `r unchecked_model$rmse`$\text{m}^3/\text{s}$ against discharge values of over 30$\text{m}^3 / \text{s}$, these discrepancies are relatively small.
+Figure \@ref(fig:uncheckedscatter) compares the Unchecked and interpolated values, with a dashed 1:1 line that represents perfect agreement. Since all Unchecked readings lie close to this line with a RMSE of `r sprintf("%.3f", unchecked_model$rmse)` $\text{m}^3/\text{s}$ against discharge values of up to `r sprintf("%.0f", unchecked_model$max_q)` $\text{m}^3/\text{s}$, these discrepancies are relatively small.
 
 Although this does not prove that the Unchecked readings are completely accurate, the small size of the discrepancies provides some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes.
 
 Therefore, we retain the Unchecked SEPA readings rather than replacing them with the corresponding interpolated estimates as the values are close enough that preserving the original recorded values avoids unnecessary modification to the data.
+
+### Suspect readings {#suspect-readings}
+
+SEPA flags `r format(n_suspect, big.mark = ",")` readings (`r sprintf("%.2f", pct_suspect)`% of the record) as Suspect (code 150), meaning that the flow lies beyond the acceptable extrapolation limit of the gauge's stage-discharge relationship. As in Part 1, these readings are excluded. The largest Suspect reading is `r sprintf("%.1f", max_suspect)` $\text{m}^3/\text{s}$, and `r n_suspect_above` exceed the threshold of `r u_final` $\text{m}^3/\text{s}$. However, a reading below the threshold can still affect the shape of an event: wherever an excluded reading falls inside an event window, the hydrograph is linearly interpolated across the gap between the retained readings on either side. We therefore checked which Suspect readings fall inside the standardised event windows, using the same approach as for the Unchecked readings.
+
+```{r suspecttext, results="asis", echo=FALSE}
+if (is.null(suspect_model)) {
+  cat("None of the Suspect readings fall inside any of the", nrow(events),
+      "event windows, so excluding them does not affect any of the hydrographs we model.\n")
+} else {
+  cat(sprintf(
+    "%d Suspect readings, in %d separate bursts, fall inside %d of the %d event windows (Table \\@ref(tab:suspectdata)). Figure \\@ref(fig:suspecthydro) shows where they lie within the hydrographs of the affected events, alongside the interpolated values the model uses in their place.\n",
+    n_suspect_model_readings, n_suspect_model_bursts, n_suspect_model_events, nrow(events)))
+}
+```
+
+```{r suspectdata, results="asis", echo=FALSE}
+if (!is.null(suspect_model)) {
+  knitr::kable(
+    suspect_model$table,
+    format    = "markdown",
+    align     = "llrrrrrr",
+    col.names = c("Burst", "Event(s)", "Start", "Readings", "Duration (min)",
+                  "Max flow (m³/s)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
+    caption   = "Suspect readings (code 150) within the event windows. RMSE and maximum absolute difference compare each excluded reading with the linear interpolation used in its place."
+  )
+}
+```
+
+```{r suspecthydro, echo=FALSE, fig.width=9, fig.height=5, fig.cap="Hydrographs of the events containing Suspect readings. The line shows the readings used in the model, which is the linear interpolation across each gap; points show the excluded Suspect readings; the dotted line is the threshold."}
+if (!is.null(suspect_model_plot)) suspect_model_plot
+```
 
 ## Exploratory Analysis {#exploratory-analysis}
 
@@ -142,7 +177,12 @@ Some events exhibit sharp peaks followed by rapid recession, whereas others have
 
 While the mean hydrograph provides a useful summary of the typical event shape, it smooths over important differences between individual events. Consequently, representing every event using only an average hydrograph scaled by peak discharge may fail to capture the full variability in an event.
 
-```{r heatmap, echo=FALSE, fig.height=10, fig.width=9, fig.cap="A heat map showing the varation in discharge and timeline of each of the 41 extreme flow events"}
+```{r heatmap, echo=FALSE, fig.height=10, fig.width=9, fig.cap=cap_heatmap}
+cap_heatmap <- paste0(
+  "A heat map showing the variation in discharge and timeline of each of the ",
+  nrow(peaks),
+  " extreme flow events"
+)
 heat_map_plot
 ```
 
@@ -165,17 +205,18 @@ The resulting data were arranged into a matrix (Y), with one row per extreme flo
 Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
 
 # Methods for representing hydrograph shape
+The output of flood inundation models fit emulators. Since every input increases the number of runs to fit it, and each run is slow, we aim to minimise the number of inputs. After standardisation (Section \@ref{#standardising-the-hydrographs}), each of the ($N =$ `r nrow(Y)`) extreme flow events are summarised to `r n_grid` time points $u_j$, their standardised discharge $y_i(u_j)$, peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$. 
 
-SEPA's emulator is fitted to input and output pairs of the flood inundation model, and since every additional input increases the number of runs needed to fit it, and each run is slow, we aim to keep the number of inputs as low as possible. However, after standardisation (Section \@ref{#standardising-the-hydrographs}), each of our extreme flow events $i = 1, \dots, N$ ($N =$ `r nrow(Y)`) is described by its standardised discharge $y_i(u_j)$ at each of the `r n_grid` time points $u_j$, plus its peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$, giving `r n_grid + 3` numbers per extreme flow event. This is far too many to use as inputs to the emulator, so we explore the polynomial regression, Principal Component Analysis (PCA), and wavelet dimension-reduction methods from lectures, alongside two additional methods from our further reading.
+Using all of these `r n_grid + 3` values as emulator inputs would be impractical. We therefore considered five methods for reducing the number of parameters needed to represent hydrograph shape. These methods are polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function. 
 
-Most of these methods approximate the standardised curve $y_i(u)$ by a weighted sum of $K$ basis functions,
+Most methods approximate each standardised hydrograph by a weighted sum of $K$ basis functions,
 
 \begin{equation}
 y_i(u) \approx \sum_{k=1}^{K} \theta_{ik}\,\phi_k(u),
 (\#eq:basis)
 \end{equation}
 
-and differ only in their choice of basis functions $\phi_k$. The exceptions are PCA, which first subtracts the mean curve before applying \@ref(#eq:basis), and the gamma-type curve from our further reading, which is a nonlinear function of its parameters. In every case, the coefficients $\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})$ for extreme flow event $i$ become our $K$ shape parameters, while the peak discharge, duration, and relative peak position are kept seperately as they are, so that event $i$ is now described by
+where $\phi_k(u)$ are the basis functions and $\theta_{ik}$ are the shape parameters for event $i$. The methods differ mainly in how these functions are chosen. Peak discharge, duration and relative peak position are retained separately, giving ($K+3$) parameters for each event. The exceptions are PCA, which first subtracts the mean curve before applying \@ref(eq:basis), and the gamma-type curve from our further reading, which is a nonlinear function of its parameters. 
 
 \begin{equation}
 \mathbf{x}_i = \left(Q_i^{\text{peak}},\; W_i,\; \tau_i,\; \boldsymbol{\theta}_i\right).
@@ -185,8 +226,7 @@ and differ only in their choice of basis functions $\phi_k$. The exceptions are 
 The emulator therefore only needs $3 + K$ inputs, where $K$ is significantly smaller than the previous `r n_grid`.
 
 ## SEPA's Approach {#method-SEPA}
-
-We introduce SEPA's current approach as a baseline against which the other five methods can be compared. Their approach treats the shape of the hydrograph as fixed, and scales it up or down using only its maximum flow. We implemented this by scaling discharge and time, as per \@ref{standardising-the-hydrographs}, but we do not realign peaks, as SEPA does not do so. We obtain the unaligned standardised curves $\tilde{y}_i(u)$, which are then averaged across extreme flow events,
+SEPA's current approach is our baseline. It uses a fix-shape hydrograph, which is scaled according to maximum discharge. The baseline was constructed by averaging the standardised hydrographs (from \@ref{standardising-the-hydrographs}) without aligning their peaks, (as SEPA does not do so). The unaligned curves $\tilde{y}_i(u)$, are then averaged across extreme flow events,
 
 \begin{equation}
 \bar{y}(u) = \frac{1}{N}\sum_{l=1}^{N} \tilde{y}_l(u),
@@ -200,13 +240,15 @@ and rescaled to have a peak value of one,
 (\#eq:sepa-2)
 \end{equation}
 
-The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat{y}$ to the flood's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$, so that every flood shares the same shape and differs only in its height and length. To test how well this shape predicts a flood it has not seen, each flood is also compared with the average of the other $N - 1$ floods only. Finally, each flood here is given its own observed duration $W_i$, as it is for every method, whereas SEPA's approach uses the same duration for every flood, so this version of SEPA's approach may fit the observed floods slightly better than the real one.
+The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat{y}$ to the flood's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$. This means every flood shares the same shape and differs only in its height and length. To test how well this shape predicts a flood it has not seen, each flood is also compared with the average of the other $N - 1$ floods only. 
+
+Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary between events. This means the observed hydrographs now obtained may be more accurate than the strictly fixed-duration approach.
 
 ## Evaluation criteria {#methods-comparison}
 
-Following the lectures, we evaluate each method on three criteria: accuracy, parsimony, and fitness for purpose. These are initially used to choose the number of parameters for each method (Sections 3.3-3.6) and then, to compare the methods at these choices and on common groundings (Section 5). 
+Following the lectures, we evaluate each method on three criteria: accuracy, parsimony, and fitness for purpose. These are initially used to choose the number of parameters for each method (Sections 3.3-3.6) and then, to compare the methods at these choices and on common groundings (Section 5).
 
-Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each event's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for event $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all 41 extreme flow events.
+Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each event's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for event $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all `r nrow(peaks)` extreme flow events.
 
 **Accuracy:** We measure how closely the whole hydrograph is reproduced using the root mean squared error,
 
@@ -215,7 +257,7 @@ Since flood inundation uses real flows rather than standardised ones, we first c
 (\#eq:rmse)
 \end{equation}
 
-Where possible, the errors are calculated both within and out of sample. For methods whose basis or average shape is estimated from all extreme flow events together (SEPA's approach, PCA and the choice of wavelet coefficients), we use leave-one-out cross-validation, in which each flood in turn is removed, the method is refitted to the remaining $N - 1$ floods, and the removed flood is predicted. For methods fitted to each flood separately (polynomial, B-spline and gamma-type), leaving a flood out does not change the fit to the others, so the in-sample and leave-one-out errors are identical. For these, the floods were instead split once at random into `r length(train_floods)` training and `r length(test_floods)` test floods, which is used to choose each method's number of parameters.
+Where possible, the errors are calculated both within and out of sample. For methods whose basis or average shape is estimated from all extreme flow events together (SEPA's approach, PCA and the choice of wavelet coefficients), we use leave-one-out cross-validation, in which each event in turn is removed, the method is refitted to the remaining $N - 1$ events, and the removed event is predicted. For methods fitted to each event separately (polynomial, B-spline and gamma-type), leaving an event out does not change the fit to the others, so the in-sample and leave-one-out errors are identical; for these, the events were instead split once at random into `r length(train_floods)` training and `r length(test_floods)` test events, which is used to choose each method's number of parameters.
 
 **Parsimony:** The number of parameters needed to achieve that accuracy matters because the parameters become the emulator's inputs, and fewer, less correlated parameters make both the emulator and the modelling of their uncertainty easier. We therefore compare the number of shape parameters of each method and the correlation between them across events.
 
@@ -227,7 +269,7 @@ Where possible, the errors are calculated both within and out of sample. For met
 \text{Volume error}_i &= 100 \times \frac{\int \hat{Q}_i(t)\,dt - \int Q_i(t)\,dt}{\int Q_i(t)\,dt}\ \%, (\#eq:volume)
 \end{align}
 
-where the integrals are evaluated by the trapezium rule. As every method except SEPA's places the peak at its observed position, their timing errors are close to zero by construction, so this error is mainly informative for the baseline. The second part of fitness for purpose, is how well unusual floods are reproduced, which we assess once their uncertainty has been modelled in Section \@ref(uncertainty)
+where the integrals are evaluated by the trapezium rule. As every method except SEPA's places the peak at its observed position, their timing errors are close to zero by construction, so this error is mainly informative for the baseline. The second part of fitness for purpose, is how well unusual extreme flow events are reproduced, which we assess once their uncertainty has been modelled in Section \@ref(uncertainty).
 
 ## Polynomial regression {#method-polynomial}
 
@@ -237,6 +279,7 @@ First, we consider a polynomial in time as our choice of basis, so that the stan
 y_i(u_j) \approx \theta_{i0} + \theta_{i1}u_j + \theta_{i2}u_j^2 + \dots + \theta_{ip}u_j^p, \qquad j = 1, \dots, `r n_grid`.
 (\#eq:poly)
 \end{equation}
+
 Since this is a linear model, the coefficients are found by least squares as $\hat{\boldsymbol{\theta}}_i = (X^\top X)^{-1} X^\top \mathbf{y}_i$, where $X$ is the `r n_grid` $\times (p+1)$ matrix with columns $1, u, \dots, u^p$ evaluated at the grid times, and $\mathbf{y}_i$ is the standardised curve of event $i$. The $p + 1$ fitted coefficients are the shape parameters of the event.
 
 To choose the degree $p$, we considered degrees from `r min(degrees)` to `r max(degrees)` in two ways. First, for each degree, we recorded the proportion of extreme flood events for which the highest-order term was significant at the 5% level (Table \@ref(tab:polysig)). Second, we compared the errors for each degree across the training and test floods (Section \@ref(methods-comparison), Figure \@ref(fig:polychoice)).
@@ -255,9 +298,9 @@ knitr::kable(
 plot_choice(poly_choice, "Polynomial degree")
 ```
 
-From Table 3, we observe that the proportion of significant higher-order terms does not decrease steadily with the degree, but it is generally lower at even degrees than odd. However, we only use this table only as a guide, because neighbouring points on a hydrograph are strongly correlated, which violates the independence assumption of the linear model, producing overly-optimistic results since standard errors are small.
+From Table \@ref(tab:polysig), we observe that the proportion of significant higher-order terms does not decrease steadily with the degree, but it is generally lower at even degrees than odd. However, we only use this table only as a guide, because neighbouring points on a hydrograph are strongly correlated, which violates the independence assumption of the linear model, producing overly-optimistic results since standard errors are small.
 
-Hence, we primarily choose the order from Figure 3, where we observe that all four errors fall as the degree increases, and the test errors follow training errors closely. Also, we see a similar even-odd trend from Table 3 across all four errors, with the largest improvements occuring when moving to a higher odd degree. The step from degree 6 to 7 is the largest such reduction in peak error, and among the largest for RMSE and timing error also, with volume error staying approximately the same. Across all four errors, further increases either see a leveling off after degree 7, or smaller gains for each additional parameter, meaning degree 8 gives similar errors. Therefore, we choose $p =$ `r p_chosen`.
+Hence, we primarily choose the order from Figure \@ref(fig:polychoice), where we observe that all four errors fall as the degree increases, and the test errors follow training errors closely. Also, we see a similar even-odd trend from Table 3 across all four errors, with the largest improvements occuring when moving to a higher odd degree. The step from degree 6 to 7 is among the largest reductions in peak error, RMSE and timing error, with volume error staying approximately the same. Across all four errors, further increases either see a leveling off after degree 7, or smaller gains for each additional parameter, meaning degree 8 gives similar errors. Therefore, we choose $p =$ `r p_chosen`.
 
 ## Principal component analysis {#method-pca}
 
@@ -267,6 +310,7 @@ Unlike the polynomial, where the basis is fixed before looking at the data, PCA 
 y_i(u_j) \approx \bar{y}(u_j) + \sum_{k=1}^{K} \xi_{ik}\,\phi_k(u_j), \qquad \xi_{ik} = \sum_{j=1}^{`r n_grid`} \big(y_i(u_j) - \bar{y}(u_j)\big)\,\phi_k(u_j),
 (\#eq:pca)
 \end{equation}
+
 where the scores $\xi_{i1}, \dots, \xi_{iK}$ are the shape parameters of event $i$. An advantage of PCA is that the scores of different components are uncorrelated across events by construction, which makes their variation between events easier to model.
 
 ```{r pcaloadings, echo=FALSE, fig.height=4, fig.cap="The first three principal components against standardised time."}
@@ -302,6 +346,7 @@ Using the discrete wavelet transform, each standardised hydrograph is split into
 y_i(u) = \sum_{k} a_{ik}\,\varphi_k(u) + \sum_{j=1}^{`r wav_levels`}\sum_{k} d_{ijk}\,\psi_{jk}(u),
 (\#eq:wavelet)
 \end{equation}
+
 where the $a_{ik}$ are the smooth coefficients, describing the overall shape of the hydrograph, and the $d_{ijk}$ are the detail coefficients at scale $j$ and location $k$, with $j = 1$ the finest scale. We used the Daubechies wavelet with four coefficients, `r wav_levels` levels and periodic boundaries, and since `r n_grid` $= 2^6$, the transform can be applied to each hydrograph directly. With these settings, each hydrograph has `r n_grid / 2^wav_levels` smooth coefficients and `r n_grid - n_grid / 2^wav_levels` detail coefficients, so that using all of them would reproduce the hydrograph exactly. Figure \@ref(fig:wavdecomp) shows this decomposition for event 1, where we observe that the smooth coefficients capture the overall shape of the event, while the detail coefficients are close to zero except around the peak, and are smallest at the finest scale.
 
 ```{r wavdecomp, echo=FALSE, fig.height=6, fig.cap="Wavelet decomposition of event 1: the detail coefficients at each level and the smooth coefficients."}
@@ -319,7 +364,7 @@ To reduce the number of parameters, we keep all of the smooth coefficients but o
 plot_choice(wav_choice, "Detail coefficients kept")
 ```
 
-We also checked the sensitivity of the results to the choice of wavelet and the number of levels, keeping $M =$ `r keep_chosen` fixed (Table \@ref(tab:wavsens)). Since more levels give fewer smooth coefficients, this also changes the number of parameters. We observe that the number of levels matters much more than the choice of wavelet, with the RMSE, peak and volume errors all increasing as the number of levels increases and the number of parameters falls, from 13 parameters at three levels to 7 at five levels. For a given number of levels, the Haar wavelet has a noticeably higher RMSE than the two Daubechies wavelets. The least asymmetric Daubechies wavelet with eight coefficients has a similar RMSE to our choice, and a lower peak error at three levels (0.90 compared with 2.96 m³/s), but we kept the Daubechies wavelet with four coefficients used in the lecture example, as the difference at the peak is small compared with the other methods.
+We also checked the sensitivity of the results to the choice of wavelet and the number of levels, keeping $M =$ `r keep_chosen` fixed (Table \@ref(tab:wavsens)). Since more levels give fewer smooth coefficients, this also changes the number of parameters. We observe that the number of levels matters much more than the choice of wavelet, with the RMSE, peak and volume errors all increasing as the number of levels increases and the number of parameters falls, from 13 parameters at three levels to 7 at five levels. For a given number of levels, the `haar` wavelet has a noticeably higher RMSE than the two Daubechies wavelets. The least asymmetric Daubechies wavelet with eight coefficients, `la8`, has a similar RMSE to `d4`, and a lower peak error at three levels (`r sprintf("%.2f", wav_sensitivity$peak_error[wav_sensitivity$filter == "la8" & wav_sensitivity$levels == 3])` compared with `r sprintf("%.2f", wav_sensitivity$peak_error[wav_sensitivity$filter == "d4" & wav_sensitivity$levels == 3])` $\text{m}^3/\text{s}$). Given the `la8` wavelet has the lowest average absolute errors across the board at three levels, we select it.
 
 ```{r wavsens, echo=FALSE}
 knitr::kable(
@@ -353,9 +398,11 @@ We now validate the methods at their chosen number of parameters.
 plot_all_methods()
 ```
 
-The polynomial method underestimates sharp peaks and cannot reproduce extreme flow events with two peaks, such as events 19, 29 and 41 (Figure \@ref(fig:all-methods-plot)), instead fitting a single peak that is too low and broad. This is because each term acts over the whole event, so a sharp change at the peak would disrupt the rest of the curve, while the higher-order terms dominate near the ends, causing the fit to drift away from the observed flow there. The B-spline method fits the recession and ends closely, but shows the same pattern around the peak, with only a marginal improvement on two-peak events. The gamma-type method performs the poorest, as each curve has a single peak and the same baseflow at the start and end, so it misses one peak of two-peaked events entirely and fits the ends of most extreme flow events poorly.
+The polynomial method underestimates sharp peaks and cannot reproduce multi-peak extreme flow events (Figure \@ref(fig:all-methods-plot)), instead fitting a single peak that is too low and broad. This is because each term acts over the whole event, so a sharp change at the peak would disrupt the rest of the curve, while the higher-order terms dominate near the ends, causing the fit to drift away from the observed flow there. The B-spline method fits the recession and ends closely, but shows the same pattern around the peak, with only a marginal improvement on multi-peak events. The gamma-type method performs the poorest, as each curve has a single peak and the same baseflow at the start and end, fitting the peaks and ends of contrasting extreme flow events poorly.
 
-Unlike these three methods, PCA reproduces single-peak events almost exactly and events with two peaks closely, with the main difference an underestimate of one peak. The wavelet method fits similarly closely, however, its curves are jagged in places, with unrealistic dips in events 2, 19 and 41, which we expect is because the same detail coefficients are kept for every flood. Also, there are sharp deviations at the ends, likely due to the periodic boundary.
+Unlike these three methods, PCA reproduces single-peak events almost exactly and multi-peak events closely. For multi-peak events, PCA tends to underestimate at least one of the smaller peaks.
+
+The wavelet method performs similarly to PCA. However, its curves are jagged in places with unrealistic dips, which we expect is because the same detail coefficients are kept for every flood. Additionally, there are sharp deviations at the ends, likely due to the periodic boundary.
 
 ## Residuals
 
@@ -365,7 +412,7 @@ plot_all_residuals()
 
 The residuals (Figure \@ref(fig:residuals-all)) confirm these observations across all extreme flow events. The polynomial residuals are positive at the peak and negative on either side for most, confirming that the fitted peak is systematically too low and broad, while the B-spline residuals are similar around the peak but close to zero after $u \approx 0.6$. The gamma-type method has the widest spread. On the other hand, the residuals for PCA are small throughout, largest on the rising limb, and the average is exactly zero by construction. The wavelet method also has small residuals throughout, with a jagged average. 
 
-Neighbouring residuals are correlated, so the independence assumed by the regression-based methods does not hold, but this does not affect their use here, as the fitted curves are a basis rather than used for inference.
+Neighbouring residuals are correlated, so the independence assumed by the regression-based methods does not hold, but this does not affect their use here, as the fitted curves are used as a basis rather than for inference.
 
 ## Correlation of parameters
 
@@ -505,11 +552,20 @@ kable(sampling_table, digits = 3,
 
 # Emulator application {#emulator}
 
-- Give a brief explanation of how the emulator would be used
-- e.g, explain the two separate phases,
+From our analysis above our proposed method, PCA, effectively represents the hydrograph shapes in a low-dimensional form. Each event is represented by its maximum discharge, duration and peak position alongside seven principal component scores describing its shape. This gives a total of ten emulator inputs, rather than treating every discharge measurement as separate parameters. This keeps the number of inputs small, as increasing the number of parameters requires more flood inundation model runs to fit the emulator. 
 
-First, SEPA could select different parameter combinations, reconstruct corresponding hydrographs and run these through the actual flood inundation model. The resulting input-output pairs would be used to train an emulator.
+To train an emulator, SEPA could select a combinations of these ten parameters covering a plausible range of extreme flow events, while still accounting for the dependencies and constraints identified in our analysis. These inputs could be selected using a statistical design, such as a grid over the plausible parameter ranges [@wilson2026lec3]. For each combination, PCA would be used to reconstruct the complete hydrograph, to be supplied to the flood inundation model. 
 
-Second, SEPA could repeatedly sample parameters from your fitted uncertainty distribution and feed those parameters into the trained emulator to obtain a distribution of predicted extreme flow event outcomes.
+The resulting flood outcomes, such as maximum water depth or inundation extent, from the inundation model would form the outputs used to train emulator [@environmentagency2025]. The emulator would therefore be able to approximate the relationship between hydrograph parameters and flood outcomes replacing the need to run a flood inundation model, thereby reducing the computational burden. 
+
+Once the emulator has been trained and validated,  new  combinations of the ten parameters can be sampled from the fitted joint distribution. These can be passed into the emulator to obtain a distribution of predicted flood depths or extents. This would allow SEPA the means to quantify how uncertainty in both peak discharge and hydrograph shape influence predicted flood risk, as currently they only are able to vary maximum flow alone.
+
+The reliability of these predictions depends on PCA’s ability to characterise the observed flood shapes, generate hydrographs and capture dependencies between parameters. Additionally, the emulator itself also introduces prediction uncertainty. 
+Thus, the flood model may differ from real-world flood behaviour, and these uncertainties would need to be considered when interpreting the resulting flood risk estimates.
 
 # Conclusion
+
+# References {.numbered}
+
+::: {#refs}
+:::
