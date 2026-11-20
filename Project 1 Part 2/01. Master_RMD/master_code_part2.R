@@ -1624,34 +1624,30 @@ worst_events <- imap_dfr(cmp_err, function(e, name) {
 })
 
 # Accuracy-parsimony trade-off:
-# Errors over ALL events at every setting tried in Section 3. For the
-# per-event methods the train/test averages are recombined (weighted by size),
-# for PCA and wavelets the leave-one-out errors are used. PCA is extended to
-# K = 15 so it can be compared with wavelets at the same number of parameters.
-split_to_all <- function(choice) {
-  n_tr <- length(train_floods); n_te <- length(test_floods)
-  choice %>%
-    group_by(setting) %>%
-    summarise(across(c(rmse, peak_error, timing_error, volume_error),
-                     ~ (n_tr * .x[type == "train"] + n_te * .x[type == "test"]) / (n_tr + n_te)),
-              .groups = "drop")
-}
+# Every method is evaluated at every whole number of shape parameters in K_grid,
+# so the curves can be compared at the same K. Errors are averaged over ALL
+# events: leave-one-out for PCA and wavelets; for the per-event methods,
+# held-out = in-sample (Section 3.2).
+# Structural limits: polynomial K >= 2 (degree >= 1); B-spline K >= 4
+# (bs() needs >= 3 basis functions); wavelets K >= n_smooth_cmp + 1 = 9
+# (all smooth coefficients are kept); gamma-type is fixed at K = 3.
+K_grid <- 1:16
 
-extra_k   <- setdiff(1:15, pca_choice$setting)
-pca_extra <- cached("cmp_pca_extra_k", map_dfr(extra_k, function(k) {
-  data.frame(setting = k, type = "leave-one-out",
-             t(average_errors(method_errors(loocv(function(i) pca_left_out(i, k))))))
-}), key = extra_k)
+avg_err <- function(Y_fit) average_errors(method_errors(Y_fit))
 
-tradeoff <- bind_rows(
-  split_to_all(poly_choice)    %>% mutate(method = "Polynomial", K = setting + 1),
-  split_to_all(bspline_choice) %>% mutate(method = "B-spline",   K = setting + 1),
-  bind_rows(pca_choice, pca_extra) %>% filter(type == "leave-one-out") %>%
-    mutate(method = "PCA", K = setting),
-  wav_choice %>% filter(type == "leave-one-out") %>%
-    mutate(method = "Wavelets", K = n_smooth_cmp + setting),
-  as_tibble(t(average_errors(gamma_errors))) %>% mutate(method = "Gamma-type", K = 3)
-) %>%
+tradeoff <- cached("cmp_tradeoff_common_K", bind_rows(
+  map_dfr(K_grid[K_grid >= 2], function(K)
+    data.frame(method = "Polynomial", K = K, t(avg_err(poly_fit_all(K - 1))))),
+  map_dfr(K_grid[K_grid >= 4], function(K)
+    data.frame(method = "B-spline", K = K, t(avg_err(bspline_fit_all(K - 1))))),
+  map_dfr(K_grid, function(K)
+    data.frame(method = "PCA", K = K,
+               t(avg_err(loocv(function(i) pca_left_out(i, K)))))),
+  map_dfr(K_grid[K_grid > n_smooth_cmp], function(K)
+    data.frame(method = "Wavelets", K = K,
+               t(avg_err(loocv(function(i) wavelet_left_out(i, K - n_smooth_cmp)))))),
+  data.frame(method = "Gamma-type", K = 3, t(average_errors(gamma_errors)))
+), key = list(K_grid, wav_filter, wav_levels)) %>%
   select(method, K, rmse, peak_error, volume_error) %>%
   arrange(method, K)
 
@@ -1780,10 +1776,12 @@ per_event_long_plot <- ggplot(per_event_long, aes(method, value, fill = method))
 tradeoff_long_plot <- ggplot(tradeoff_long, aes(K, value, colour = method)) +
   geom_hline(data = sepa_ref, aes(yintercept = value), inherit.aes = FALSE,
              linetype = "dashed", colour = "grey40") +
+  geom_vline(xintercept = n_smooth_cmp + 1, linetype = "dotted", colour = "grey60") +
   geom_line(linewidth = 0.6) +
   geom_point(size = 1.3) +
   geom_point(data = filter(tradeoff_long, chosen), size = 3.5, shape = 21,
              fill = NA, stroke = 1.3) +
+  scale_x_continuous(limits = c(1, max(K_grid)), breaks = seq(2, max(K_grid), by = 2)) +
   scale_y_log10() +
   scale_colour_manual(values = cmp_colours, name = NULL) +
   facet_wrap(~ metric, scales = "free_y") +

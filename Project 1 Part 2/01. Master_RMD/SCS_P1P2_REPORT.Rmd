@@ -521,7 +521,7 @@ into the paragraph above)
 -->
 ```
 
-Every method beats SEPA's fixed-shape method, and PCA and wavelets beat it by roughly an order of magnitude. PCA and wavelets appear to be the most accurate methods according to Tables \@ref(tab:cmp-main), \@ref(tab:cmp-features), and Figure \@ref(fig:cmp-distribution); consistent with what we observed in Section \@ref(#validation-of-methods). Both PCA and wavelets exhibit the best overall, worst-case and feature-based accuracy, as well as the least bias. Noteably, wavelets has the edge on PCA on most of these metrics. However,
+Every method beats SEPA's fixed-shape method, and PCA and wavelets beat it by roughly an order of magnitude. PCA and wavelets appear to be the most accurate methods according to Tables \@ref(tab:cmp-main), \@ref(tab:cmp-features), and Figure \@ref(fig:cmp-distribution); consistent with what we observed in Section \@ref(validation-of-methods). Both PCA and wavelets exhibit the best overall, worst-case and feature-based accuracy, as well as the least bias. Noteably, wavelets has the edge on PCA on most of these metrics. However,
 
 - `r cmp_main_tbl$neg[6]` of the wavelets method's held-out curves have negative flow (PCA: `r cmp_main_tbl$neg[5]`),
 
