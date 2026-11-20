@@ -100,7 +100,7 @@ Having re-run our Part 1 analysis on the expanded dataset, we keep the threshold
 
 ## Checking the data
 
-Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending `r win_before_h`` hours before and `r win_after_h` hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be [standardised](#standardising-the-hydrographs), forming the set of event windows used throughout the rest of the report.
+Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending `r win_before_h` hours before and `r win_after_h` hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be [standardised](#standardising-the-hydrographs), forming the set of event windows used throughout the rest of the report.
 
 In Part 1 we kept only Good (code 50) and Estimated (code 100) readings. Since Part 2 models the whole hydrograph of each event rather than only its peak, we reconsider the two groups of readings that were excluded: Unchecked readings (code 254), which we retain after the check below, and Suspect readings (code 150), which remain excluded.
 
