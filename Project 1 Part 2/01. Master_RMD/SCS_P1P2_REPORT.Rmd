@@ -15,8 +15,6 @@ link-citations: true
 linkcolor: blue
 citecolor: blue
 urlcolor: blue
-nocite: |
-  @*
 
 header-includes:
   - \usepackage{graphicx}
@@ -554,11 +552,20 @@ kable(sampling_table, digits = 3,
 
 # Emulator application {#emulator}
 
-- Give a brief explanation of how the emulator would be used
-- e.g, explain the two separate phases,
+From our analysis above our proposed method, PCA, effectively represents the hydrograph shapes in a low-dimensional form. Each event is represented by its maximum discharge, duration and peak position alongside seven principal component scores describing its shape. This gives a total of ten emulator inputs, rather than treating every discharge measurement as separate parameters. This keeps the number of inputs small, as increasing the number of parameters requires more flood inundation model runs to fit the emulator. 
 
-First, SEPA could select different parameter combinations, reconstruct corresponding hydrographs and run these through the actual flood inundation model. The resulting input-output pairs would be used to train an emulator.
+To train an emulator, SEPA could select a combinations of these ten parameters covering a plausible range of extreme flow events, while still accounting for the dependencies and constraints identified in our analysis. These inputs could be selected using a statistical design, such as a grid over the plausible parameter ranges [@wilson2026lec3]. For each combination, PCA would be used to reconstruct the complete hydrograph, to be supplied to the flood inundation model. 
 
-Second, SEPA could repeatedly sample parameters from your fitted uncertainty distribution and feed those parameters into the trained emulator to obtain a distribution of predicted extreme flow event outcomes.
+The resulting flood outcomes, such as maximum water depth or inundation extent, from the inundation model would form the outputs used to train emulator [@environmentagency2025]. The emulator would therefore be able to approximate the relationship between hydrograph parameters and flood outcomes replacing the need to run a flood inundation model, thereby reducing the computational burden. 
+
+Once the emulator has been trained and validated,  new  combinations of the ten parameters can be sampled from the fitted joint distribution. These can be passed into the emulator to obtain a distribution of predicted flood depths or extents. This would allow SEPA the means to quantify how uncertainty in both peak discharge and hydrograph shape influence predicted flood risk, as currently they only are able to vary maximum flow alone.
+
+The reliability of these predictions depends on PCA’s ability to characterise the observed flood shapes, generate hydrographs and capture dependencies between parameters. Additionally, the emulator itself also introduces prediction uncertainty. 
+Thus, the flood model may differ from real-world flood behaviour, and these uncertainties would need to be considered when interpreting the resulting flood risk estimates.
 
 # Conclusion
+
+# References {.numbered}
+
+::: {#refs}
+:::
