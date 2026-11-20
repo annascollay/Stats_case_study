@@ -1575,79 +1575,44 @@ cat("Wavelets check:", max(abs(wav_sim_curves(wav_params) - Y_wav)), "\n")
 # ------------------------------------------------------------------------------
 # 19b. Looking at the shape parameters
 # ------------------------------------------------------------------------------
+# Normal Q-Q plot of each shape parameter. The multivariate Normal in 19c
+# assumes each parameter is roughly Normal: if so, the points lie close to the
+# black line. Curving away at the ends means skew or long tails.
+# Row 1: PCA scores (blue). Rows 2-3: wavelet parameters (orange), smooth
+# coefficients S1-S8 then detail coefficients D1-D5.
 
-# Distributions (1): histogram of each parameter with a Normal curve (same mean
-# and standard deviation) drawn on top. The multivariate Normal in 19c
-# assumes each parameter roughly follows this curve: look for skew, long
-# tails or outlying events.
-plot_param_histograms <- function(shape_params, method_name) {
-  par(mfrow = c(ceiling(ncol(shape_params) / 4), 4), mar = c(4, 4, 2, 1))
-  for (j in 1:ncol(shape_params)) {
-    values <- shape_params[, j]
-    hist(values, freq = FALSE, breaks = 10, col = "#DCEEF5", xlab = "",
-         main = paste(method_name, colnames(shape_params)[j]))
-    curve(dnorm(x, mean(values), sd(values)), add = TRUE, col = "red", lwd = 2)
-  }
-  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
+pca_colour <- "#0072B2"
+wav_colour <- "#E69F00"
+
+# Normal Q-Q plot of one parameter
+qq_panel <- function(values, name, colour) {
+  qqnorm(values, pch = 19, cex = 0.7, col = colour, main = name, xlab = "", ylab = "")
+  qqline(values, col = "black", lwd = 1.5)
 }
 
-# Distributions (2): Normal Q-Q plot of each parameter: if the parameter is
-# Normal, the points lie close to the red line. Curving away at the ends
-# means skew or long tails.
-plot_param_qq <- function(shape_params, method_name) {
-  par(mfrow = c(ceiling(ncol(shape_params) / 4), 4), mar = c(4, 4, 2, 1))
-  for (j in 1:ncol(shape_params)) {
-    values <- shape_params[, j]
-    qqnorm(values, pch = 19, cex = 0.7,
-           main = paste(method_name, colnames(shape_params)[j]))
-    qqline(values, col = "red", lwd = 2)
+plot_all_qq <- function() {
+  par(mfrow = c(3, 7), mar = c(2.5, 2.5, 2, 0.5), oma = c(2.5, 2.5, 0, 0),
+      mgp = c(2, 0.6, 0), cex.axis = 0.8)
+  
+  # row 1: PCA scores, then the legend
+  for (j in 1:ncol(pca_scores)) {
+    qq_panel(pca_scores[, j], colnames(pca_scores)[j], pca_colour)
   }
-  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
-}
 
-plot_param_histograms(pca_scores, "PCA")
-plot_param_qq(pca_scores, "PCA")
-plot_param_histograms(wav_params, "Wavelet")
-plot_param_qq(wav_params, "Wavelet")
-
-# Correlations between the parameters (printed in sections 13 and 14). PCA
-# scores are uncorrelated by construction; the wavelet parameters are not,
-# which the multivariate Normal in 19c has to capture (13 x 14 / 2 = 91
-# correlations estimated from 118 events).
-wav_correlations <- cor(wav_params)
-image(1:ncol(wav_params), 1:ncol(wav_params), wav_correlations, zlim = c(-1, 1),
-      col = colorRampPalette(c("#AA1945", "white", "#174B67"))(118),
-      axes = FALSE, xlab = "", ylab = "", main = "Correlation between wavelet parameters")
-axis(1, 1:ncol(wav_params), colnames(wav_correlations), las = 2)
-axis(2, 1:ncol(wav_params), colnames(wav_correlations), las = 2)
-
-# Dependence on the size and timing of the event. We divided by peak flow and
-# rescaled time, so shape is modelled separately from Part 1's peak flow and
-# time to peak. That is only justified if the shape parameters are (roughly)
-# unrelated to them.
-flood_size_timing <- cbind(log_peak_flow = log(events$peak_flow),
-                           log_width     = log(events$width_h),
-                           peak_position = events$peak_position)
-
-# Spearman correlation (based on ranks, so not driven by a few extreme
-# events). With 118 events, a correlation above about 0.18 in size would arise
-# by chance less than 1 time in 20; with this many correlations a few will
-# pass by chance, so look for strong, consistent relationships. [REMOVE AFTER INTERPRETATION]
-size_timing_correlations <- lapply(params, function(shape_params)
-  round(cor(shape_params, flood_size_timing, method = "spearman"), 2))
-print(size_timing_correlations)
-
-# Scatter plots of each PCA score against each size/timing variable, with a
-# smooth trend line (red)
-par(mfrow = c(3, ncol(pca_scores)), mar = c(4, 4, 1, 1))
-for (v in colnames(flood_size_timing)) {
-  for (pc in colnames(pca_scores)) {
-    plot(flood_size_timing[, v], pca_scores[, pc], pch = 19, cex = 0.6, xlab = v, ylab = pc)
-    lines(lowess(flood_size_timing[, v], pca_scores[, pc]), col = "red")
+  plot.new()
+  legend("center", c("PCA scores", "Wavelet parameters"), col = c(pca_colour, wav_colour),
+         pch = 19, bty = "n")
+  
+  # rows 2-3: wavelet parameters
+  for (j in 1:ncol(wav_params)) {
+    qq_panel(wav_params[, j], colnames(wav_params)[j], wav_colour)
   }
+  
+  mtext("Theoretical Normal quantiles", side = 1, outer = TRUE, line = 1)
+  mtext("Sample quantiles",             side = 2, outer = TRUE, line = 1)
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0),
+      mgp = c(3, 1, 0), cex.axis = 1)
 }
-par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
-
 
 # ------------------------------------------------------------------------------
 # 19c. Simulating new shape parameters
@@ -1712,22 +1677,22 @@ compare_param_distributions <- function(observed, simulated, method_name) {
 compare_param_distributions(pca_scores, simulated_params$PCA, "PCA")
 compare_param_distributions(wav_params, simulated_params$Wavelets, "Wavelet")
 
-# Check 2: 20 simulated curves next to 20 observed ones. Do the simulated
-# events look like real ones (one peak, no negative flow, similar spread)?
-plot_20_curves <- function(curves, title, colour) {
-  matplot(grid_u, t(curves[1:20, ]), type = "l", lty = 1, col = colour,
+# Check 2: all 41 observed curves next to 41 simulated ones. Do the
+# simulated floods look like real ones (one peak, no negative flow,
+# similar spread)?
+plot_curves <- function(curves, title, colour) {
+  matplot(grid_u, t(curves[1:nrow(Y), ]), type = "l", lty = 1, col = colour,
           xlab = "Rescaled time u", ylab = "Flow / peak flow", main = title)
 }
 
 par(mfrow = c(2, 3))
-plot_20_curves(Y, "Observed", "grey40")
-plot_20_curves(pca_sim_curves(simulated_params$PCA$Normal),    "PCA - Normal",    "#5298BC")
-plot_20_curves(pca_sim_curves(simulated_params$PCA$Bootstrap), "PCA - Bootstrap", "#5298BC")
-plot_20_curves(Y, "Observed", "grey40")
-plot_20_curves(wav_sim_curves(simulated_params$Wavelets$Normal),    "Wavelets - Normal",    "#AA1945")
-plot_20_curves(wav_sim_curves(simulated_params$Wavelets$Bootstrap), "Wavelets - Bootstrap", "#AA1945")
+plot_curves(Y, "Observed", "grey40")
+plot_curves(pca_sim_curves(simulated_params$PCA$Normal),    "PCA - Normal",    pca_colour)
+plot_curves(pca_sim_curves(simulated_params$PCA$Bootstrap), "PCA - Bootstrap", pca_colour)
+plot_curves(Y, "Observed", "grey40")
+plot_curves(wav_sim_curves(simulated_params$Wavelets$Normal),    "Wavelets - Normal",    wav_colour)
+plot_curves(wav_sim_curves(simulated_params$Wavelets$Bootstrap), "Wavelets - Bootstrap", wav_colour)
 par(mfrow = c(1, 1))
-
 
 # ------------------------------------------------------------------------------
 # 19d. Out-of-sample check
