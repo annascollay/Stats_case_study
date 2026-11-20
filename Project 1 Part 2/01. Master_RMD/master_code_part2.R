@@ -1992,6 +1992,16 @@ plot_all_qq <- function() {
       mgp = c(3, 1, 0), cex.axis = 1)
 }
 
+# Is shape related to the size and timing of the event? If so, shape
+# should be simulated conditional on peak flow, duration and peak position
+# (19c), rather than separately from them.
+flood_size_timing <- cbind(peak_flow     = events$peak_flow,
+                           duration      = events$width_h,
+                           peak_position = events$peak_position)
+
+pca_dependence <- round(cor(pca_scores, flood_size_timing, method = "spearman"), 2)
+wav_dependence <- round(cor(wav_params, flood_size_timing, method = "spearman"), 2)
+
 # ------------------------------------------------------------------------------
 # 19c. Simulating new shape parameters
 # ------------------------------------------------------------------------------

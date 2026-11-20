@@ -641,13 +641,39 @@ WRITING NOTES - Synthesis and choice (aim: ~150 words)
 
 # Uncertainty analysis {#uncertainty}
 
-We explored three kinds of uncertainty in Lecture 3: parametric uncertainty, function uncertainty, and structural discrepancy. Function uncertainty and structural discrepancy both relate to the emulator, so we explore them in \@ref{emulator}, and here we focus on parametric uncertainty in $\mathbf{x_i}$.
+For the PCA and wavelet decomposition methods that we are taking forward, we now model the uncertainty in their parameters between hydrographs. Importantly, this allows us to move beyond the extreme flow events we have observed and simulate new hydrographs, and it means the uncertainty in hydrograph shape at extreme flows can be propagated through an emulator of the flood inundation model.
 
-## Distribution of the shape parameters
+## Distribution and dependencies of the shape parameters
+
+We first consider the marginal distributions of the PCA scores and wavelet coefficients, analysing their QQ-plots.
 
 ```{r param-qq, echo = FALSE, fig.width = 11, fig.height = 5.5, fig.cap = "Normal Q-Q plots of the shape parameters: PCA scores PC1--PC6 (blue, top row) and wavelet parameters (orange), smooth coefficients S1--S8 followed by detail coefficients D1--D5. Points close to the black line indicate an approximately Normal parameter."}
 plot_all_qq()
 ```
+
+From Figure \@ref(fig:param-qq), we observe that PC1–PC4 lie approximately on the black line, with only minor deviations in the tails, although the largest values of PC2 fall below the line, indicating a lighter upper tail. PC5 shows heavy tails on either side, while PC6 deviates substantially, with a particularly heavy lower tail. For wavelets, the 8 smooth coefficients lie approximately on the black line, other than at the extreme ends, where S1–S3 and S8 show right skew, and S4 and S5, and to a lesser extent S6, level off at the extremes. Of the detail coefficients, D3 and D5 lie approximately on the line and D4 shows mild right skew, while D1 and D2 deviate heavily at the right tail.
+
+As the majority of parameters sit approximately on the line through the centre of their distributions, we continue with our exploration of the Normal distribution, but due to some having heavy tails or large deviations at the extremes, we also consider a smoothed bootstrap sampling scheme, which does not require such a normality assumption.
+
+We aim to fit each on shape parameters and the three standardisation parameters (peak flow, duration and peak position), which are held seperately. To justify this, we must consider their dependencies, and we use the Spearman correlations to do so.
+
+```{r dependence-tables, echo = FALSE}
+dependence_cols <- c("Peak flow", "Duration", "Peak position")
+
+kables(
+  list(
+    kable(pca_dependence, format = "latex", booktabs = TRUE, valign = "t",
+          col.names = dependence_cols),
+    kable(wav_dependence, format = "latex", booktabs = TRUE, valign = "t",
+          col.names = dependence_cols)
+  ),
+  format  = "latex",
+  caption = "Spearman correlation of the shape parameters with the peak flow, duration and peak position of each event: PCA scores (left) and wavelet parameters (right).",
+  label   = "dependence"
+)
+```
+
+Table \@ref(tab:dependence) indicates moderate to strong correlations for both the PCA scores and the wavelet parameters with the standardisation parameters. In particular, PC2 and peak position have a correlation of $-0.80$, and S5 and peak position a correlation of $-0.74$, suggesting that standardisation does not fully separate the shape of a hydrograph from its timing. Simply fitting the unconditional distributions would therefore pair simulated shapes with peak flows, durations and peak positions that do not occur together in the data, as well as overstating the variation in shape for an event of a given size and timing. This motivates the need to move towards a conditional multivariate Normal distribution and a conditional smoothed bootstrap, which we fit in Section 6.2.
 
 ## Simulating: statistical model and a sampling scheme
 
