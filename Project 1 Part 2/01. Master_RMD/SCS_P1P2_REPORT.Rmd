@@ -207,17 +207,18 @@ The resulting data were arranged into a matrix (Y), with one row per extreme flo
 Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
 
 # Methods for representing hydrograph shape
+The output of flood inundation models fit emulators. Since every input increases the number of runs to fit it, and each run is slow, we aim to minimise the number of inputs. After standardisation (Section \@ref{#standardising-the-hydrographs}), each of the ($N =$ `r nrow(Y)`) extreme flow events are summarised to `r n_grid` time points $u_j$, their standardised discharge $y_i(u_j)$, peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$. 
 
-SEPA's emulator is fitted to input and output pairs of the flood inundation model, and since every additional input increases the number of runs needed to fit it, and each run is slow, we aim to keep the number of inputs as low as possible. However, after standardisation (Section \@ref{standardising-the-hydrographs}), each of our extreme flow events $i = 1, \dots, N$ ($N =$ `r nrow(Y)`) is described by its standardised discharge $y_i(u_j)$ at each of the `r n_grid` time points $u_j$, plus its peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$, giving `r n_grid + 3` numbers per extreme flow event. This is far too many to use as inputs to the emulator, so we explore the polynomial regression, Principal Component Analysis (PCA), and wavelet dimension-reduction methods from lectures, alongside two additional methods from our further reading.
+Using all of these `r n_grid + 3` values as emulator inputs would be impractical. We therefore considered five methods for reducing the number of parameters needed to represent hydrograph shape. These methods are polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function. 
 
-Most of these methods approximate the standardised curve $y_i(u)$ by a weighted sum of $K$ basis functions,
+Most methods approximate each standardised hydrograph by a weighted sum of $K$ basis functions,
 
 \begin{equation}
 y_i(u) \approx \sum_{k=1}^{K} \theta_{ik}\,\phi_k(u),
 (\#eq:basis)
 \end{equation}
 
-and differ only in their choice of basis functions $\phi_k$. The exceptions are PCA, which first subtracts the mean curve before applying \@ref(eq:basis), and the gamma-type curve from our further reading, which is a nonlinear function of its parameters. In every case, the coefficients $\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})$ for extreme flow event $i$ become our $K$ shape parameters, while the peak discharge, duration, and relative peak position are kept seperately as they are, so that event $i$ is now described by
+where $\phi_k(u)$ are the basis functions and $\theta_{ik}$ are the shape parameters for event $i$. The methods differ mainly in how these functions are chosen. Peak discharge, duration and relative peak position are retained separately, giving ($K+3$) parameters for each event. The exceptions are PCA, which first subtracts the mean curve before applying \@ref(eq:basis), and the gamma-type curve from our further reading, which is a nonlinear function of its parameters. 
 
 \begin{equation}
 \mathbf{x}_i = \left(Q_i^{\text{peak}},\; W_i,\; \tau_i,\; \boldsymbol{\theta}_i\right).
@@ -227,8 +228,7 @@ and differ only in their choice of basis functions $\phi_k$. The exceptions are 
 The emulator therefore only needs $3 + K$ inputs, where $K$ is significantly smaller than the previous `r n_grid`.
 
 ## SEPA's Approach {#method-SEPA}
-
-We introduce SEPA's current approach as a baseline against which the other five methods can be compared. Their approach treats the shape of the hydrograph as fixed, and scales it up or down using only its maximum flow. We implemented this by scaling discharge and time, as per \@ref{standardising-the-hydrographs}, but we do not realign peaks, as SEPA does not do so. We obtain the unaligned standardised curves $\tilde{y}_i(u)$, which are then averaged across extreme flow events,
+SEPA's current approach is our baseline. It uses a fix-shape hydrograph, which is scaled according to maximum discharge. The baseline was constructed by averaging the standardised hydrographs (from \@ref{standardising-the-hydrographs}) without aligning their peaks, (as SEPA does not do so). The unaligned curves $\tilde{y}_i(u)$, are then averaged across extreme flow events,
 
 \begin{equation}
 \bar{y}(u) = \frac{1}{N}\sum_{l=1}^{N} \tilde{y}_l(u),
@@ -242,7 +242,9 @@ and rescaled to have a peak value of one,
 (\#eq:sepa-2)
 \end{equation}
 
-The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat{y}$ to the flood's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$, so that every flood shares the same shape and differs only in its height and length. To test how well this shape predicts a flood it has not seen, each flood is also compared with the average of the other $N - 1$ floods only. Finally, each flood here is given its own observed duration $W_i$, as it is for every method, whereas SEPA's approach uses the same duration for every flood, so this version of SEPA's approach may fit the observed floods slightly better than the real one.
+The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat{y}$ to the flood's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$. This means every flood shares the same shape and differs only in its height and length. To test how well this shape predicts a flood it has not seen, each flood is also compared with the average of the other $N - 1$ floods only. 
+
+Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary between events. This means the observed hydrographs now obtained may be more accurate than the strictly fixed-duration approach.
 
 ## Evaluation criteria {#methods-comparison}
 
