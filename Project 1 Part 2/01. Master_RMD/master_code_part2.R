@@ -86,9 +86,9 @@ n_years <- n_distinct(river_data$water_year)
 
 # Count the number of missing readings by comparing our river data against a
 # complete 15-minute sequence
-complete_sequence <- seq(min(river_data$Timestamp), 
+complete_sequence <- seq(min(river_data_raw$Timestamp), 
                          max(river_data$Timestamp), by = "15 min")
-number_missing <- sum(!complete_sequence %in% river_data$Timestamp)
+number_missing <- sum(!complete_sequence %in% river_data_raw$Timestamp)
 
 # Create data description table
 data_description_table <- tibble(
@@ -102,9 +102,9 @@ data_description_table <- tibble(
     "1,273 $km^2$",
     "15 minutes",
     "Velocity-area",
-    paste(format(min(river_data$Timestamp), "%d %B %Y"), "–",
-          format(max(river_data$Timestamp), "%d %B %Y")),
-    format(nrow(river_data), big.mark = ","),
+    paste(format(min(river_data_raw$Timestamp), "%d %B %Y"), "–",
+          format(max(river_data_raw$Timestamp), "%d %B %Y")),
+    format(nrow(river_data_raw), big.mark = ","),
     format(number_missing, big.mark = ",")
   )
 )
@@ -130,7 +130,7 @@ quality_code_table <- tibble(
 # Join quality code table with the number of readings for each code
 quality_combined <- quality_code_table %>%
   left_join(
-    river_data %>% count(QualityCode = as.numeric(QualityCode), name = "Count"),
+    river_data_raw %>% count(QualityCode = as.numeric(QualityCode), name = "Count"),
     by = c("Code number" = "QualityCode")
   ) %>%
   mutate(

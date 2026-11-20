@@ -248,7 +248,7 @@ The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat
 
 Following the lectures, we evaluate each method on three criteria: accuracy, parsimony, and fitness for purpose. These are initially used to choose the number of parameters for each method (Sections 3.3-3.6) and then, to compare the methods at these choices and on common groundings (Section 5).
 
-Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each event's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for event $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all \`r \`\` extreme flow events.
+Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each event's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for event $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all `r nrow(peaks)` extreme flow events.
 
 **Accuracy:** We measure how closely the whole hydrograph is reproduced using the root mean squared error,
 
