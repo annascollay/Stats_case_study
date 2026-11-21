@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  20 NOV 2026 21:53
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.10.25)  21 NOV 2026 15:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -592,7 +592,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.34 ...ne {8}Emulator application}{31}{section.8}
+l.34 ...ne {8}Emulator application}{32}{section.8}
                                                   % [1])
 \tf@toc=\write3
 \openout3 = `SCS_P1P2_REPORT.toc'.
@@ -644,37 +644,37 @@ File: SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf Graphic file (type pdf)
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf  used on input line 357.
 (pdftex.def)             Requested size: 650.4284pt x 722.69823pt.
 [6 <./SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf>] [7 <./SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf>] [8{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathsy.enc}{c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathex.enc}] [9] [10]
-<SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf, id=205, 469.755pt x 433.62pt>
+<SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf, id=206, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf  used on input line 491.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
 [11 <./SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf, id=218, 469.755pt x 289.08pt>
+<SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf, id=219, 469.755pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf  used on input line 512.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
 [12]
-<SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf, id=229, 469.755pt x 289.08pt>
+<SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf, id=230, 469.755pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf  used on input line 522.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
 [13 <./SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf, id=242, 469.755pt x 433.62pt>
+<SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf, id=243, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf  used on input line 528.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
 [14 <./SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf>] [15 <./SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf, id=264, 469.755pt x 433.62pt>
+<SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf, id=265, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf  used on input line 547.
 (pdftex.def)             Requested size: 469.75386pt x 433.61894pt.
 [16 <./SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf, id=279, 469.755pt x 433.62pt>
+<SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf, id=280, 469.755pt x 433.62pt>
 File: SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf  used on input line 555.
@@ -703,136 +703,145 @@ Overfull \hbox (1.47229pt too wide) in paragraph at lines 592--593
  []
 
 [17 <./SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf, id=294, 794.97pt x 722.7pt>
+<SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf, id=295, 794.97pt x 722.7pt>
 File: SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf  used on input line 639.
 (pdftex.def)             Requested size: 794.96806pt x 722.69823pt.
 [18] [19 <./SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf, id=312, 722.7pt x 469.755pt>
+<SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf, id=313, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf  used on input line 653.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
 [20 <./SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf, id=331, 722.7pt x 289.08pt>
+<SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf, id=332, 722.7pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf  used on input line 726.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [21]
-<SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf, id=344, 722.7pt x 289.08pt>
+<SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf, id=346, 722.7pt x 289.08pt>
 File: SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf>
 Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf  used on input line 745.
 (pdftex.def)             Requested size: 722.69823pt x 289.07928pt.
 [22 <./SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf>]
-Overfull \hbox (13.99413pt too wide) in paragraph at lines 793--794
+
+LaTeX Warning: Reference `tab:cmp-paired' on page 23 undefined on input line 792.
+
+
+Overfull \hbox (13.99413pt too wide) in paragraph at lines 807--808
 []|\T1/lmr/m/n/8 Interpretability|  
  []
 
 
-Overfull \hbox (13.34914pt too wide) in paragraph at lines 799--799
+Overfull \hbox (13.34914pt too wide) in paragraph at lines 813--813
 []|\T1/lmr/bx/n/8 Uncorrelated 
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf, id=365, 794.97pt x 397.485pt>
+[23]
+<SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf, id=375, 794.97pt x 397.485pt>
 File: SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf  used on input line 816.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf  used on input line 843.
 (pdftex.def)             Requested size: 794.96806pt x 397.48402pt.
-[23] [24 <./SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf, id=387, 722.7pt x 216.81pt>
+[24] [25 <./SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf, id=396, 722.7pt x 216.81pt>
 File: SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf  used on input line 871.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf  used on input line 898.
 (pdftex.def)             Requested size: 722.69823pt x 216.80946pt.
-[25]
-<SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf, id=393, 722.7pt x 216.81pt>
+<SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf, id=397, 722.7pt x 216.81pt>
 File: SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf  used on input line 877.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf  used on input line 904.
 (pdftex.def)             Requested size: 722.69823pt x 216.80946pt.
-<SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf, id=394, 722.7pt x 469.755pt>
+[26 <./SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf, id=411, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf  used on input line 883.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf  used on input line 910.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
-[26 <./SCS_P1P2_REPORT_files/figure-latex/pca-sim-densities-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf>]
-Overfull \hbox (111.25241pt too wide) in paragraph at lines 893--918
+
+Overfull \hbox (111.25241pt too wide) in paragraph at lines 920--945
  [][] 
  []
 
-<SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf, id=414, 722.7pt x 469.755pt>
+[27 <./SCS_P1P2_REPORT_files/figure-latex/wav-sim-densities-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf, id=430, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf  used on input line 922.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf  used on input line 949.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
-[27 <./SCS_P1P2_REPORT_files/figure-latex/sim-curves-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf, id=427, 722.7pt x 469.755pt>
+<SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf, id=431, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf  used on input line 928.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf  used on input line 955.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
-<SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf, id=428, 722.7pt x 469.755pt>
+[28 <./SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf, id=444, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf  used on input line 934.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf  used on input line 961.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
-[28 <./SCS_P1P2_REPORT_files/figure-latex/bands-pca-normal-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf, id=447, 722.7pt x 469.755pt>
+<SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf, id=445, 722.7pt x 469.755pt>
 File: SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf  used on input line 940.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf  used on input line 967.
 (pdftex.def)             Requested size: 722.69823pt x 469.75386pt.
-<SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf, id=448, 578.16pt x 361.35pt>
+[29 <./SCS_P1P2_REPORT_files/figure-latex/bands-pca-bootstrap-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf, id=464, 578.16pt x 361.35pt>
 File: SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf  used on input line 948.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf  used on input line 975.
 (pdftex.def)             Requested size: 578.15858pt x 361.34912pt.
-[29 <./SCS_P1P2_REPORT_files/figure-latex/bands-wav-normal-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf>]
-<SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf, id=467, 722.7pt x 325.215pt>
+[30 <./SCS_P1P2_REPORT_files/figure-latex/bands-wav-bootstrap-1.pdf>]
+<SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf, id=477, 722.7pt x 325.215pt>
 File: SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf  used on input line 954.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf  used on input line 981.
 (pdftex.def)             Requested size: 722.69823pt x 325.2142pt.
-<SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf, id=468, 722.7pt x 325.215pt>
+<SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf, id=478, 722.7pt x 325.215pt>
 File: SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf Graphic file (type pdf)
 <use SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf>
-Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf  used on input line 962.
+Package pdftex.def Info: SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf  used on input line 989.
 (pdftex.def)             Requested size: 722.69823pt x 325.2142pt.
-[30 <./SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf>] [31 <./SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf>]
-Underfull \hbox (badness 3019) in paragraph at lines 1010--1011
+[31 <./SCS_P1P2_REPORT_files/figure-latex/fan-chart-1.pdf> <./SCS_P1P2_REPORT_files/figure-latex/real-vs-simulated-floods-1.pdf>] [32 <./SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf>]
+Underfull \hbox (badness 3019) in paragraph at lines 1037--1038
 []\T1/lmr/m/n/10.95 Environment Agency. (2025). \T1/lmr/m/it/10.95 Rapid ev-i-dence as-sess-ment of the use of em-u-la-tors 
  []
 
 
-Underfull \hbox (badness 1769) in paragraph at lines 1010--1011
+Underfull \hbox (badness 1769) in paragraph at lines 1037--1038
 \T1/lmr/m/it/10.95 in flood risk anal-y-sis \T1/lmr/m/n/10.95 (Tech-ni-cal Re-port FRS19218a/TR). En-vi-ron-ment Agency. 
  []
 
-[32] (./SCS_P1P2_REPORT.aux)
+[33] (./SCS_P1P2_REPORT.aux)
  ***********
 LaTeX2e <2026-06-01>
 L3 programming layer <2026-09-09>
  ***********
+
+LaTeX Warning: There were undefined references.
+
  ) 
 Here is how much of TeX's memory you used:
- 14874 strings out of 469040
- 250121 string characters out of 5455508
- 702105 words of memory out of 5000000
- 43598 multiletter control sequences out of 15000+600000
+ 14877 strings out of 469040
+ 250157 string characters out of 5455508
+ 703105 words of memory out of 5000000
+ 43600 multiletter control sequences out of 15000+600000
  713314 words of font info for 97 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  88i,14n,93p,1930b,612s stack positions out of 10000i,1000n,20000p,200000b,200000s
 <c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmcsc10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmex10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmmib10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr6.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy10.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy8.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmsy9.pfb><c:/Users/ZachO/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on SCS_P1P2_REPORT.pdf (33 pages, 1899992 bytes).
+Output written on SCS_P1P2_REPORT.pdf (34 pages, 1905707 bytes).
 PDF statistics:
- 756 PDF objects out of 1000 (max. 8388607)
- 619 compressed objects within 7 object streams
- 120 named destinations out of 1000 (max. 500000)
+ 766 PDF objects out of 1000 (max. 8388607)
+ 628 compressed objects within 7 object streams
+ 121 named destinations out of 1000 (max. 500000)
  414 words of extra memory for PDF output out of 10000 (max. 10000000)
 

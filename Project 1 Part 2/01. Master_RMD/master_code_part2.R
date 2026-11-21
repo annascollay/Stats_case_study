@@ -1798,13 +1798,6 @@ paired_tbl <- paired_results %>%
     p          = ifelse(p_value < 0.001, "$<$0.001", sprintf("%.3f", p_value))
   )
 
-paired_kable <- kable(paired_tbl, format = "latex", booktabs = TRUE, escape = FALSE,
-                      align = "lrrrr",
-                      col.names = c("Metric", "Mean difference", "95\\% bootstrap CI",
-                                    "Events where first is better (\\%)", "Wilcoxon $p$"),
-                      caption = "Paired comparison of held-out absolute errors over the same extreme flow events. A negative difference means the first method has smaller errors.") %>%
-  kable_styling(latex_options = c("hold_position"), font_size = 9)
-
 groups <- unique(paired_results$comparison)
 for (g in seq_along(groups)) {
   rows_g <- which(paired_results$comparison == groups[g])
