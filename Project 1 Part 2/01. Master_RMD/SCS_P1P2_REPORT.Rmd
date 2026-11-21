@@ -706,7 +706,6 @@ Table \@ref(tab:dependence) indicates moderate to strong correlations for both t
 
 ## Statistical model and sampling scheme
 
-<<<<<<< HEAD
 To fit the conditional multivariate Normal distribution and conditional smoothed bootstrap, we start in the same way.
 
 Let $\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})^\top$ be the shape parameters for extreme flow event $i$, which are either the PCA scores ($K = 6$) or the wavelet coefficients ($K = 13$), and let $\mathbf{s}_i = (Q_i^{\text{peak}}, W_i, \tau_i)^\top$ be its standardisation parameters. We regress the shape parameters on the standardisation parameters,
@@ -761,89 +760,18 @@ From Table \@ref(tab:out-of-sample), all four combinations reduce the CRPS by at
 
 Coverage is below the 90% target for every combination, so the simulated bands are somewhat too narrow, partly because the variation discarded by keeping only $K$ components or coefficients cannot appear in them, and Figure \@ref(fig:held-out-bands) shows that the observed hydrographs leave the band mainly at secondary peaks. Wavelets have slightly higher coverage than PCA, by `r sprintf("%.1f", oos("Wavelets", "Conditional Normal", "coverage") - oos("PCA", "Conditional Normal", "coverage"))` percentage points for the Normal and `r sprintf("%.1f", oos("Wavelets", "Conditional bootstrap", "coverage") - oos("PCA", "Conditional bootstrap", "coverage"))` for the bootstrap, but more of their simulated curves are physically invalid, with around `r sprintf("%.0f", oos("Wavelets", "Conditional Normal", "above_peak"))`% rising above their peak compared with `r sprintf("%.0f", oos("PCA", "Conditional Normal", "above_peak"))`% for PCA, and more having negative flow. Finally, the Normal and bootstrap differ little on any measure, so the heavier tails kept by the bootstrap make no practical difference here.
 
-## Final simulations
+## Simulating new extreme flow events {#uncertainty-sim}
+
+In Subsection 6.4, we checked the models out of sample, now, we refit all four approaches to every event and use them to simulate new extreme flow events.
 
 ```{r fan-charts, echo=FALSE, fig.width=10, fig.height=8, fig.cap="Median, 25--75\\% and 5--95\\% bands of 1000 simulated standardised hydrographs from each combination, with the observed events in grey."}
 plot_fan_charts()
 ```
 
+Figure \@ref(fan-chart) shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We observe that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from previously in practice.
+
 ```{r volumes, echo=FALSE}
 volume_kable
-```
-
-```{r simulated-events, echo=FALSE, fig.width=10, fig.height=8, fig.cap="30 simulated extreme flow events from each combination (coloured) over the observed events (grey)."}
-plot_simulated_events()
-=======
-```{r pca-sim-densities, echo = FALSE, fig.width = 10, fig.height = 3, fig.cap = "Density of the first four PCA scores: observed events (black) against 1000 simulated from the multivariate Normal (blue, dashed) and the smoothed bootstrap (red, dotted)."}
-compare_param_distributions(pca_scores, simulated_params$PCA, "PCA")
-```
-
-```{r wav-sim-densities, echo = FALSE, fig.width = 10, fig.height = 3, fig.cap = "Density of the first four wavelet parameters: observed events (black) against 1000 simulated from the multivariate Normal (blue, dashed) and the smoothed bootstrap (red, dotted)."}
-compare_param_distributions(wav_params, simulated_params$Wavelets, "Wavelet")
-```
-
-```{r sim-curves, echo = FALSE, fig.width = 10, fig.height = 6.5, fig.cap = "The 41 observed standardised events (grey) against 41 simulated from each method and way of simulating: PCA (blue, top row) and wavelets (orange, bottom row)."}
-par(mfrow = c(2, 3))
-plot_curves(Y, "Observed", "grey40")
-plot_curves(pca_sim_curves(simulated_params$PCA$Normal),    "PCA - Normal",    pca_colour)
-plot_curves(pca_sim_curves(simulated_params$PCA$Bootstrap), "PCA - Bootstrap", pca_colour)
-plot_curves(Y, "Observed", "grey40")
-plot_curves(wav_sim_curves(simulated_params$Wavelets$Normal),    "Wavelets - Normal",    wav_colour)
-plot_curves(wav_sim_curves(simulated_params$Wavelets$Bootstrap), "Wavelets - Bootstrap", wav_colour)
-par(mfrow = c(1, 1))
-```
-
-## Out-of-sample check
-
-```{r held-out-table, echo = FALSE}
-kable(uncertainty_summary, digits = 2, row.names = FALSE,
-      col.names = c("Model", "Check", "RMSE", "Peak", "Timing", "Volume",
-                    "CRPS", "Coverage", "Negative", "Peak off"),
-      caption = "Out-of-sample check, averaged over held-out events: absolute errors of the median simulated event (RMSE, peak and CRPS in m$^3$/s, timing in hours, volume in \\%), coverage of the simulated 90\\% band (target 0.90), and the share of simulated shapes with negative flow or a peak more than 5\\% from the peak flow.")
-```
-
-```{r bands-pca-normal, echo = FALSE, fig.width = 10, fig.height = 6.5, fig.cap = "Simulated 90\\% band (shaded) and median (dashed) for six contrasting extreme flow events, each held out of the fit, against the real event (black): PCA with the multivariate Normal."}
-plot_held_out_bands("PCA", simulate_normal, "PCA - Normal")
-```
-
-```{r bands-pca-bootstrap, echo = FALSE, fig.width = 10, fig.height = 6.5, fig.cap = "Simulated 90\\% band (shaded) and median (dashed) for six contrasting events, each held out of the fit, against the real event (black): PCA with the smoothed bootstrap."}
-plot_held_out_bands("PCA", simulate_bootstrap, "PCA - Bootstrap")
-```
-
-```{r bands-wav-normal, echo = FALSE, fig.width = 10, fig.height = 6.5, fig.cap = "Simulated 90\\% band (shaded) and median (dashed) for six contrasting events, each held out of the fit, against the real event (black): wavelets with the multivariate Normal."}
-plot_held_out_bands("Wavelets", simulate_normal, "Wavelets - Normal")
-```
-
-```{r bands-wav-bootstrap, echo = FALSE, fig.width = 10, fig.height = 6.5, fig.cap = "Simulated 90\\% band (shaded) and median (dashed) for six contrasting events, each held out of the fit, against the real event (black): wavelets with the smoothed bootstrap."}
-plot_held_out_bands("Wavelets", simulate_bootstrap, "Wavelets - Bootstrap")
-```
-
-## Final simulations (for chosen only)
-
-```{r fan-chart, echo = FALSE, fig.width = 8, fig.height = 5, fig.cap = "Simulated event shapes from the chosen model (PCA with the multivariate Normal), fitted to all 41 events: 5--95\\% and 25--75\\% bands and median of 1000 simulated shapes, with the observed events in grey."}
-plot(grid_u, band[3, ], type = "n", ylim = range(band, Y),
-     xlab = "Rescaled time u", ylab = "Flow / peak flow",
-     main = paste("Simulated event shapes:", chosen_method, "-", chosen_distribution))
-polygon(c(grid_u, rev(grid_u)), c(band[1, ], rev(band[5, ])), col = "#DCEEF5", border = NA)
-polygon(c(grid_u, rev(grid_u)), c(band[2, ], rev(band[4, ])), col = "#9CC7DD", border = NA)
-matlines(grid_u, t(Y), col = adjustcolor("grey30", 0.3), lty = 1)
-lines(grid_u, band[3, ], col = "#174B67", lwd = 2)
-legend("topright", c("5-95%", "25-75%", "Median", "Real events"),
-       fill = c("#DCEEF5", "#9CC7DD", NA, NA), border = NA,
-       col = c(NA, NA, "#174B67", "grey30"), lty = c(NA, NA, 1, 1), cex = 0.8)
-```
-
-```{r real-vs-simulated-floods, echo = FALSE, fig.width = 10, fig.height = 4.5, fig.cap = "The 41 observed floods (left) and 30 simulated floods (right) in m$^3$/s and hours. Each simulated flood combines a simulated shape with a peak flow, duration and peak position resampled from the observed floods."}
-par(mfrow = c(1, 2))
-plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
-     xlab = "Hours since start", ylab = "Discharge (m^3/s)", main = "Real floods")
-for (f in real_floods) lines(f$hours, f$discharge, col = adjustcolor("grey30", 0.6))
-plot(NA, xlim = c(0, max_hours), ylim = c(0, max_flow),
-     xlab = "Hours since start", ylab = "Discharge (m^3/s)",
-     main = paste("Simulated floods:", chosen_method, "-", chosen_distribution))
-for (f in simulated_floods) lines(f$hours, f$discharge, col = adjustcolor("#5298BC", 0.6))
-par(mfrow = c(1, 1))
->>>>>>> ff7b9a454cc1105995a52739e274ec26248724ab
 ```
 
 ## Other uncertainties (sampling in code while reconstruction, peak detection and cleaning choices and any others from lecture 5 final slide to be explored in words)
