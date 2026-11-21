@@ -749,7 +749,14 @@ Define Coverage, CPRS, Physical invalidity checks
 We now evaluate how our two approaches perform on events they have not seen, using a leave-one-out check repeated for each of the `r nrow(Y)` extreme flow events. For each event $i$, we remove it and refit both the shape method and the distribution to the other `r nrow(Y) - 1` events, then simulate 200 shapes using event $i$'s own peak flow, duration and peak position $\mathbf{s}_i$, before converting them to hydrographs and comparing them with event $i$'s observed hydrograph.
 
 ```{r out-of-sample, echo=FALSE}
-out_of_sample_kable
+kable(out_of_sample[, -1], format = "latex", booktabs = TRUE, digits = 2, row.names = FALSE,
+      col.names = c("", "Coverage (\\%)", "CRPS (m$^3$/s)", "Negative flow (\\%)", "Above peak (\\%)"),
+      escape = FALSE,
+      caption = "Out-of-sample check: each event is left out of the fit, and 200 curves are simulated with its own peak flow, duration and peak position. Coverage: percentage of the observed curve inside the simulated 90\\% band (target 90\\%). CRPS: lower is better; for SEPA's single shape it is the mean absolute error. Last two columns: percentage of simulated curves that are physically invalid. Coverage, negative flow and above peak are measured on simulated curves, so do not apply to SEPA's single fixed shape.") %>%
+  kable_styling(latex_options = "hold_position", font_size = 9) %>%
+  pack_rows("SEPA", 1, 1) %>%
+  pack_rows("PCA", 2, 3) %>%
+  pack_rows("Wavelets", 4, 5)
 ```
 
 ```{r held-out-bands, echo=FALSE, fig.width=10, fig.height=10, fig.cap="90\\% band of 200 simulated hydrographs for three contrasting extreme flow events, each left out of the fit, from each combination (rows), with the observed hydrograph in black."}
@@ -768,10 +775,15 @@ In Subsection 6.4, we checked the models out of sample, now, we refit all four a
 plot_fan_charts()
 ```
 
-Figure \@ref(fan-chart) shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We observe that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from previously in practice.
+Figure \@ref(fig:fan-charts) shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We observe that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from previously in practice.
 
 ```{r volumes, echo=FALSE}
-volume_kable
+kable(volume_table, format = "latex", booktabs = TRUE, digits = 2, row.names = FALSE,
+      col.names = c("", "5\\%", "Median", "95\\%"), escape = FALSE,
+      caption = paste0("Flood volume (million m$^3$) of an event with the median peak flow (",
+                       round(typical["peak_flow"]), " m$^3$/s), duration and peak position: ",
+                       "SEPA's single shape against 1000 simulated shapes from each scheme.")) %>%
+  kable_styling(latex_options = "hold_position", font_size = 9)
 ```
 
 ## Other uncertainties (sampling in code while reconstruction, peak detection and cleaning choices and any others from lecture 5 final slide to be explored in words)
@@ -781,7 +793,13 @@ plot_sampling_bands()
 ```
 
 ```{r sampling, echo=FALSE}
-sampling_kable
+kable(sampling_table, format = "latex", booktabs = TRUE, digits = 3, row.names = FALSE,
+      col.names = c("", "Band width", "SD of lower edge", "SD of upper edge"),
+      caption = paste0("Sampling uncertainty: average width of the simulated 90\\% band, and the ",
+                       "average standard deviation of its edges across ", n_boot,
+                       " refits to resampled events (fractions of the peak flow)."),
+      escape = FALSE) %>%
+  kable_styling(latex_options = "hold_position", font_size = 9)
 ```
 
 # Recommendation

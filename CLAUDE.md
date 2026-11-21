@@ -14,11 +14,16 @@ A group coursework project (Statistical Case Studies 2026/27, University of Edin
 
 Always run from `Project 1 Part 2/01. Master_RMD/` — every path (data file, `cache/`, logo, `.bib`) is relative to that folder.
 
+Knit the report (works from any directory; PDF is written next to the Rmd):
+
 ```bash
-cd "Project 1 Part 2/01. Master_RMD"
-"/c/Program Files/R/R-4.6.1/bin/x64/Rscript" -e "rmarkdown::render('SCS_P1P2_REPORT.Rmd')"   # knit the PDF (bookdown::pdf_document2, needs LaTeX)
-"/c/Program Files/R/R-4.6.1/bin/x64/Rscript" master_code_part2.R                          # run the analysis alone
+"/c/Program Files/R/R-4.6.1/bin/x64/Rscript" -e "setwd('C:/Users/ZachO/OneDrive - University of Edinburgh/01. Dissertations/Statistical Case Studies/SCS Projects/Stats_case_study/Project 1 Part 2/01. Master_RMD'); rmarkdown::render('SCS_P1P2_REPORT.Rmd')"
 ```
+
+- Do not pass `output_format = 'pdf_document'`: it overrides the YAML's `bookdown::pdf_document2` and every `\@ref()` becomes "??". Don't pass `output_dir` either.
+- Tables that are cross-referenced must be built with `kable(..., caption = ...)` directly inside their Rmd chunk (not as a pre-built object from the script), otherwise references render as "Table ??". Keep the table *data* in the script and the `kable()` call in the Rmd.
+
+Run the analysis alone: `Rscript master_code_part2.R` from the same folder.
 
 Packages: tidyverse, lubridate, knitr, kableExtra, patchwork, wavelets, splines, rlang, bookdown.
 

@@ -1798,13 +1798,7 @@ paired_tbl <- paired_results %>%
     p          = ifelse(p_value < 0.001, "$<$0.001", sprintf("%.3f", p_value))
   )
 
-groups <- unique(paired_results$comparison)
-for (g in seq_along(groups)) {
-  rows_g <- which(paired_results$comparison == groups[g])
-  paired_kable <- pack_rows(paired_kable, groups[g], min(rows_g), max(rows_g))
-}
-
-f1 <- function(x, d = 1) formatC(x, format = "f", digits = d)
+f1 <-function(x, d = 1) formatC(x, format = "f", digits = d)
 
 synthesis <- tribble(
   ~Method, ~Accuracy, ~Features, ~Unusual, ~Parsimony, ~Behaviour, ~Valid, ~Interpret,
@@ -2165,16 +2159,8 @@ oos <- function(method, scheme, column) {
   out_of_sample[[column]][out_of_sample$method == method & out_of_sample$scheme == scheme]
 }
 
+# Table is built in the report chunk "out-of-sample" (caption must live in the Rmd)
 options(knitr.kable.NA = "--")
-out_of_sample_kable <- kable(
-  out_of_sample[, -1], format = "latex", booktabs = TRUE, digits = 2, row.names = FALSE,
-  col.names = c("", "Coverage (\\%)", "CRPS (m$^3$/s)", "Negative flow (\\%)", "Above peak (\\%)"),
-  escape = FALSE,
-  caption = "Out-of-sample check: each event is left out of the fit, and 200 curves are simulated with its own peak flow, duration and peak position. Coverage: percentage of the observed curve inside the simulated 90\\% band (target 90\\%). CRPS: lower is better; for SEPA's single shape it is the mean absolute error. Last two columns: percentage of simulated curves that are physically invalid. Coverage, negative flow and above peak are measured on simulated curves, so do not apply to SEPA's single fixed shape.") %>%
-  kable_styling(latex_options = "hold_position", font_size = 9) %>%
-  pack_rows("SEPA", 1, 1) %>%
-  pack_rows("PCA", 2, 3) %>%
-  pack_rows("Wavelets", 4, 5)
 
 # Figure: simulated 90% band against the observed curve, each event left out
 # of the fit. One row per combination, one column per event. By default the
@@ -2281,14 +2267,7 @@ volume_table <- rbind(
 )
 print(volume_table, digits = 3)
 
-options(knitr.kable.NA = "--")
-volume_kable <- kable(
-  volume_table, format = "latex", booktabs = TRUE, digits = 2, row.names = FALSE,
-  col.names = c("", "5\\%", "Median", "95\\%"), escape = FALSE,
-  caption = paste0("Flood volume (million m$^3$) of an event with the median peak flow (",
-                   round(typical["peak_flow"]), " m$^3$/s), duration and peak position: ",
-                   "SEPA's single shape against 1000 simulated shapes from each scheme.")) %>%
-  kable_styling(latex_options = "hold_position", font_size = 9)
+# Table is built in the report chunk "volumes" (caption must live in the Rmd)
 
 
 # Simulating whole events in m^3/s and hours, as they would be fed to the
@@ -2392,12 +2371,4 @@ sampling_table <- data.frame(
     mean(apply(sapply(bands, function(b) b[2, ]), 1, sd)))
 )
 print(sampling_table, digits = 3)
-
-sampling_kable <- kable(
-  sampling_table, format = "latex", booktabs = TRUE, digits = 3, row.names = FALSE,
-  col.names = c("", "Band width", "SD of lower edge", "SD of upper edge"),
-  caption = paste0("Sampling uncertainty: average width of the simulated 90\\% band, and the ",
-                   "average standard deviation of its edges across ", n_boot,
-                   " refits to resampled events (fractions of the peak flow)."),
-  escape = FALSE) %>%
-  kable_styling(latex_options = "hold_position", font_size = 9)
+# Table is built in the report chunk "sampling" (caption must live in the Rmd)
