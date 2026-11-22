@@ -79,26 +79,13 @@ source("master_code_part2.R")
 
 # Data and Exploratory Data Analysis {#initial-analysis}
 
-In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten [water years](https://en.wikipedia.org/wiki/Water_year) (2016-2026). For Part 2, we have expanded this dataset to `r n_years` [water years](https://en.wikipedia.org/wiki/Water_year) (2001-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events with the quality codes reconsidered in Section \@ref(unchecked-readings) – \@ref(suspect-readings), and form the basis of our analysis of hydrograph shape uncertainty.
+In Part 1, we extracted and cleaned the 15-minute discharge data for the River Don at Parkhill, which we have extended from ten [water years](https://en.wikipedia.org/wiki/Water_year) to twenty-five for Part 2, covering October 2001 to September 2026 (Table 1). We retain the same threshold of 65 $m^3/s$ and the Robson and Reed (1999) independence criteria, which identifies `r nrow(peaks)` independent extreme flow events, an average of `r sprintf("%.2f", nrow(peaks) / n_years)` per year.
 
 ```{r tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
 tidy_data_table
 ```
 
-## Robson & Reed (1999) Independence Criteria Results
-
-Having re-run our Part 1 analysis on the expanded dataset, we keep the threshold of `r u_final` $\text{m}^3 / \text{s}$ we established having obtained satisfactory results. We identified `r nrow(peaks)` independent extreme flow events across the `r n_years`-year observation period, corresponding to an average of `r sprintf("%.2f", nrow(peaks) / n_years)` events per year.
-
-| Metric | Value | Unit |
-|:-----------------------|:-----------------------|:-----------------------|
-| **Threshold (**$u$) | `r u_final` | $\text{m}^3 / \text{s}$ |
-| **Total Independent Peaks** | `r nrow(peaks)` | events |
-| **Average Peak Rate** | `r sprintf("%.2f", nrow(peaks) / n_years)` | peaks/year |
-| **Period of Record** | `r n_years` | water years |
-
 ## Checking the data
-
-Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the `r nrow(peaks)` identified events. Each event was [initially represented using a common 120-hour window](#exploratory-analysis), extending `r win_before_h` hours before and `r win_after_h` hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be [standardised](#standardising-the-hydrographs), forming the set of event windows used throughout the rest of the report.
 
 In Part 1 we kept only Good (code 50) and Estimated (code 100) readings. Since Part 2 models the whole hydrograph of each event rather than only its peak, we reconsider the two groups of readings that were excluded: Unchecked readings (code 254), which we retain after the check below, and Suspect readings (code 150), which remain excluded.
 
@@ -740,9 +727,25 @@ with $h = \big(4/((K+2)N)\big)^{1/(K+4)}$ (Silverman, 1986). The noise stops sim
 
 Following the generation, we turn $\boldsymbol{\theta}^\ast$ into a curve using Equation \@ref(eq:pca) for PCA and \@ref(eq:wavelet) for wavelets, and finally we reverse the standardisation with $\mathbf{s}^\ast$.
 
-## Additional evaluation criteria
+## Evaluation criteria
 
-Define Coverage, CPRS, Physical invalidity checks
+We evaluate how well each approach simulates new extreme flow events using the criteria of coverage, continuous ranked probability score, and physical validity. For each, we simulate $M =$ `r n_each` shapes for event $i$ using its own standardisation parameters $\mathbf{s}_i$, then convert them to hydrographs $\hat{Q}_i^{(m)}(t_j)$, $m = 1, \dots, M$ and compare these with the observed hydrograph $Q_i(t_j)$ in $\text{m}^3/\text{s}$ at the same `r n_grid` time points as in Section \@ref(evaluation-criteria). We average each criterion over all events.
+
+**Coverage:** the percentage of the observed hydrograph lying inside the simulated 90\% band,
+
+$$
+\text{Coverage}_i = \frac{100}{118}\sum_{j} \mathbb{1}\big\{L_i(t_j) \le Q_i(t_j) \le U_i(t_j)\big\},
+$$
+where $L_i(t_j)$ and $U_i(t_j)$ are the 5\% and 95\% quantiles of the simulated flows at $t_j$. Coverage close to 90\% indicates that the simulated uncertainty is about right, while lower coverage indicates that the simulations are too narrow and higher coverage that they are too wide.
+
+**Continuous ranked probability score (CRPS):** a measure of how close the simulated flows are to the observed flow, where simulations that are both accurate and appropriately spread perform better (Gneiting and Raftery, 2007),
+
+$$
+\text{CRPS}_i = \frac{1}{118}\sum_{j}\left( \frac{1}{M}\sum_{m} \big|\hat{Q}_i^{(m)}(t_j) - Q_i(t_j)\big| - \frac{1}{2M^2}\sum_{m}\sum_{m'} \big|\hat{Q}_i^{(m)}(t_j) - \hat{Q}_i^{(m')}(t_j)\big| \right).
+$$
+The first term is the average distance of the simulations from the observed flow, and the second subtracts half the average distance between simulations. For SEPA's approach, the second term is zero and the CRPS reduces to the mean absolute error, allowing a direct comparison. The result is in $\text{m}^3/\text{s}$ and lower is better. 
+
+**Physical validity:** the percentage of simulated standardised curves that are negative at any time point, and the percentage that rise more than 1\% above the peak value of one, both of which are not actually possible.
 
 ## Out-of-sample check
 
@@ -775,7 +778,9 @@ In Subsection 6.4, we checked the models out of sample, now, we refit all four a
 plot_fan_charts()
 ```
 
-Figure \@ref(fig:fan-charts) shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We observe that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from previously in practice.
+Figure \@ref(fig:fan-charts) shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We see that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from the previous subsection.
+
+SEPA is primarily interested in how much land floods during an extreme flow event, which depends heavily on how much water passes through, so we move beyond our statistical evaluation criteria and consider the flood volume. Specifically, we take one typical event with the median peak flow, duration and peak position, so that these are held fixed and only the shape changes.
 
 ```{r volumes, echo=FALSE}
 kable(volume_table, format = "latex", booktabs = TRUE, digits = 2, row.names = FALSE,
@@ -786,11 +791,13 @@ kable(volume_table, format = "latex", booktabs = TRUE, digits = 2, row.names = F
   kable_styling(latex_options = "hold_position", font_size = 9)
 ```
 
-## Other uncertainties (sampling in code while reconstruction, peak detection and cleaning choices and any others from lecture 5 final slide to be explored in words)
+From Table \@ref(tab:volumes), applying SEPA's single fixed shape to this event gives a volume (the area under the hydrograph) of `r sprintf("%.1f", volume_table$median[1])` million $\text{m}^3$. On the other hand, simulating 1,000 plausible shapes for the same event from each of our four approaches gives median volumes of `r sprintf("%.1f", min(volume_table$median[-1]))` to `r sprintf("%.1f", max(volume_table$median[-1]))` million $\text{m}^3$, with a 90\% band of `r sprintf("%.1f", min(volume_table$lower, na.rm = TRUE))` to `r sprintf("%.1f", max(volume_table$upper, na.rm = TRUE))` million $\text{m}^3$.
 
-```{r sampling-bands, echo=FALSE, fig.width=10, fig.height=8, fig.cap="Edges of the simulated 90\\% band from 100 refits to resampled events, for each combination."}
-plot_sampling_bands()
-```
+This demonstrates that two events with the same peak flow can hold very different amounts of water just because of their shape, and SEPA's approach of fixing this shape and reporting just one number masks this entirely. Additionally, SEPA's volume sits above the 95th percentile of every approach, which suggests that SEPA's approach is not only missing this variation but may also systematically overestimate the volume, matching their large volume error in Section \@ref(cmp-accuracy). All four of our approaches produce very similar results, so this conclusion does not depend on which method or distribution is used.
+
+## Other uncertainties
+
+The uncertainty analysis we have conducted is based on our one observed set of `r nrow(Y)` extreme flow events, and we want to assess the extent to which our results depend on this particular set. To do so, for each of the four approaches, we create an alternative set of events by sampling our events at random with replacement, refit both the shape method and the distribution on this alternative set, and simulate 1,000 shapes, recording the edges of the 90\% band, repeating this 100 times.
 
 ```{r sampling, echo=FALSE}
 kable(sampling_table, format = "latex", booktabs = TRUE, digits = 3, row.names = FALSE,
@@ -802,23 +809,29 @@ kable(sampling_table, format = "latex", booktabs = TRUE, digits = 3, row.names =
   kable_styling(latex_options = "hold_position", font_size = 9)
 ```
 
-# Recommendation
+From Table \@ref(tab:sampling), the band has an average width of around `r sprintf("%.2f", mean(sampling_table$band_width))` of the peak flow for every approach, while its edges move by only `r sprintf("%.3f", min(sampling_table[, c("lower_sd", "upper_sd")]))` to `r sprintf("%.3f", max(sampling_table[, c("lower_sd", "upper_sd")]))` between refits, around `r sprintf("%.0f", 100 * mean(unlist(sampling_table[, c("lower_sd", "upper_sd")])) / mean(sampling_table$band_width))`\% of its width. This suggests that our simulated uncertainty is relatively robust to the particular events observed, so our conclusions are unlikely to change substantially with a different set of similar events.
 
-- Recommend the best method and justify, alongside advantages and disadvantages
+Comparing between approaches, we expected the wavelet bands to vary more between refits, since wavelets estimate many more quantities from the same events (`r ncol(wav_params)` shape parameters against `r k_chosen` for PCA). However, the standard deviations are almost identical across all four approaches, so sampling uncertainty does not distinguish between them, and provides no additional argument for parsimony.
 
-# Emulator application {#emulator}
+Figure \@ref(fig:sampling-bands) shows that the most variation is in the lower (5\%) edge on the rising limb, where shapes differ most between events, while the upper (95\%) edge rises above the peak in every refit, demonstrating that this is a feature of the models rather than of the particular events observed.
 
-From our analysis above our proposed method, PCA, effectively represents the hydrograph shapes in a low-dimensional form. Each event is represented by its maximum discharge, duration and peak position alongside seven principal component scores describing its shape. This gives a total of ten emulator inputs, rather than treating every discharge measurement as separate parameters. This keeps the number of inputs small, as increasing the number of parameters requires more flood inundation model runs to fit the emulator.
+```{r sampling-bands, echo=FALSE, fig.width=10, fig.height=8, fig.cap="Edges of the simulated 90\\% band from 100 refits to resampled events, for each combination."}
+plot_sampling_bands()
+```
 
-To train an emulator, SEPA could select a combinations of these ten parameters covering a plausible range of extreme flow events, while still accounting for the dependencies and constraints identified in our analysis. These inputs could be selected using a statistical design, such as a grid over the plausible parameter ranges [@wilson2026lec3]. For each combination, PCA would be used to reconstruct the complete hydrograph, to be supplied to the flood inundation model.
+# Recommendation and emulator application
 
-The resulting flood outcomes, such as maximum water depth or inundation extent, from the inundation model would form the outputs used to train emulator [@environmentagency2025]. The emulator would therefore be able to approximate the relationship between hydrograph parameters and flood outcomes replacing the need to run a flood inundation model, thereby reducing the computational burden.
+## Recommendation
 
-Once the emulator has been trained and validated, new combinations of the ten parameters can be sampled from the fitted joint distribution. These can be passed into the emulator to obtain a distribution of predicted flood depths or extents. This would allow SEPA the means to quantify how uncertainty in both peak discharge and hydrograph shape influence predicted flood risk, as currently they only are able to vary maximum flow alone.
+## Emulator application
 
-The reliability of these predictions depends on PCA’s ability to characterise the observed flood shapes, generate hydrographs and capture dependencies between parameters. Additionally, the emulator itself also introduces prediction uncertainty. Thus, the flood model may differ from real-world flood behaviour, and these uncertainties would need to be considered when interpreting the resulting flood risk estimates.
+Our recommended method, PCA, describes each extreme flow event by nine numbers: its peak flow, duration and peak position, and six principal component scores. These nine numbers become the emulator's inputs, which are now suitably low-dimensional, and SEPA would use the method in two stages.
 
-# Conclusion
+**Collecting the data to fit the emulator:** SEPA must first choose the training inputs by selecting a few hundred combinations of the nine inputs using an experimental statistical design, such as a grid over the plausbile parameter ranges [@wilson2026lec3]. Each combination would then be turned into a hydrograph as before, reconstruvting the standardised shape from the six scores using Equation (), and then reversing the standardisation using the peak flow, duration and peak position. Each hydrograph is then ran through the flood inundation model and the outputs of interest, such as maximum flood depth or the total flooded area, are recorded. An emulator is then fitted to these pairs of inputs and outputs and checked against a set of runs held back from fitting, so that it can approximate the flood inundation model at a fraction of the computational cost.
+
+**Using the emulator to explore uncertainty in flood inundation:** Following this, SEPA can then use our conditional multivariate Normal distribution from Section 6 to simulate a large number of new extreme flow events. Since the emulator can be evaluated much more quickly than the inundation model, thousands of these events can be passed through to give a full distribution of flood depths or extents that reflects parametric uncertainty, meaning uncertainty in both the size and shape of the hydrograph. The emulator's own prediction uncertainty at untested inputs, known as function uncertainty [@wilson2026lec3], show also be added to this distribution, as well as any structural discrepancy that remains between the inundation model and real flooding, and between our statistical model and the real variation in hydrograph shape. Our Normality assumption and the simulated bands containing around 81\% of observed events both contribute to this.
+
+Finally, repeating this with the scores fixed at zero which corresponds to the average shape, would also show how much of the uncertainty in flood inundation is due to hydrograph shape alone, which SEPA's current approach does not capture. 
 
 # References {.numbered}
 
