@@ -9,10 +9,11 @@
 library(tidyverse)
 library(lubridate)
 library(knitr)
-library(patchwork) # For combining diagnostic plots if installed
+library(patchwork)
 library(wavelets)
-library(splines)   # part of base R; provides bs()
+library(splines)
 library(kableExtra)
+library(gridGraphics)
 
 # Set HTTP timeout limit for SEPA API fetch if local RDS is absent
 options(timeout = 300)
