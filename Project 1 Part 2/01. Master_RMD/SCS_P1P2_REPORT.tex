@@ -1,0 +1,1055 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  11pt,
+  a4paper]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{caption}
+\floatplacement{figure}{H}
+\floatplacement{table}{H}
+\usepackage{ragged2e}
+\usepackage{etoolbox}
+\AtBeginEnvironment{CSLReferences}{\RaggedRight}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={blue},
+  urlcolor={blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+
+\vspace*{1cm}
+
+\includegraphics[width=1\linewidth]{edinburgh_logo.png}
+
+\vspace{1.5cm}
+
+{\Large\scshape Statistical Case Studies 2026/27 Semester 1\par}
+
+\vspace{3cm}
+
+{\LARGE\bfseries
+Project 1, part 2: Uncertainty in river flow hydrographs for flood
+inundation modelling\par}
+
+\vfill
+
+{\large Prepared by\par}
+
+\vspace{0.5cm}
+
+Anna Scollay (s2480899), Lewis Seath (s2475311), Zacharias Onyejiaka (s2624116)
+
+\vspace{1.5cm}
+
+Word Count: XXXX
+
+\vspace{0.5cm}
+
+November 2026
+
+\end{titlepage}
+\tableofcontents
+\clearpage
+
+\section{Executive Summary}\label{executive-summary}
+
+\section{Data and Exploratory Data Analysis}\label{initial-analysis}
+
+In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten \href{https://en.wikipedia.org/wiki/Water_year}{water years} (2016-2026) (\citeproc{ref-robson1999}{Robson \& Reed, 1999}). For Part 2, we have expanded this dataset to 10 \href{https://en.wikipedia.org/wiki/Water_year}{water years} (2001-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events with the quality codes reconsidered in Section \ref{unchecked-readings} -- \ref{suspect-readings}, and form the basis of our analysis of hydrograph shape uncertainty.
+
+\begin{table}[!h]
+
+\caption{\label{tab:tidyingthedata}Data used in this analysis, and the quality codes assigned to each reading}
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{ll}
+\toprule
+ & \\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{2}{l}{\textbf{Data description}}\\
+\hspace{1em}\cellcolor{gray!10}{Station} & \cellcolor{gray!10}{Don at Parkhill}\\
+\hspace{1em}Source & SEPA time series data service\\
+\hspace{1em}\cellcolor{gray!10}{Measurement} & \cellcolor{gray!10}{River discharge ($m^3/s$)}\\
+\hspace{1em}Catchment area & 1,273 $km^2$\\
+\hspace{1em}\cellcolor{gray!10}{Resolution} & \cellcolor{gray!10}{15 minutes}\\
+\hspace{1em}Station type & Velocity-area\\
+\hspace{1em}\cellcolor{gray!10}{Period} & \cellcolor{gray!10}{01 October 2016 – 30 September 2026}\\
+\hspace{1em}Readings & 350,592\\
+\hspace{1em}\cellcolor{gray!10}{Missing readings} & \cellcolor{gray!10}{0}\\
+\addlinespace[0.3em]
+\multicolumn{2}{l}{\textbf{Quality codes}}\\
+\hspace{1em}50 – Good (G) & 335,647 readings (95.74\%), retained\\
+\hspace{1em}\cellcolor{gray!10}{100 – Estimated (E)} & \cellcolor{gray!10}{14,915 readings (4.25\%), retained}\\
+\hspace{1em}140 – Provisional (Prov) & 0 readings (0.00\%), excluded\\
+\hspace{1em}\cellcolor{gray!10}{150 – Suspect (S)} & \cellcolor{gray!10}{0 readings (0.00\%), excluded}\\
+\hspace{1em}200 – Unchecked (imported from legacy database) (V) & 0 readings (0.00\%), excluded\\
+\hspace{1em}\cellcolor{gray!10}{254 – Unchecked (U)} & \cellcolor{gray!10}{30 readings (0.01\%), excluded}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Robson \& Reed (1999) Independence Criteria Results}\label{robson-reed-1999-independence-criteria-results}
+
+Having re-run our Part 1 analysis on the expanded dataset, we keep the threshold of 65 \(\text{m}^3 / \text{s}\) we established having obtained satisfactory results. We identified 41 independent extreme flow events across the 10-year observation period, corresponding to an average of 4.10 events per year.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 4\tabcolsep) * \real{0.3333}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Metric
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Unit
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\textbf{Threshold (}\(u\)) & 65 & \(\text{m}^3 / \text{s}\) \\
+\textbf{Total Independent Peaks} & 41 & events \\
+\textbf{Average Peak Rate} & 4.10 & peaks/year \\
+\textbf{Period of Record} & 10 & water years \\
+\end{longtable}
+
+\subsection{Checking the data}\label{checking-the-data}
+
+Before constructing individual hydrographs for each extreme flow event, we assessed the reliability of the discharge readings for each of the 41 identified events. Each event was \hyperref[exploratory-analysis]{initially represented using a common 120-hour window}, extending 48 hours before and 72 hours after its peak, with readings recorded at 15-minute intervals. For later analysis, we require all events to be \hyperref[standardising-the-hydrographs]{standardised}, forming the set of event windows used throughout the rest of the report.
+
+In Part 1 we kept only Good (code 50) and Estimated (code 100) readings. Since Part 2 models the whole hydrograph of each event rather than only its peak, we reconsider the two groups of readings that were excluded: Unchecked readings (code 254), which we retain after the check below, and Suspect readings (code 150), which remain excluded.
+
+\subsubsection{Unchecked readings}\label{unchecked-readings}
+
+We identified 8 Unchecked readings falling within 2 of the standardised event windows (Table \ref{tab:uncheckeddata}).
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0684}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1624}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1453}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0769}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1282}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1368}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1026}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1795}}@{}}
+\caption{\label{tab:uncheckeddata}Unchecked readings (code 254) within the event windows, compared with linear interpolation between the neighbouring checked readings.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Burst
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Event(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Start
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Readings
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Duration (min)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Max flow (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+RMSE (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Max abs. diff (m³/s)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Burst
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Event(s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Start
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Readings
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Duration (min)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Max flow (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+RMSE (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Max abs. diff (m³/s)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+1 & 5 & 2017-11-22 00:00 & 2 & 30 & 84.3 & 0.327 & 0.435 \\
+2 & 6 & 2017-11-30 23:30 & 2 & 30 & 41.5 & 0.134 & 0.154 \\
+3 & 6 & 2017-12-01 08:30 & 2 & 30 & 38.8 & 0.033 & 0.042 \\
+4 & 6 & 2017-12-08 18:30 & 2 & 30 & 31.2 & 0.081 & 0.114 \\
+\textbf{All} & \textbf{2 of 41 events} & --- & \textbf{8} & --- & \textbf{84.3} & \textbf{0.182} & \textbf{0.435} \\
+\end{longtable}
+
+To fix this, we compared the original Unchecked readings with estimated values to decide whether retaining these Unchecked readings was reasonable. The estimated values were obtained by linear interpolation of the nearest checked readings by assuming a constant rate of change.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/uncheckedscatter-1.pdf}
+\caption{\label{fig:uncheckedscatter}Unchecked readings against the linear interpolation between neighbouring checked readings.}
+\end{figure}
+
+Figure \ref{fig:uncheckedscatter} compares the Unchecked and interpolated values, with a dashed 1:1 line that represents perfect agreement. Since all Unchecked readings lie close to this line with a \texttt{RMSE} of 0.182 \(\text{m}^3/\text{s}\) against discharge values of up to 84 \(\text{m}^3/\text{s}\), these discrepancies are relatively small.
+
+Although this does not prove that the Unchecked readings are completely accurate, the small size of the discrepancies provides some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes.
+
+Therefore, we retain the Unchecked SEPA readings rather than replacing them with the corresponding interpolated estimates as the values are close enough that preserving the original recorded values avoids unnecessary modification to the data.
+
+\subsubsection{Suspect readings}\label{suspect-readings}
+
+SEPA flags 0 readings (0.00\% of the record) as Suspect (code 150), meaning that the flow lies beyond the acceptable extrapolation limit of the gauge's stage-discharge relationship. As in Part 1, these readings are excluded. The largest Suspect reading is NA \(\text{m}^3/\text{s}\), and 0 exceed the threshold of 65 \(\text{m}^3/\text{s}\). However, a reading below the threshold can still affect the shape of an event: wherever an excluded reading falls inside an event window, the hydrograph is linearly interpolated across the gap between the retained readings on either side. We therefore checked which Suspect readings fall inside the standardised event windows, using the same approach as for the Unchecked readings.
+
+None of the Suspect readings fall inside any of the 41 event windows, so excluding them does not affect any of the hydrographs we model.
+
+\subsection{Exploratory Analysis}\label{exploratory-analysis}
+
+To investigate the variation in hydrograph shape, the 41 independent extreme flow events are aligned at their maximum discharge, with the peak assigned time zero. Each hydrograph is examined over the same 120-hour window, allowing differences in peak magnitude, rising and falling behaviour to be compared.
+
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/Hydrograph-1.pdf}
+
+Plotting all of the hydrographs on the same time scale shows the variation in shapes of extreme flow events. All events are aligned at their peaks showing not only do their maximum discharges differ considerably, (with the largest exceeding 400 \(\text{m}^3 / \text{s}\)) but the differences in the rate of discharge vary considerably.
+
+Some events exhibit sharp peaks followed by rapid recession, whereas others have more broad hydrographs with gradual changes in discharge. Several events also display elevated discharge or secondary fluctuations away from the main peak, suggesting that extreme flow behaviour cannot always be accurately described by a single common shape.
+
+While the mean hydrograph provides a useful summary of the typical event shape, it smooths over important differences between individual events. Consequently, representing every event using only an average hydrograph scaled by peak discharge may fail to capture the full variability in an event.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/heatmap-1.pdf}
+\caption{\label{fig:heatmap}A heat map showing the variation in discharge and timeline of each of the 41 extreme flow events}
+\end{figure}
+
+Figure \ref{fig:heatmap}, illustrates this variability further, with darker shading indicating higher discharge. The concentration of high discharge around time zero is expected as the hydrographs are aligned at their maximum flow. However, interestingly there is significant variation between events before and after their peak. In particular, some events maintain high discharge for longer periods, while others return to lower flows more rapidly.
+
+Together, both these visualisations help illustrate the variation between event shapes not captured by only their maximum discharge.
+
+\subsection{Standardising the hydrographs}\label{standardising-the-hydrographs}
+
+From our analysis above we can see that extreme flow events differ in duration, peak discharge, and the relative timing of their peaks, so without standardisation, these differences would obscure the underlying variation in hydrograph shape.
+
+To make the events comparable, each extreme flow event was first defined between its rising and falling limb troughs. Time was then rescaled to the interval {[}0,1{]}, with zero representing the start of the event and one representing its end. The relative peak position was calculated as the time from the event start to its peak, divided by its total duration.
+
+The rising and falling limbs were then rescaled separately so that every hydrograph reached its peak at the mean peak position across all events. This alignment allows differences in the shape of the rising and falling limbs to be compared without variation in peak timing dominating the analysis.
+
+Discharge was also divided by the event's maximum flow, giving each standardised hydrograph a peak value of one. Finally, linear interpolation was used to represent every hydrograph at 64 equally spaced points on the standardised time scale.
+
+The resulting data were arranged into a matrix (Y), with one row per extreme flow event and 64 columns representing common time points. This provides a consistent basis for comparing hydrograph shapes and applying the statistical modelling methods described in the following section.
+
+Importantly, the original peak discharge, event duration and relative peak position are retained separately. These quantities allow fitted standardised hydrographs to be transformed back into physically meaningful discharge and time scales for subsequent model validation.
+
+\section{Methods for representing hydrograph shape}\label{methods-for-representing-hydrograph-shape}
+
+The output of flood inundation models fit emulators. Since every input increases the number of runs to fit it, and each run is slow, we aim to minimise the number of inputs. After standardisation (Section @ref(\#standardising-the-hydrographs)), each of the (\(N =\) 41) extreme flow events are summarised to 64 time points \(u_j\), their standardised discharge \(y_i(u_j)\), peak discharge \(Q_i^{\text{peak}}\), duration \(W_i\), and relative peak position \(\tau_i\).
+
+Using all of these 67 values as emulator inputs would be impractical. We therefore considered five methods for reducing the number of parameters needed to represent hydrograph shape. These methods are polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function.
+
+Most methods approximate each standardised hydrograph by a weighted sum of \(K\) basis functions,
+
+\begin{equation}
+y_i(u) \approx \sum_{k=1}^{K} \theta_{ik}\,\phi_k(u),
+\label{eq:basis}
+\end{equation}
+
+where \(\phi_k(u)\) are the basis functions and \(\theta_{ik}\) are the shape parameters for event \(i\). The methods differ mainly in how these functions are chosen. Peak discharge, duration and relative peak position are retained separately, giving (\(K+3\)) parameters for each event. The exceptions are PCA, which first subtracts the mean curve before applying \eqref{eq:basis}, and the gamma-type curve from our further reading, which is a nonlinear function of its parameters.
+
+\begin{equation}
+\mathbf{x}_i = \left(Q_i^{\text{peak}},\; W_i,\; \tau_i,\; \boldsymbol{\theta}_i\right).
+\label{eq:inputs}
+\end{equation}
+
+The emulator therefore only needs \(3 + K\) inputs, where \(K\) is significantly smaller than the previous 64.
+
+\subsection{SEPA's Approach}\label{method-SEPA}
+
+SEPA's current approach is our baseline. It uses a fix-shape hydrograph, which is scaled according to maximum discharge. The baseline was constructed by averaging the standardised hydrographs (from \ref{standardising-the-hydrographs}) without aligning their peaks, (as SEPA does not do so). The unaligned curves \(\tilde{y}_i(u)\), are then averaged across extreme flow events,
+
+\begin{equation}
+\bar{y}(u) = \frac{1}{N}\sum_{l=1}^{N} \tilde{y}_l(u),
+\label{eq:sepa}
+\end{equation}
+
+and rescaled to have a peak value of one,
+
+\begin{equation}
+\hat{y}(u) = \frac{\bar{y}(u)}{\max_u \bar{y}(u)}.
+\label{eq:sepa-2}
+\end{equation}
+
+The fitted hydrograph for extreme flow event \(i\) is obtained by stretching \(\hat{y}\) to the extreme flow event's duration \(W_i\) and multiplying it by its peak discharge \(Q_i^{\text{peak}}\). This means every event shares the same shape and differs only in its height and length. To test how well this shape predicts an event it has not seen, each event is also compared with the average of the other \(N - 1\) events only.
+
+Unlike SEPA's current approach, our baseline allows duration (\(W_i\)) to vary between events. This means the observed hydrographs now obtained may be more accurate than the strictly fixed-duration approach.
+
+\subsection{Evaluation criteria}\label{evaluation-criteria}
+
+We compared the methods using three criteria: accuracy, parsimony, and fitness for purpose (\citeproc{ref-wilson2026lec5}{Wilson, 2026b}). These helped choose the initial number of parameters for each method (Sections 3.3-3.6) and the final comparison in (Section 5).
+
+\textbf{Accuracy:} We measured how closely each method reconstructed the observed hydrographs using the root mean squared error (RMSE):
+
+\begin{equation}
+\text{RMSE}_i = \sqrt{\tfrac{1}{64}\textstyle\sum_{j}\big(\hat{Q}_i(t_j) - Q_i(t_j)\big)^2}.
+\label{eq:rmse}
+\end{equation}
+
+As flood inundation use actual discharge values not standardised values, we calculated errors after converting the reconstructed hydrographs back to their original discharge and time scales.
+
+For methods that estimate a shared shape or basis across extreme flow events (SEPA's approach, PCA and the wavelet coefficient selection), we used leave-one-out cross-validation. Each event was excluded in turn, while the shared model was refitted using the remaining \(N - 1\) events The events excluded were then reconstructed using this fitted model.
+
+For methods where each event was fitted separately (polynomial, B-spline and gamma-type), leaving out an event does not change the other fitted curves. So, we randomly divided the events into 33 training and 8 test events to compare the reconstruction errors and guide our selection of parameters.
+
+\textbf{Parsimony:} As the shape parameters are inputs to the emulator, a method is required to ensure fewer parameters is preferable, provided that they still reconstruct the hydrographs accurately. Strong correlations between parameters may also complicate modelling their uncertainty. Thus, we compared both the number of shape parameters and their correlations across events.
+
+\textbf{Fitness for purpose:} The \texttt{RMSE} measures overall reconstruction accuracy, but it doesn't determine whether the method represents a valid range of hydrograph shapes. So, we also measure errors in peak discharge, peak timing and total flow volume (\citeproc{ref-wilson2026lec5}{Wilson, 2026b}):
+
+\begin{align}
+\text{Peak error}_i &= \max_j \hat{Q}_i(t_j) - \max_j Q_i(t_j), \label{eq:peak}\\
+\text{Timing error}_i &= \hat{t}_{i}^{\,\text{peak}} - t_{i}^{\,\text{peak}}, \label{eq:timing}\\
+\text{Volume error}_i &= 100 \times \frac{\int \hat{Q}_i(t)\,dt - \int Q_i(t)\,dt}{\int Q_i(t)\,dt}\ \%, \label{eq:volume}
+\end{align}
+
+Flow volumes were calculated using the trapezium rule. As all methods except SEPA's baseline align peaks to their observed positions, timing errors are expected to be small by construction. This measure is therefore most useful for assessing the baseline.
+
+Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assesed further in Section (\citeproc{ref-ref}{\textbf{ref?}})(uncertainty), where uncertainty in the shape parameters is modelled.
+
+\subsection{Polynomial regression}\label{method-polynomial}
+
+First, we consider a polynomial in time as our choice of basis, so that the standardised hydrograph of event \(i\) is approximated by
+
+\begin{equation}
+y_i(u_j) \approx \theta_{i0} + \theta_{i1}u_j + \theta_{i2}u_j^2 + \dots + \theta_{ip}u_j^p, \qquad j = 1, \dots, 64.
+\label{eq:poly}
+\end{equation}
+
+Since this is a linear model, the coefficients are found by least squares as \(\hat{\boldsymbol{\theta}}_i = (X^\top X)^{-1} X^\top \mathbf{y}_i\), where \(X\) is the 64 \(\times (p+1)\) matrix with columns \(1, u, \dots, u^p\) evaluated at the grid times, and \(\mathbf{y}_i\) is the standardised curve of event \(i\). The \(p + 1\) fitted coefficients are the shape parameters of the event.
+
+To choose the degree \(p\), we considered degrees from 2 to 15 in two ways. First, for each degree, we recorded the proportion of extreme flow events for which the highest-order term was significant at the 5\% level (Table \ref{tab:polysig}). Second, we compared the errors for each degree across the training and test events (Section \ref{evaluation-criteria}, Figure \ref{fig:polychoice}).
+
+\begin{longtable}[]{@{}cc@{}}
+\caption{\label{tab:polysig}Proportion of events for which the highest-order polynomial term is significant at the 5\% level.}\tabularnewline
+\toprule\noalign{}
+Degree \(p\) & Proportion of events with \(\theta_p\) significant at 5\% \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Degree \(p\) & Proportion of events with \(\theta_p\) significant at 5\% \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+2 & 1.00 \\
+3 & 0.85 \\
+4 & 0.54 \\
+5 & 0.83 \\
+6 & 0.41 \\
+7 & 0.78 \\
+8 & 0.59 \\
+9 & 0.61 \\
+10 & 0.78 \\
+11 & 0.54 \\
+12 & 0.90 \\
+13 & 0.90 \\
+14 & 0.49 \\
+15 & 0.49 \\
+\end{longtable}
+
+From Table \ref{tab:polysig}, we observe that the proportion of significant higher-order terms does not decrease steadily with the degree, but it is generally lower at even degrees than odd. However, we only use this table only as a guide, because neighbouring points on a hydrograph are strongly correlated, which violates the independence assumption of the linear model, producing overly-optimistic results since standard errors are small.
+
+\begin{minipage}[h]{0.50\textwidth}
+![\label{fig:polychoice}Average absolute errors for training and test events by polynomial degree.](SCS_P1P2_REPORT_files/figure-latex/polychoice-1.pdf) 
+\end{minipage}
+\hfill
+\begin{minipage}[h]{0.48\textwidth}
+Hence, we primarily choose the order from Figure \\ref{fig:polychoice}, where we observe that all four errors fall as the degree increases, and the test errors follow training errors closely. Also, we see a similar even-odd trend from Table 3 across all four errors, with the largest improvements occuring when moving to a higher odd degree. The step from degree 6 to 7 is among the largest reductions in peak error, `RMSE` and timing error, with volume error staying approximately the same. Across all four errors, further increases either see a leveling off after degree 7, or smaller gains for each additional parameter, meaning degree 8 gives similar errors. Therefore, we choose $p =$ 7.
+\end{minipage}
+
+\subsection{Principal component analysis}\label{method-pca}
+
+Unlike the polynomial, where the basis is fixed before looking at the data, PCA estimates the basis from the extreme flow events themselves, finding the curves that best describe how the events differ from one another. To do this, we arrange the standardised hydrographs into the 41 \(\times\) 64 matrix \(Y\), with one row per event, and centre each column by subtracting the mean curve \(\bar{y}(u_j)\). We do not scale the columns, as every column is already on the same standardised scale. PCA then finds the principal components \(\phi_1, \phi_2, \dots\), which are the eigenvectors of the sample covariance matrix of \(Y\), ordered so that the first explains the most variation between events, the second the most of what remains, and so on. Each standardised hydrograph is then approximated by
+
+\begin{equation}
+y_i(u_j) \approx \bar{y}(u_j) + \sum_{k=1}^{K} \xi_{ik}\,\phi_k(u_j), \qquad \xi_{ik} = \sum_{j=1}^{64} \big(y_i(u_j) - \bar{y}(u_j)\big)\,\phi_k(u_j),
+\label{eq:pca}
+\end{equation}
+
+where the scores \(\xi_{i1}, \dots, \xi_{iK}\) are the shape parameters of event \(i\). An advantage of PCA is that the scores of different components are uncorrelated across events by construction, which makes their variation between events easier to model.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/pcaloadings-1.pdf}
+\caption{\label{fig:pcaloadings}The first three principal components against standardised time.}
+\end{figure}
+
+Figure \ref{fig:pcaloadings} shows the first three principal components, which together explain 87\% of the variation between events. We observe that all three are close to zero at the peak, \(u^\ast =\) 0.38, since every standardised hydrograph has the same value there. The first component, which alone explains 65\% of the variation, has the same sign on both sides of the peak, and so describes how broad the event is, that is, how high the flow stays relative to the peak, particularly on the rising limb. The second component has opposite signs before and after the peak, and so contrasts the flow shortly before the peak with the flow during the recession. The third component is concentrated on the rising limb, and describes how late and how steeply the flow rises towards the peak, which also captures events with an earlier, smaller peak.
+
+To choose the number of components \(K\), we again considered two approaches. First, we plotted the cumulative proportion of the variation explained against \(K\) (Figure \ref{fig:pcacumvar}), where the common rule of explaining 95\% of the variation gives \(K =\) 6. Second, since the components are estimated from all events together, we compared the in-sample and leave-one-out errors for each \(K\) (Section \ref{evaluation-criteria}, Figure \ref{fig:pcachoice}), recalculating the mean curve and components without each left-out event before reconstructing it. We observe that the \texttt{RMSE} and volume error fall as \(K\) increases, with the leave-one-out errors only slightly above the in-sample errors, so the components found from the other events generalise well to a new event. Moving from 6 to 7 components gives almost no improvement in the leave-one-out \texttt{RMSE}, so, in agreement with the 95\% rule, we chose \(K =\) 6. We also observe that the peak and timing errors are very small for every \(K\), at under 1 m³/s and 1 hour, since the variation between events at the peak is almost zero, so the mean curve already reproduces the peak.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/pcacumvar-1.pdf}
+\caption{\label{fig:pcacumvar}Cumulative proportion of variation explained by the first \(K\) principal components, with the dashed line at 95\%.}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/pcachoice-1.pdf}
+\caption{\label{fig:pcachoice}Average absolute errors, in-sample and leave-one-out, by number of principal components.}
+\end{figure}
+
+\subsection{Wavelets}\label{method-wavelets}
+
+Finally, we consider wavelets. A wavelet is a short, localised wave that starts at zero, oscillates briefly and returns to zero, and a hydrograph can be built up from shifted and stretched copies of a single wavelet, each describing the detail in the curve at a particular time and scale. This makes wavelets potentially well suited to hydrographs, which are often dominated by a single sharp peak that may be described by only a few of them. As for the polynomial, the basis is fixed and fitted to each extreme flow event separately, but here using wavelet functions in place of powers of time.
+
+Using the discrete wavelet transform, each standardised hydrograph is split into a smooth trend and the detail at 3 successively coarser scales, so that
+
+\begin{equation}
+y_i(u) = \sum_{k} a_{ik}\,\varphi_k(u) + \sum_{j=1}^{3}\sum_{k} d_{ijk}\,\psi_{jk}(u),
+\label{eq:wavelet}
+\end{equation}
+
+where the \(a_{ik}\) are the smooth coefficients, describing the overall shape of the hydrograph, and the \(d_{ijk}\) are the detail coefficients at scale \(j\) and location \(k\), with \(j = 1\) the finest scale. We used the Daubechies wavelet with four coefficients, 3 levels and periodic boundaries, and since 64 \(= 2^6\), the transform can be applied to each hydrograph directly. With these settings, each hydrograph has 8 smooth coefficients and 56 detail coefficients, so that using all of them would reproduce the hydrograph exactly. Figure \ref{fig:wavdecomp} shows this decomposition for event 1, where we observe that the smooth coefficients capture the overall shape of the event, while the detail coefficients are close to zero except around the peak, and are smallest at the finest scale.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/wavdecomp-1.pdf}
+\caption{\label{fig:wavdecomp}Wavelet decomposition of event 1: the detail coefficients at each level and the smooth coefficients.}
+\end{figure}
+
+To reduce the number of parameters, we keep all of the smooth coefficients but only the \(M\) detail coefficients that are largest on average across events, setting the rest to zero. The same \(M\) coefficients are kept for every event, so that all events share the same basis, and the shape parameters of each event are its 8 smooth coefficients and \(M\) kept detail coefficients. To choose \(M\), we compared the in-sample and leave-one-out errors for different values of \(M\) (Section \ref{evaluation-criteria}, Figure \ref{fig:wavchoice}), where for each left-out event the coefficients to keep are chosen from the remaining events only. We observe that the leave-one-out errors are almost identical to the in-sample errors, since leaving out one event barely changes which coefficients are largest on average. The peak error falls sharply up to \(M = 5\) and then stays roughly constant up to \(M = 10\), while the \texttt{RMSE} continues to fall more gradually and the volume error stays below 0.25\% throughout. Since each additional coefficient adds a parameter, we chose \(M =\) 5, giving 13 shape parameters per event.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/wavchoice-1.pdf}
+\caption{\label{fig:wavchoice}Average absolute errors, in-sample and leave-one-out, by number of detail coefficients kept.}
+\end{figure}
+
+We also checked the sensitivity of the results to the choice of wavelet and the number of levels, keeping \(M =\) 5 fixed (Table \ref{tab:wavsens}). Since more levels give fewer smooth coefficients, this also changes the number of parameters. We observe that the number of levels matters much more than the choice of wavelet, with the \texttt{RMSE}, peak and volume errors all increasing as the number of levels increases and the number of parameters falls, from 13 parameters at three levels to 7 at five levels. For a given number of levels, the \texttt{haar} wavelet has a noticeably higher \texttt{RMSE} than the two Daubechies wavelets. The least asymmetric Daubechies wavelet with eight coefficients, \texttt{la8}, has a similar \texttt{RMSE} to \texttt{d4}, and a lower peak error at three levels (0.90 compared with 2.96 \(\text{m}^3/\text{s}\)). Given the \texttt{la8} wavelet has the lowest average absolute errors across the board at three levels, we select it.
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0833}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0729}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1771}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1250}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1875}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1771}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1771}}@{}}
+\caption{\label{tab:wavsens}Average absolute errors for different wavelets and numbers of levels, keeping the same number of detail coefficients.}\tabularnewline
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Wavelet
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Levels
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Shape parameters
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+RMSE (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Peak error (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Timing error (h)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Volume error (\%)
+\end{minipage} \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\raggedright
+Wavelet
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Levels
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Shape parameters
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+RMSE (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Peak error (m³/s)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Timing error (h)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Volume error (\%)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+haar & 3 & 13 & 6.13 & 2.25 & 0.84 & 0.12 \\
+d4 & 3 & 13 & 3.52 & 2.96 & 0.85 & 0.18 \\
+la8 & 3 & 13 & 3.33 & 0.90 & 0.51 & 0.08 \\
+haar & 4 & 9 & 8.36 & 9.84 & 2.50 & 0.16 \\
+d4 & 4 & 9 & 5.37 & 5.21 & 0.24 & 0.28 \\
+la8 & 4 & 9 & 5.16 & 4.61 & 3.74 & 0.32 \\
+haar & 5 & 7 & 10.71 & 13.63 & 6.86 & 1.17 \\
+d4 & 5 & 7 & 7.14 & 6.71 & 1.41 & 0.33 \\
+la8 & 5 & 7 & 7.06 & 7.06 & 3.99 & 0.34 \\
+\end{longtable}
+
+\subsection{Other methods}\label{method-other}
+
+As well as the three methods suggested in the lectures, we considered two further methods, each addressing a weakness found above.
+
+\subsubsection{B-splines}\label{method-bspline}
+
+The polynomial's weaknesses all stem from using a single curve across the whole event, so we also considered a B-spline basis, which joins short cubic pieces smoothly together so that each basis function only affects one part of the hydrograph (Ramsay and Silverman, 2005). The standardised hydrograph is approximated by \(y_i(u_j) \approx \theta_{i0} + \sum_{l=1}^{L} \theta_{il}\,B_l(u_j)\), where \(B_1, \dots, B_L\) are cubic B-splines with equally spaced knots, and it is fitted and validated in the same way as the polynomial. We chose \(L =\) 8, giving 9 shape parameters, close to the 8 of the polynomial, so that the two can be compared at a similar number of parameters.
+
+\subsubsection{A known hydrograph function}\label{method-gamma}
+
+The lectures suggest that a known function which approximates hydrographs may give parameters that can be interpreted. We therefore fitted a gamma-type hydrograph (Nash, 1957) with an added baseflow to each extreme flow event by nonlinear least squares, giving three parameters with a physical meaning: the baseflow as a fraction of the peak flow (median 0.31), the time of the peak, and the sharpness of the peak.
+
+\section{Validation of methods}\label{validation-of-methods}
+
+We now validate the methods at their chosen number of parameters.
+
+\subsection{Contrasting extreme flow events}\label{validation-contrast}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/all-methods-plot-1.pdf}
+\caption{\label{fig:all-methods-plot}Observed (black) and fitted curves from each method for six contrasting events: earliest peak (event 2), latest peak (41), shortest (26), longest (19), flattest (29) and sharpest (3).}
+\end{figure}
+
+The polynomial method underestimates sharp peaks and cannot reproduce multi-peak extreme flow events (Figure \ref{fig:all-methods-plot}), instead fitting a single peak that is too low and broad. This is because each term acts over the whole event, so a sharp change at the peak would disrupt the rest of the curve, while the higher-order terms dominate near the ends, causing the fit to drift away from the observed flow there. The B-spline method fits the recession and ends closely, but shows the same pattern around the peak, with only a marginal improvement on multi-peak events. The gamma-type method performs the poorest, as each curve has a single peak and the same baseflow at the start and end, fitting the peaks and ends of contrasting extreme flow events poorly.
+
+Unlike these three methods, PCA reproduces single-peak events almost exactly and multi-peak events closely. For multi-peak events, PCA tends to underestimate at least one of the smaller peaks.
+
+The wavelet method performs similarly to PCA. However, its curves are jagged in places with unrealistic dips, which we expect is because the same detail coefficients are kept for every extreme flow event. Additionally, there are sharp deviations at the ends, likely due to the periodic boundary.
+
+\subsection{Residuals}\label{residuals}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/residuals-all-1.pdf}
+\caption{\label{fig:residuals-all}Residuals against rescaled time for each method (grey: individual extreme flow events; coloured: average), with the five averages compared in the final panel.}
+\end{figure}
+
+The residuals (Figure \ref{fig:residuals-all}) confirm these observations across all extreme flow events. The polynomial residuals are positive at the peak and negative on either side for most, confirming that the fitted peak is systematically too low and broad, while the B-spline residuals are similar around the peak but close to zero after \(u \approx 0.6\). The gamma-type method has the widest spread. On the other hand, the residuals for PCA are small throughout, largest on the rising limb, and the average is exactly zero by construction. The wavelet method also has small residuals throughout, with a jagged average.
+
+Neighbouring residuals are correlated, so the independence assumed by the regression-based methods does not hold, but this does not affect their use here, as the fitted curves are used as a basis rather than for inference.
+
+\subsection{Correlation of parameters}\label{correlation-of-parameters}
+
+Finally, the polynomial coefficients are strongly correlated across events, from 0.59 to 1.00 in absolute value, because the powers of \(u\) are highly correlated on the interval. The correlations are weaker for the B-spline coefficients, up to 0.86, and the wavelet parameters, from 0.02 to 0.96, with the strongest between neighbouring smooth coefficients, and mostly weaker correlations between smooth and detail coefficients. Unlike these methods, the PCA scores are uncorrelated by construction, and the gamma-type parameters are only weakly correlated, up to 0.37. This matters because simulating new extreme flow events requires a joint distribution for the shape parameters, and every correlation must be estimated from 41 events, which favours PCA for the uncertainty analysis in Section \ref{uncertainty}.
+
+\section{Comparison of methods}\label{comparison-of-methods}
+
+Having explored five methods and performed validation tests on them at our selected parameters, we proceed with further comparison of the methods by expanding on our established \hyperref[evaluation-criteria]{evaluation criteria}.
+
+Errors are in real units after undoing the standardisation, and are out-of-sample wherever the method learns anything from other events (Section \ref{evaluation-criteria}), so the comparison is like-for-like.
+
+\subsection{Accuracy and fitness for purpose}\label{cmp-accuracy}
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:cmp-main}Comparison of SEPA's approach and the five methods at their chosen settings. Errors are average absolute values over extreme flow events, in real units.}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{9}{11}\selectfont
+\begin{threeparttable}
+\begin{tabular}[t]{lrrrrrrrrrr}
+\toprule
+\multicolumn{3}{c}{ } & \multicolumn{3}{c}{RMSE (m$^3$/s)} & \multicolumn{3}{c}{Held-out errors} & \multicolumn{2}{c}{Parameter behaviour} \\
+\cmidrule(l{3pt}r{3pt}){4-6} \cmidrule(l{3pt}r{3pt}){7-9} \cmidrule(l{3pt}r{3pt}){10-11}
+Method & $K$ & Inputs & In-sample & Held-out & Held-out (\% of peak) & Peak (m$^3$/s) & Timing (h) & Volume (\%) & Neg. & Max $|r|$\\
+\midrule
+SEPA (average shape) & 0 & 2 & 41.92 & 42.52 & 30.9 & \textbf{0.42} & 27.09 & 67.33 & 0 & --\\
+Gamma-type & 3 & 6 & 10.85 & 10.85 & 8.1 & 0.44 & 4.66 & 2.99 & 0 & 0.37\\
+Polynomial & 8 & 11 & 10.65 & 10.65 & 7.6 & 24.74 & 5.17 & 0.41 & 6 & 1.00\\
+B-spline & 9 & 12 & 8.95 & 8.95 & 6.3 & 20.20 & 5.27 & 0.40 & 6 & 0.86\\
+PCA & 6 & 9 & 4.07 & 5.36 & 4.0 & 0.78 & 0.68 & 0.53 & 3 & 0.00\\
+\addlinespace
+Wavelets & 13 & 16 & \textbf{3.33} & \textbf{3.33} & \textbf{2.5} & 0.90 & \textbf{0.51} & \textbf{0.08} & 0 & 0.96\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item $K$: number of shape parameters; Inputs: emulator inputs ($K$ plus peak flow, duration and peak position; SEPA uses peak flow). Held-out: leave-one-out for SEPA, PCA and wavelets. The polynomial, B-spline and gamma-type are fitted to each event on its own, so their held-out and in-sample errors are identical; for wavelets, leaving one event out does not change which coefficients are kept, so the two also coincide. Gamma-type: the 41 of 41 events whose fit converged. Neg.: events whose held-out curve has negative flow. Max $|r|$: largest absolute correlation between shape parameters across events. Bold: best in column.
+\end{tablenotes}
+\end{threeparttable}}
+\end{table}
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:cmp-features}Event-relevant features and worst-case performance (held-out). Bias is the signed mean error (positive = overestimate). Above threshold: time and volume of flow above $u = 65$ m$^3$/s. RMSE by limb: before and after the observed peak.}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{lrrrrrrrrr}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Bias} & \multicolumn{2}{c}{RMSE across events (m$^3$/s)} & \multicolumn{3}{c}{Above threshold $u$} & \multicolumn{2}{c}{RMSE by limb (m$^3$/s)} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-8} \cmidrule(l{3pt}r{3pt}){9-10}
+Method & Peak (m$^3$/s) & Volume (\%) & 90th pct. & Worst & Duration (h) & Volume (Mm$^3$) & Volume bias (Mm$^3$) & Rising & Falling\\
+\midrule
+SEPA (average shape) & +0.41 & +67.3 & 85.7 & 197.8 & 75.0 & 18.35 & +18.34 & 47.27 & 36.92\\
+Gamma-type & +0.33 & +2.4 & 25.2 & 37.1 & 12.5 & 1.05 & +0.27 & 12.50 & 8.66\\
+Polynomial & -24.74 & +0.3 & 21.9 & 39.8 & 9.6 & 0.63 & -0.26 & 12.18 & 8.81\\
+B-spline & -20.01 & +0.4 & 20.4 & 31.9 & 8.1 & 0.47 & -0.25 & 11.21 & 6.52\\
+PCA & +0.56 & +0.1 & 10.4 & 22.7 & 3.8 & 0.36 & -0.12 & 6.25 & 4.01\\
+\addlinespace
+Wavelets & +0.57 & -0.0 & \textbf{7.1} & \textbf{10.9} & \textbf{2.4} & \textbf{0.10} & -0.05 & \textbf{3.33} & \textbf{2.38}\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/cmp-distribution-1.pdf}
+\caption{\label{fig:cmp-distribution}Held-out errors for every extreme flow event, by method (log scale). Boxes show the middle 50\% of events; points are individual events with unusually large errors.}
+\end{figure}
+
+Every method beats SEPA's fixed-shape method, and PCA and wavelets beat it by roughly an order of magnitude. PCA and wavelets appear to be the most accurate methods according to Tables \ref{tab:cmp-main}, \ref{tab:cmp-features}, and Figure \ref{fig:cmp-distribution}; consistent with what we observed in Section \ref{validation-of-methods}. Both PCA and wavelets exhibit the best overall, worst-case and feature-based accuracy, as well as the least bias. Noteably, wavelets has the edge on PCA on most of these metrics. However,
+
+\begin{itemize}
+\item
+  0 of the wavelets method's held-out curves have negative flow (PCA: 3),
+\item
+  the largest absolute correlation between the wavelets method's shape parameters across events is 0.96 (PCA: 0.00, by construction)
+\end{itemize}
+
+which indicates that the out-performance of the wavelets method compared to PCA comes with structural flaws and the computational cost of having too many parameters.
+
+\subsection{Parsimony and parameter behaviour}\label{cmp-parsimony}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/cmp-tradeoff-1.pdf}
+\caption{\label{fig:cmp-tradeoff}Accuracy against number of shape parameters for every setting tried in Section 3 (log scale; leave-one-out for PCA and wavelets, all events for the per-event methods). Circled points are the chosen settings; the dashed line is SEPA's approach (leave-one-out).}
+\end{figure}
+
+Each shape parameter is one more emulator input, and the number of inundation-model runs needed grows with inputs.
+
+For any given K, the PCA method usually gives the lowest errors, requiring far fewer parameters than the other methods for a fraction of their error, with the exception of volume error, where its performance is roughly inline with the other methods.
+
+The honest PCA vs wavelets comparison is at equal \(K\): PCA with \(K =\) 13 gives held-out \texttt{RMSE} 2.26 \(\text{m}^3/\text{s}\) vs wavelets' 3.33 \(\text{m}^3/\text{s}\). Thus, wavelets' lower error comes with the cost of having more parameters. Wavelets can't go below \(K =\) 8 since all smooth coefficients are kept.
+
+A practical cost of the PCA method is that its basis must be re-estimated as new events are recorded, whereas the wavelets basis is fixed. However, both are computationally cheap, as neither needs iterative fitting.
+
+\subsection{Are the differences real?}\label{cmp-paired}
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:cmp-paired}Paired comparison of held-out absolute errors over the same extreme flow events. A negative difference means the first method has smaller errors.}
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{lrrrr}
+\toprule
+Metric & Mean difference & 95\% bootstrap CI & Events where first is better (\%) & Wilcoxon $p$\\
+\midrule
+RMSE (m$^3$/s) & -37.16 & (-48.93, -27.83) & 100 & $<$0.001\\
+Peak error (m$^3$/s) & +0.36 & (-0.04, +0.86) & 54 & 0.660\\
+Volume error (\%) & -66.80 & (-83.66, -51.97) & 100 & $<$0.001\\
+RMSE (m$^3$/s) & -39.19 & (-50.39, -29.64) & 100 & $<$0.001\\
+Peak error (m$^3$/s) & +0.47 & (+0.19, +0.77) & 37 & 0.015\\
+\addlinespace
+Volume error (\%) & -67.25 & (-83.09, -53.44) & 100 & $<$0.001\\
+RMSE (m$^3$/s) & -2.03 & (-3.03, -1.23) & 88 & $<$0.001\\
+Peak error (m$^3$/s) & +0.12 & (-0.50, +0.68) & 44 & 0.129\\
+Volume error (\%) & -0.45 & (-0.65, -0.29) & 93 & $<$0.001\\
+RMSE (m$^3$/s) & -3.59 & (-5.17, -2.23) & 80 & $<$0.001\\
+\addlinespace
+Peak error (m$^3$/s) & -19.42 & (-26.23, -13.40) & 90 & $<$0.001\\
+Volume error (\%) & +0.13 & (-0.03, +0.28) & 32 & 0.060\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Averages over 41 events could differ by chance; comparing the methods on the same events removes event-to-event variation. Events are independent by our Robson \& Reed criteria, so resampling events is valid. Hence, we implement this analysis in Table \ref{tab:cmp-paired} using a bootstrap CI for the mean difference and a signed-rank test.
+
+Both the PCA and wavelets methods are clear improvements on SEPA's method across every event, with CIs far from zero and the ``first better (\%)'' column at 100\%, with the exception of \texttt{Peak\ error} where SEPA's method performs better, which is unsurprising given SEPA's method only varies \(Q^\text{peak}\).
+
+Wavelets' out-performance of PCA in \texttt{RMSE} and \texttt{Volume\ error} across most events is statistically detectable, but practically small relative to the respective \textasciitilde37 \(\text{m}^3/\text{s}\) and \textasciitilde{} \(\text{m}^3/\text{s}\) gains over SEPA. Thus, the choice between the wavelets and PCA methods should rest on parsimony and parameter behaviour, not \texttt{RMSE}.
+
+\subsection{Overall comparison and methods carried forward}\label{cmp-synthesis}
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:cmp-synthesis}Summary of the comparison against the three criteria. The two methods carried forward to the uncertainty analysis are in bold.}
+\centering
+\fontsize{8}{10}\selectfont
+\begin{tabular}[t]{>{\raggedright\arraybackslash}p{1.6cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{1.5cm}}
+\toprule
+Method & Accuracy (held-out RMSE) & Event features & Unusual events & Shape parameters & Parameter behaviour & Physical validity & Interpretability\\
+\midrule
+SEPA (average shape) & Poor: 42.5 m$^3$/s & Peak matched; timing 27 h; volume +67\% & One shape for every event & 0 shape parameters & None to model & Valid & High\\
+Gamma-type & Moderate: 10.8 m$^3$/s & Peak 0.44 m$^3$/s; volume 3.0\% & Single peak only; same baseflow at start and end & 3 & Weakly correlated (max 0.37) & Valid; 0 fits failed & High (baseflow, peak time, sharpness)\\
+Polynomial & Moderate: 10.6 m$^3$/s & Peak too low by 24.7 m$^3$/s & Fails multi-peak events; drifts at ends & 8 & Near-collinear (max 1.00) & 6 events negative & Low\\
+B-spline & Moderate: 9.0 m$^3$/s & Peak too low by 20.2 m$^3$/s & Good tails; peaks flattened & 9 & Correlated (max 0.86) & 6 events negative & Low\\
+\textbf{PCA} & \textbf{Very good: 5.36 m$^3$/s} & \textbf{Peak 0.78 m$^3$/s; volume 0.53\%} & \textbf{Close on multi-peak; smaller peaks underestimated} & \textbf{6} & \textbf{Uncorrelated by construction} & \textbf{3 events negative} & \textbf{Moderate (breadth, rise vs recession)}\\
+\addlinespace
+\textbf{Wavelets} & \textbf{Very good: 3.33 m$^3$/s} & \textbf{Peak 0.90 m$^3$/s; volume 0.08\%} & \textbf{Close, but jagged dips and end artefacts} & \textbf{13} & \textbf{Smooth coefficients correlated (max 0.96)} & \textbf{0 events negative} & \textbf{Low}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:cmp-synthesis} provides a summary of the comparison between the methods, and the trade-offs between the criteria.
+
+We make the decision to advance the PCA and wavelets methods to the \hyperref[uncertainty]{uncertainty analysis section}, having made the following eliminations:
+
+\begin{itemize}
+\item
+  SEPA: a fixed hydrograph shape cannot capture timing or volume accurately. Simply varying \(Q^\text{peak}\) leads to much larger errors than any other method.
+\item
+  Polynomial / B-spline: both methods erode the peak and give negative flows; polynomial parameters near-collinear; both methods fail validation tests and are hard to simulate.
+\item
+  Gamma-type: best interpretability and parsimony, but cannot represent multi-peak events or different start/end flows, \textasciitilde2x PCA's \texttt{RMSE}, and fails to converge for some events.
+\end{itemize}
+
+\section{Uncertainty analysis}\label{uncertainty}
+
+For the PCA and wavelet decomposition methods that we are taking forward, we now model the uncertainty in their parameters between hydrographs. Importantly, this allows us to move beyond the extreme flow events we have observed and simulate new hydrographs, and it means the uncertainty in hydrograph shape at extreme flows can be propagated through an emulator of the flood inundation model.
+
+\subsection{Distribution and dependencies of the shape parameters}\label{distribution-and-dependencies-of-the-shape-parameters}
+
+We first consider the marginal distributions of the PCA scores and wavelet coefficients, analysing their QQ-plots.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/param-qq-1.pdf}
+\caption{\label{fig:param-qq}Normal Q-Q plots of the shape parameters: PCA scores PC1--PC6 (blue, top row) and wavelet parameters (orange), smooth coefficients S1--S8 followed by detail coefficients D1--D5. Points close to the black line indicate an approximately Normal parameter.}
+\end{figure}
+
+From Figure \ref{fig:param-qq}, we observe that PC1--PC4 lie approximately on the black line, with only minor deviations in the tails, although the largest values of PC2 fall below the line, indicating a lighter upper tail. PC5 shows heavy tails on either side, while PC6 deviates substantially, with a particularly heavy lower tail. For wavelets, the 8 smooth coefficients lie approximately on the black line, other than at the extreme ends, where S1--S3 and S8 show right skew, and S4 and S5, and to a lesser extent S6, level off at the extremes. Of the detail coefficients, D3 and D5 lie approximately on the line and D4 shows mild right skew, while D1 and D2 deviate heavily at the right tail.
+
+As the majority of parameters sit approximately on the line through the centre of their distributions, we continue with our exploration of the Normal distribution, but due to some having heavy tails or large deviations at the extremes, we also consider a smoothed bootstrap sampling scheme, which does not require such a normality assumption.
+
+We aim to fit each on shape parameters and the three standardisation parameters (peak flow, duration and peak position), which are held seperately. To justify this, we must consider their dependencies, and we use the Spearman correlations to do so.
+
+\begin{table}
+\caption{\label{tab:dependence}Spearman correlation of the shape parameters with the peak flow, duration and peak position of each event: PCA scores (left) and wavelet parameters (right).}
+
+\begin{tabular}[t]{lrrr}
+\toprule
+  & Peak flow & Duration & Peak position\\
+\midrule
+PC1 & 0.42 & 0.59 & 0.49\\
+PC2 & 0.15 & 0.19 & 0.53\\
+PC3 & -0.03 & -0.47 & -0.25\\
+PC4 & -0.14 & -0.21 & 0.04\\
+PC5 & 0.33 & -0.25 & 0.43\\
+\addlinespace
+PC6 & -0.15 & 0.03 & -0.02\\
+\bottomrule
+\end{tabular}
+\begin{tabular}[t]{lrrr}
+\toprule
+  & Peak flow & Duration & Peak position\\
+\midrule
+S1 & -0.11 & -0.27 & -0.02\\
+S2 & -0.20 & -0.44 & -0.18\\
+S3 & -0.52 & -0.33 & -0.40\\
+S4 & -0.32 & -0.47 & -0.37\\
+S5 & -0.43 & -0.71 & -0.74\\
+\addlinespace
+S6 & 0.00 & -0.59 & 0.17\\
+S7 & -0.35 & -0.60 & -0.23\\
+S8 & -0.20 & -0.33 & -0.14\\
+D1 & 0.11 & 0.78 & 0.23\\
+D2 & 0.19 & 0.20 & 0.18\\
+\addlinespace
+D3 & -0.28 & -0.19 & -0.27\\
+D4 & 0.22 & 0.64 & 0.39\\
+D5 & -0.19 & -0.69 & -0.12\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:dependence} indicates moderate to strong correlations for both the PCA scores and the wavelet parameters with the standardisation parameters. In particular, PC2 and peak position have a correlation of \(-0.80\), and S5 and peak position a correlation of \(-0.74\), suggesting that standardisation does not fully separate the shape of a hydrograph from its timing. Simply fitting the unconditional distributions would therefore pair simulated shapes with peak flows, durations and peak positions that do not occur together in the data, as well as overstating the variation in shape for an event of a given size and timing. This motivates the need to move towards a conditional multivariate Normal distribution and a conditional smoothed bootstrap, which we fit in Section 6.2.
+
+\subsection{Statistical model and sampling scheme}\label{statistical-model-and-sampling-scheme}
+
+To fit the conditional multivariate Normal distribution and conditional smoothed bootstrap, we start in the same way.
+
+Let \(\boldsymbol{\theta}_i = (\theta_{i1}, \dots, \theta_{iK})^\top\) be the shape parameters for extreme flow event \(i\), which are either the PCA scores (\(K = 6\)) or the wavelet coefficients (\(K = 13\)), and let \(\mathbf{s}_i = (Q_i^{\text{peak}}, W_i, \tau_i)^\top\) be its standardisation parameters. We regress the shape parameters on the standardisation parameters,
+
+\[
+\boldsymbol{\theta}_i = \boldsymbol{\beta}_0 + B\,\mathbf{s}_i + \boldsymbol{\varepsilon}_i,
+\]
+
+where \(B\) is a \(K \times 3\) matrix of coefficients, and fitting this by least squares gives residuals \(\hat{\boldsymbol{\varepsilon}}_1, \dots, \hat{\boldsymbol{\varepsilon}}_N\) with sample covariance \(\hat{\Sigma}\).
+
+A new event with standardisation parameters \(\mathbf{s}^\ast\) then has simulated shape parameters
+
+\[
+\boldsymbol{\theta}^\ast = \hat{\boldsymbol{\beta}}_0 + \hat{B}\,\mathbf{s}^\ast + \boldsymbol{\varepsilon}^\ast,
+\]
+
+where both approaches assume the residual spread is the same for every \(\mathbf{s}^\ast\), and differ only in the generation of \(\boldsymbol{\varepsilon}^\ast\).
+
+Our statistical model, the conditional Normal, generates \(\boldsymbol{\varepsilon}^\ast\) by assuming Normality for these residuals,
+
+\[
+\boldsymbol{\varepsilon}^\ast \sim N_K(\mathbf{0}, \hat{\Sigma}).
+\]
+
+Our sampling scheme, the conditional smoothed bootstrap, generates \(\boldsymbol{\varepsilon}^\ast\) as
+
+\[
+\boldsymbol{\varepsilon}^\ast = \frac{\hat{\boldsymbol{\varepsilon}}_J + h\,\mathbf{z}}{\sqrt{1+h^2}}, \qquad J \sim \text{Uniform}\{1,\dots,N\}, \quad \mathbf{z} \sim N_K(\mathbf{0}, \hat{\Sigma}),
+\]
+
+with \(h = \big(4/((K+2)N)\big)^{1/(K+4)}\) (Silverman, 1986). The noise stops simulated residuals being exact copies of observed ones, and dividing by \(\sqrt{1+h^2}\) keeps their covariance approximately at \(\hat{\Sigma}\). Unlike the Normal, this keeps the heavy tails seen in Section \ref{uncertainty}.
+
+Following the generation, we turn \(\boldsymbol{\theta}^\ast\) into a curve using Equation \eqref{eq:pca} for PCA and \eqref{eq:wavelet} for wavelets, and finally we reverse the standardisation with \(\mathbf{s}^\ast\).
+
+\subsection{Additional evaluation criteria}\label{additional-evaluation-criteria}
+
+Define Coverage, CPRS, Physical invalidity checks
+
+\subsection{Out-of-sample check}\label{out-of-sample-check}
+
+We now evaluate how our two approaches perform on events they have not seen, using a leave-one-out check repeated for each of the 41 extreme flow events. For each event \(i\), we remove it and refit both the shape method and the distribution to the other 40 events, then simulate 200 shapes using event \(i\)'s own peak flow, duration and peak position \(\mathbf{s}_i\), before converting them to hydrographs and comparing them with event \(i\)'s observed hydrograph.
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:out-of-sample}Out-of-sample check: each event is left out of the fit, and 200 curves are simulated with its own peak flow, duration and peak position. Coverage: percentage of the observed curve inside the simulated 90\% band (target 90\%). CRPS: lower is better; for SEPA's single shape it is the mean absolute error. Last two columns: percentage of simulated curves that are physically invalid. Coverage, negative flow and above peak are measured on simulated curves, so do not apply to SEPA's single fixed shape.}
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{lrrrr}
+\toprule
+ & Coverage (\%) & CRPS (m$^3$/s) & Negative flow (\%) & Above peak (\%)\\
+\midrule
+\addlinespace[0.3em]
+\multicolumn{5}{l}{\textbf{SEPA}}\\
+\hspace{1em}Average shape & -- & 37.04 & -- & --\\
+\addlinespace[0.3em]
+\multicolumn{5}{l}{\textbf{PCA}}\\
+\hspace{1em}Conditional Normal & 81.40 & 10.37 & 7.62 & 21.29\\
+\hspace{1em}Conditional bootstrap & 80.91 & 10.39 & 7.68 & 19.32\\
+\addlinespace[0.3em]
+\multicolumn{5}{l}{\textbf{Wavelets}}\\
+\hspace{1em}Conditional Normal & 85.82 & 10.44 & 10.10 & 34.71\\
+\hspace{1em}Conditional bootstrap & 83.31 & 10.32 & 9.21 & 34.09\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/held-out-bands-1.pdf}
+\caption{\label{fig:held-out-bands}90\% band of 200 simulated hydrographs for three contrasting extreme flow events, each left out of the fit, from each combination (rows), with the observed hydrograph in black.}
+\end{figure}
+
+From Table \ref{tab:out-of-sample}, all four combinations reduce the CRPS by at least 72\% compared with SEPA's fixed shape, for which the CRPS reduces to the mean absolute error, so simulating hydrographs from a fitted distribution is far more accurate than SEPA's current approach. Since the four differ in CRPS by no more than 0.12 \(\text{m}^3/\text{s}\), we compare them on the remaining columns, which do not apply to SEPA as they are measured on simulated curves.
+
+Coverage is below the 90\% target for every combination, so the simulated bands are somewhat too narrow, partly because the variation discarded by keeping only \(K\) components or coefficients cannot appear in them, and Figure \ref{fig:held-out-bands} shows that the observed hydrographs leave the band mainly at secondary peaks. Wavelets have slightly higher coverage than PCA, by 4.4 percentage points for the Normal and 2.4 for the bootstrap, but more of their simulated curves are physically invalid, with around 35\% rising above their peak compared with 21\% for PCA, and more having negative flow. Finally, the Normal and bootstrap differ little on any measure, so the heavier tails kept by the bootstrap make no practical difference here.
+
+\subsection{Simulating new extreme flow events}\label{uncertainty-sim}
+
+In Subsection 6.4, we checked the models out of sample, now, we refit all four approaches to every event and use them to simulate new extreme flow events.
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/fan-charts-1.pdf}
+\caption{\label{fig:fan-charts}Median, 25--75\% and 5--95\% bands of 1000 simulated standardised hydrographs from each combination, with the observed events in grey.}
+\end{figure}
+
+Figure \ref{fig:fan-charts} shows that all four approaches produce very similar overall shapes, as well as 50\% and 90\% bands. We observe that the majority of observed events lie within the 90\% band, although in line with the analysis of the previous subsection, the main exceptions are multi-peaks on the recession. The bands also rise slightly above the peak just before it, and this is more pronounced for wavelets, where the bands also go below zero at the start of the event, demonstrating the higher percentage of negative flows from previously in practice.
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:volumes}Flood volume (million m$^3$) of an event with the median peak flow (104 m$^3$/s), duration and peak position: SEPA's single shape against 1000 simulated shapes from each scheme.}
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{lrrr}
+\toprule
+ & 5\% & Median & 95\%\\
+\midrule
+SEPA (single shape) & -- & 54.45 & --\\
+PCA, Conditional Normal & 25.56 & 36.56 & 48.09\\
+PCA, Conditional bootstrap & 25.42 & 36.54 & 47.88\\
+Wavelets, Conditional Normal & 25.42 & 36.61 & 48.24\\
+Wavelets, Conditional bootstrap & 26.01 & 37.05 & 47.47\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Other uncertainties (sampling in code while reconstruction, peak detection and cleaning choices and any others from lecture 5 final slide to be explored in words)}\label{other-uncertainties-sampling-in-code-while-reconstruction-peak-detection-and-cleaning-choices-and-any-others-from-lecture-5-final-slide-to-be-explored-in-words}
+
+\begin{figure}
+\centering
+\includegraphics{SCS_P1P2_REPORT_files/figure-latex/sampling-bands-1.pdf}
+\caption{\label{fig:sampling-bands}Edges of the simulated 90\% band from 100 refits to resampled events, for each combination.}
+\end{figure}
+
+\begin{table}[!h]
+\centering
+\caption{\label{tab:sampling}Sampling uncertainty: average width of the simulated 90\% band, and the average standard deviation of its edges across 100 refits to resampled events (fractions of the peak flow).}
+\centering
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{lrrr}
+\toprule
+ & Band width & SD of lower edge & SD of upper edge\\
+\midrule
+PCA, Conditional Normal & 0.472 & 0.036 & 0.036\\
+PCA, Conditional bootstrap & 0.468 & 0.034 & 0.034\\
+Wavelets, Conditional Normal & 0.471 & 0.035 & 0.033\\
+Wavelets, Conditional bootstrap & 0.469 & 0.035 & 0.032\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Recommendation}\label{recommendation}
+
+\begin{itemize}
+\tightlist
+\item
+  Recommend the best method and justify, alongside advantages and disadvantages
+\end{itemize}
+
+\section{Emulator application}\label{emulator}
+
+From our analysis above our proposed method, PCA, effectively represents the hydrograph shapes in a low-dimensional form. Each event is represented by its maximum discharge, duration and peak position alongside seven principal component scores describing its shape. This gives a total of ten emulator inputs, rather than treating every discharge measurement as separate parameters. This keeps the number of inputs small, as increasing the number of parameters requires more flood inundation model runs to fit the emulator.
+
+To train an emulator, SEPA could select a combinations of these ten parameters covering a plausible range of extreme flow events, while still accounting for the dependencies and constraints identified in our analysis. These inputs could be selected using a statistical design, such as a grid over the plausible parameter ranges (\citeproc{ref-wilson2026lec3}{Wilson, 2026a}). For each combination, PCA would be used to reconstruct the complete hydrograph, to be supplied to the flood inundation model.
+
+The resulting flood outcomes, such as maximum water depth or inundation extent, from the inundation model would form the outputs used to train emulator (\citeproc{ref-environmentagency2025}{Environment Agency, 2025}). The emulator would therefore be able to approximate the relationship between hydrograph parameters and flood outcomes replacing the need to run a flood inundation model, thereby reducing the computational burden.
+
+Once the emulator has been trained and validated, new combinations of the ten parameters can be sampled from the fitted joint distribution. These can be passed into the emulator to obtain a distribution of predicted flood depths or extents. This would allow SEPA the means to quantify how uncertainty in both peak discharge and hydrograph shape influence predicted flood risk, as currently they only are able to vary maximum flow alone.
+
+The reliability of these predictions depends on PCA's ability to characterise the observed flood shapes, generate hydrographs and capture dependencies between parameters. Additionally, the emulator itself also introduces prediction uncertainty. Thus, the flood model may differ from real-world flood behaviour, and these uncertainties would need to be considered when interpreting the resulting flood risk estimates.
+
+\section{Conclusion}\label{conclusion}
+
+\section{References}\label{references}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{1}{0}
+\bibitem[\citeproctext]{ref-environmentagency2025}
+Environment Agency. (2025). \emph{Rapid evidence assessment of the use of emulators in flood risk analysis} (Technical Report FRS19218a/TR). Environment Agency. \url{https://assets.publishing.service.gov.uk/media/6846c299e5a089417c80614f/FRS19218a_Technical_report.pdf}
+
+\bibitem[\citeproctext]{ref-robson1999}
+Robson, A., \& Reed, D. (1999). \emph{Flood estimation handbook, volume 3: Statistical procedures for flood frequency estimation}. Institute of Hydrology.
+
+\bibitem[\citeproctext]{ref-wilson2026lec3}
+Wilson, A. L. (2026a). \emph{Flood modelling and hydrographs, lecture 3}.
+
+\bibitem[\citeproctext]{ref-wilson2026lec5}
+Wilson, A. L. (2026b). \emph{Project 2: Model selection and validation, lecture 5}.
+
+\end{CSLReferences}
+
+\end{document}

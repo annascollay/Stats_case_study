@@ -79,7 +79,7 @@ source("master_code_part2.R")
 
 # Data and Exploratory Data Analysis {#initial-analysis}
 
-In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten [water years](https://en.wikipedia.org/wiki/Water_year) (2016-2026). For Part 2, we have expanded this dataset to `r n_years` [water years](https://en.wikipedia.org/wiki/Water_year) (2001-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events with the quality codes reconsidered in Section \@ref(unchecked-readings) – \@ref(suspect-readings), and form the basis of our analysis of hydrograph shape uncertainty.
+In Part 1 we extracted and cleaned 15-minute discharge data from the River Don at Parkhill covering ten [water years](https://en.wikipedia.org/wiki/Water_year) (2016-2026) [@robson1999]. For Part 2, we have expanded this dataset to `r n_years` [water years](https://en.wikipedia.org/wiki/Water_year) (2001-2026). The threshold and independence criteria established in Part 1 are retained to identify extreme flow events with the quality codes reconsidered in Section \@ref(unchecked-readings) – \@ref(suspect-readings), and form the basis of our analysis of hydrograph shape uncertainty.
 
 ```{r tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
 tidy_data_table
@@ -248,22 +248,24 @@ Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary bet
 
 ## Evaluation criteria {#evaluation-criteria}
 
-Following the lectures, we evaluate each method on three criteria: accuracy, parsimony, and fitness for purpose. These are initially used to choose the number of parameters for each method (Sections 3.3-3.6) and then, to compare the methods at these choices and on common groundings (Section 5).
+We compared the methods using three criteria: accuracy, parsimony, and fitness for purpose [@wilson2026lec5]. These helped choose the initial number of parameters for each method (Sections 3.3-3.6) and the final comparison in (Section 5).
 
-Since flood inundation uses real flows rather than standardised ones, we first convert each fitted curve back into a hydrograph in $m^3/s$ and hours by reversing the standardisation with each event's peak discharge, duration, and peak position. Then, we compare the fitted hydrograph $\hat{Q}_i(t)$ and the observed hydrograph $Q_i(t)$ for event $i$ at the same `r n_grid` time points, and summarise error by its average absolute value across all `r nrow(peaks)` extreme flow events.
-
-**Accuracy:** We measure how closely the whole hydrograph is reproduced using the root mean squared error,
+**Accuracy:** We measured how closely each method reconstructed the observed hydrographs using the root mean squared error (RMSE): 
 
 \begin{equation}
 \text{RMSE}_i = \sqrt{\tfrac{1}{`r n_grid`}\textstyle\sum_{j}\big(\hat{Q}_i(t_j) - Q_i(t_j)\big)^2}.
 (\#eq:rmse)
 \end{equation}
 
-Where possible, the errors are calculated both within and out of sample. For methods whose basis or average shape is estimated from all extreme flow events together (SEPA's approach, PCA and the choice of wavelet coefficients), we use leave-one-out cross-validation, in which each event in turn is removed, the method is refitted to the remaining $N - 1$ events, and the removed event is predicted. For methods fitted to each event separately (polynomial, B-spline and gamma-type), leaving an event out does not change the fit to the others, so the in-sample and leave-one-out errors are identical; for these, the events were instead split once at random into `r length(train_floods)` training and `r length(test_floods)` test events, which is used to choose each method's number of parameters.
+As flood inundation use actual discharge values not standardised values, we calculated errors after converting the reconstructed hydrographs back to their original discharge and time scales.
 
-**Parsimony:** The number of parameters needed to achieve that accuracy matters because the parameters become the emulator's inputs, and fewer, less correlated parameters make both the emulator and the modelling of their uncertainty easier. We therefore compare the number of shape parameters of each method and the correlation between them across events.
+For methods that estimate a shared shape or basis across extreme flow events (SEPA's approach, PCA and the wavelet coefficient selection), we used leave-one-out cross-validation. Each event was excluded in turn, while the shared model was refitted using the remaining $N - 1$ events The events excluded were then reconstructed using this fitted model.
 
-**Fitness for purpose:** In addition to the `RMSE`, we also consider how well each method reproduces key hydrograph features,
+For methods where each event was fitted separately (polynomial, B-spline and gamma-type), leaving out an event does not change the other fitted curves. So, we randomly divided the events into `r length(train_floods)` training and `r length(test_floods)` test events to compare the reconstruction errors and guide our selection of parameters.  
+
+**Parsimony:** As the shape parameters are inputs to the emulator, a method is required to ensure fewer parameters is preferable, provided that they still reconstruct the hydrographs accurately. Strong correlations between parameters may also complicate modelling their uncertainty. Thus, we compared both the number of shape parameters and their correlations across events.
+
+**Fitness for purpose:** The `RMSE` measures overall reconstruction accuracy, but it doesn't determine whether the method represents a valid range of hydrograph shapes. So, we also measure errors in peak discharge, peak timing and total flow volume [@wilson2026lec5]:
 
 \begin{align}
 \text{Peak error}_i &= \max_j \hat{Q}_i(t_j) - \max_j Q_i(t_j), (\#eq:peak)\\
@@ -271,7 +273,9 @@ Where possible, the errors are calculated both within and out of sample. For met
 \text{Volume error}_i &= 100 \times \frac{\int \hat{Q}_i(t)\,dt - \int Q_i(t)\,dt}{\int Q_i(t)\,dt}\ \%, (\#eq:volume)
 \end{align}
 
-where the integrals are evaluated by the trapezium rule. As every method except SEPA's places the peak at its observed position, their timing errors are close to zero by construction, so this error is mainly informative for the baseline. The second part of fitness for purpose, is how well unusual extreme flow events are reproduced, which we assess once their uncertainty has been modelled in Section \@ref(uncertainty).
+Flow volumes were calculated using the trapezium rule. As all methods except SEPA's baseline align peaks to their observed positions, timing errors are expected to be small by construction. This measure is therefore most useful for assessing the baseline.
+
+Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assesed further in Section @ref(uncertainty), where uncertainty in the shape parameters is modelled.
 
 ## Polynomial regression {#method-polynomial}
 
@@ -295,14 +299,15 @@ knitr::kable(
   caption   = "Proportion of events for which the highest-order polynomial term is significant at the 5% level."
 )
 ```
+From Table \@ref(tab:polysig), we observe that the proportion of significant higher-order terms does not decrease steadily with the degree, but it is generally lower at even degrees than odd. However, we only use this table only as a guide, because neighbouring points on a hydrograph are strongly correlated, which violates the independence assumption of the linear model, producing overly-optimistic results since standard errors are small.
+
 
 ```{r polychoice, echo=FALSE, fig.height=6, fig.cap="Average absolute errors for training and test events by polynomial degree."}
 plot_choice(poly_choice, "Polynomial degree")
 ```
 
-From Table \@ref(tab:polysig), we observe that the proportion of significant higher-order terms does not decrease steadily with the degree, but it is generally lower at even degrees than odd. However, we only use this table only as a guide, because neighbouring points on a hydrograph are strongly correlated, which violates the independence assumption of the linear model, producing overly-optimistic results since standard errors are small.
-
 Hence, we primarily choose the order from Figure \@ref(fig:polychoice), where we observe that all four errors fall as the degree increases, and the test errors follow training errors closely. Also, we see a similar even-odd trend from Table 3 across all four errors, with the largest improvements occuring when moving to a higher odd degree. The step from degree 6 to 7 is among the largest reductions in peak error, `RMSE` and timing error, with volume error staying approximately the same. Across all four errors, further increases either see a leveling off after degree 7, or smaller gains for each additional parameter, meaning degree 8 gives similar errors. Therefore, we choose $p =$ `r p_chosen`.
+
 
 ## Principal component analysis {#method-pca}
 
