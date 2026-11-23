@@ -79,7 +79,7 @@ source("master_code_part2.R")
 
 # Data and Exploratory Data Analysis {#initial-analysis}
 
-In Part 1, we extracted and cleaned the 15-minute discharge data for the River Don at Parkhill, which we have extended from ten [water years](https://en.wikipedia.org/wiki/Water_year) to twenty-five for Part 2, covering October 2001 to September 2026 (Table 1). We retain the same threshold of 65 $m^3/s$ and the Robson and Reed [@robson1999] independence criteria, which identifies `r nrow(peaks)` independent extreme flow events, an average of `r sprintf("%.2f", nrow(peaks) / n_years)` per year.
+We have extended the 15-minute discharge data for the River Don at Parkhill from ten [water years](https://en.wikipedia.org/wiki/Water_year) in Part 1 to twenty-five for Part 2. We retain the 65 $m^3/s$ threshold and the Robson and Reed [@robson1999] independence criteria, which identifies `r nrow(peaks)` independent extreme flow events, an average of `r sprintf("%.2f", nrow(peaks) / n_years)` per year.
 
 ```{r tidyingthedata, echo=FALSE, message=FALSE, warning=FALSE, tab.cap="Data used in this analysis, and the quality codes assigned to each reading"}
 tidy_data_table
