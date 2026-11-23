@@ -2000,6 +2000,30 @@ flood_size_timing <- cbind(peak_flow     = events$peak_flow,
 pca_dependence <- round(cor(pca_scores, flood_size_timing, method = "spearman"), 2)
 wav_dependence <- round(cor(wav_params, flood_size_timing, method = "spearman"), 2)
 
+# Heatmap of the Spearman correlations: one row per shape parameter (PC1 at the top),
+# one column per standardisation parameter, red negative and blue positive
+plot_dependence <- function() {
+  dependence <- rbind(pca_dependence, wav_dependence)
+  dependence <- dependence[nrow(dependence):1, ]          # reverse so PC1 is at the top
+  n_params   <- nrow(dependence)
+  colours    <- colorRampPalette(c("#B2182B", "white", "#2166AC"))(101)
+  values     <- round(dependence, 2)
+  values[values == 0] <- 0                                # print 0.00 rather than -0.00
+  
+  par(mar = c(0.5, 3.5, 2, 0.5))
+  image(1:3, 1:n_params, t(dependence), zlim = c(-1, 1), col = colours,
+        axes = FALSE, xlab = "", ylab = "")
+  abline(h = 0:n_params + 0.5, v = 0:3 + 0.5, col = "white", lwd = 2)   # gaps between cells
+  abline(h = nrow(wav_dependence) + 0.5, col = "grey20", lwd = 1.5)     # line between PCA and wavelets
+  text(rep(1:3, each = n_params), rep(1:n_params, 3), sprintf("%.2f", values), cex = 0.8,
+       font = ifelse(abs(values) >= 0.5, 2, 1))                         # bold if |correlation| >= 0.5
+  axis(3, at = 1:3, labels = c("Peak flow", "Duration", "Peak position"),
+       tick = FALSE, line = -0.8, cex.axis = 0.85)
+  axis(2, at = 1:n_params, labels = rownames(dependence), las = 1, tick = FALSE,
+       line = -0.5, cex.axis = 0.85)
+  par(mar = c(5, 4, 4, 2) + 0.1)
+}
+
 # Follow-up check: once size and timing are accounted for, is the remaining
 # variation still roughly Normal? Normal Q-Q plot of the residuals from
 # regressing each shape parameter on peak flow, duration and peak position
@@ -2069,6 +2093,14 @@ simulate_conditional_bootstrap <- function(shape_params, size_timing, new_size_t
 
 simulators <- list("Conditional Normal"    = simulate_conditional_normal,
                    "Conditional bootstrap" = simulate_conditional_bootstrap)
+
+# Bandwidths and the share of simulated variance coming from the Normal noise
+h_pca <- silverman_h(pca_residuals)
+h_wav <- silverman_h(wav_residuals)
+
+noise_share <- function(h) h^2 / (1 + h^2)
+noise_share_pca <- noise_share(h_pca)
+noise_share_wav <- noise_share(h_wav)
 
 # The four combinations, in panel order:
 # PCA Normal, PCA bootstrap, wavelets Normal, wavelets bootstrap
