@@ -1777,7 +1777,6 @@ per_event_long_plot <- ggplot(per_event_long, aes(method, value, fill = method))
 tradeoff_long_plot <- ggplot(tradeoff_long, aes(K, value, colour = method)) +
   geom_hline(data = sepa_ref, aes(yintercept = value), inherit.aes = FALSE,
              linetype = "dashed", colour = "grey40") +
-  geom_vline(xintercept = n_smooth_cmp + 1, linetype = "dotted", colour = "grey60") +
   geom_line(linewidth = 0.6) +
   geom_point(size = 1.3) +
   geom_point(data = filter(tradeoff_long, chosen), size = 3.5, shape = 21,
@@ -1790,8 +1789,20 @@ tradeoff_long_plot <- ggplot(tradeoff_long, aes(K, value, colour = method)) +
   theme_minimal() +
   theme(legend.position = "bottom", panel.grid.minor = element_blank())
 
+# Rows grouped by comparison (row groups added in the Rmd with pack_rows()),
+# ordered as in the text: each finalist against SEPA, PCA against the best
+# fixed basis, then the two finalists against each other. Only the display
+# order changes; paired_results (and the bootstrap) is untouched.
+paired_order <- c("PCA minus SEPA (average shape)",
+                  "Wavelets minus SEPA (average shape)",
+                  "PCA minus B-spline",
+                  "Wavelets minus PCA")
 paired_tbl <- paired_results %>%
+  mutate(comparison = factor(comparison, levels = paired_order)) %>%
+  arrange(comparison) %>%
   transmute(
+    Comparison = factor(sub(" minus ", " vs ", comparison),
+                        levels = sub(" minus ", " vs ", paired_order)),
     Metric     = metric,
     Difference = sprintf("%+.2f", diff),
     CI         = sprintf("(%+.2f, %+.2f)", lower, upper),

@@ -55,5 +55,9 @@ Expensive steps are wrapped in `cached(name, expr, key)`, which writes `cache/<n
 ## Report conventions
 
 - Methods and results are described in plain language aimed at SEPA (e.g. "extreme flow event", "standardised time"), consistent with existing captions.
+- **House rules (apply to all report text):**
+  - The 118 identified extremes are "extreme flow events" or "events", never "floods".
+  - No special/Unicode characters (³, ≈, ×, −, →, etc.) in report text: use LaTeX only, e.g. `$\text{m}^3/\text{s}$`, `$\approx$`, `$\times$`.
+  - Do not alter the base code of plots or tables (in `master_code_part2.R` or the Rmd's `kable()`/plot calls) without explicit permission. Captions and prose may be edited.
 - Cross-references use bookdown labels (`{#method-pca}`, `\@ref(...)`); citations come from `Project_2_references.bib` (APA CSL).
 - Figures float with `H` placement; figure sizes are set per chunk.
