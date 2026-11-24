@@ -682,7 +682,7 @@ in $\text{m}^3/\text{s}$, where lower is better. For SEPA's single fixed shape, 
 
 **Physical validity:** the percentage of simulated standardised curves that fall below zero or rise more than 1\% above the peak value of one, neither of which a real hydrograph can do.
 
-## Validating the simulations
+## Validating the simulations {#uncertainty-validating-sim}
 
 Before simulating new events, we check whether each approach's simulations are consistent with real events not used to fit it. We leave out each of the `r nrow(Y)` events in turn, refitting both the shape method and the distribution to the remaining `r nrow(Y) - 1`, and simulating with the left-out event's own $\mathbf{s}_i$.
 
@@ -713,7 +713,7 @@ We now refit each approach to every event and simulate `r n_sim` new standardise
 plot_fan_charts()
 ```
 
-All four give very similar overall shapes and bands (Figure \@ref(fig:fan-charts)), with most observed events lying within the 90\% band, the main exceptions being multi-peaks on the recession, in line with Section \@ref(oos). The upper edge of the bands also rises alightly above the peak, and this is more pronounced for wavelets, while for both methods the lower edge under the normal reaches zero near the start of the event, which the bootstrap avoids.
+All four give very similar overall shapes and bands (Figure \@ref(fig:fan-charts)), with most observed events lying within the 90\% band, the main exceptions being multi-peaks on the recession, in line with Section \@ref(uncertainty-validating-sim). The upper edge of the bands also rises slightly above the peak, and this is more pronounced for wavelets, while for both methods the lower edge under the normal reaches zero near the start of the event, which the bootstrap avoids.
 
 SEPA is primarily interested in how much land floods, which depends heavily on how much water passes through, so we also consider the total volume of a typical event, fixing its peak flow, duration and peak position at their medians so that only the shape changes.
 
