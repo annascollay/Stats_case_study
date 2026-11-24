@@ -819,8 +819,8 @@ plot_example_fits <- function(Y_fit, title) {
          ylim = range(observed$discharge, fitted$discharge),
          xlab = "Hours since start", ylab = "Discharge (m^3/s)",
          main = paste(title, "- event", i))
-    lines(fitted$hours, fitted$discharge, col = "red", lwd = 2, lty = 2)
-    legend("topright", c("Observed", "Fitted"), col = c("black", "red"),
+    lines(fitted$hours, fitted$discharge, col = "#AA1945", lwd = 2, lty = 2)
+    legend("topright", c("Observed", "Fitted"), col = c("black", "#AA1945"),
            lty = c(1, 2), lwd = 2, cex = 0.8)
   }
   par(mfrow = c(1, 1))
@@ -832,7 +832,7 @@ plot_residuals <- function(Y_fit, title) {
   matplot(grid_u, t(residuals), type = "l", lty = 1, col = "grey",
           xlab = "Rescaled time u", ylab = "Observed - fitted",
           main = paste(title, ": residuals against time"))
-  lines(grid_u, colMeans(residuals), col = "red", lwd = 2)
+  lines(grid_u, colMeans(residuals), col = "#AA1945", lwd = 2)
   abline(h = 0, lty = 2)
 }
 
@@ -1427,7 +1427,7 @@ print(round(cor(bspline_coefs), 2))
 
 fits_to_compare <- list(Y_poly, Y_pca, Y_wav, Y_gamma, Y_bspline)
 method_names    <- c("Polynomial", "PCA", "Wavelets", "Gamma-type", "B-spline")
-method_colours <- c("#D55E00", "#0072B2", "#E69F00", "#009E73", "#CC79A7")
+method_colours <- c("#9C78BA", "#5298BC", "#CC6679", "#FDD835", "#B6D86F")
 
 # Fitted curves from every method on the same six events as plot_example_fits()
 # (section 10). One row per method, one column per event.
@@ -1542,7 +1542,7 @@ cmp <- list(
                       params = wav_params)
 )
 cmp_order   <- names(cmp)
-cmp_colours <- c("SEPA (average shape)" = "grey40", setNames(method_colours, method_names))
+cmp_colours <- c("SEPA (average shape)" = "#174B67", setNames(method_colours, method_names))
 
 # Per-event errors (section 10 definitions)
 cmp_err <- map(cmp, function(m) list(
@@ -1776,7 +1776,7 @@ per_event_long_plot <- ggplot(per_event_long, aes(method, value, fill = method))
 
 tradeoff_long_plot <- ggplot(tradeoff_long, aes(K, value, colour = method)) +
   geom_hline(data = sepa_ref, aes(yintercept = value), inherit.aes = FALSE,
-             linetype = "dashed", colour = "grey40") +
+             linetype = "dashed", colour = "#174B67") +
   geom_line(linewidth = 0.6) +
   geom_point(size = 1.3) +
   geom_point(data = filter(tradeoff_long, chosen), size = 3.5, shape = 21,
@@ -1957,8 +1957,8 @@ cat("Wavelets check:", max(abs(wav_sim_curves(wav_params) - Y_wav)), "\n")
 # Row 1: PCA scores (blue). Rows 2-3: wavelet parameters (orange), smooth
 # coefficients S1-S8 then detail coefficients D1-D5.
 
-pca_colour <- "#0072B2"
-wav_colour <- "#E69F00"
+pca_colour <- "#5298BC"
+wav_colour <- "#CC6679"
 
 # Normal Q-Q plot of one parameter
 qq_panel <- function(values, name, colour) {

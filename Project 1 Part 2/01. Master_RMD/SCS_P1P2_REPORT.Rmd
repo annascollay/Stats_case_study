@@ -89,6 +89,9 @@ tidy_data_table
 
 We identified `r nrow(unchecked_model$unique_readings)` Unchecked readings falling within `r n_distinct(unchecked_model$in_windows$Event_ID)` of the standardised event windows (Table \@ref(tab:uncheckeddata)).
 
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
 ```{r uncheckeddata, results="asis", echo=FALSE}
 if (!is.null(unchecked_model)) {
   knitr::kable(
@@ -101,6 +104,7 @@ if (!is.null(unchecked_model)) {
   )
 }
 ```
+\endgroup
 
 We compared the original Unchecked readings with interpolated values to decide whether retaining these Unchecked readings was reasonable (Figure \@ref(fig:uncheckedscatter))
 
@@ -266,21 +270,63 @@ where $X$ is the `r n_grid`$\times(p+1)$ design matrix with columns $1,u,\ldots,
 
 To choose the degree $p$, we tested degrees 2–15, comparing errors across training and test events (Figure \@ref(fig:polychoice)). We also examined the significance of the highest-order coefficient (Table \@ref(tab:polysig)). However,  these tests are less reliable as neighbouring discharge readings are correlated, violating the independence assumption used to calculate standard errors.
 
-```{r polysig, echo=FALSE, out.width="80%"}
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.37\textwidth}
+\vspace{0pt}
+\centering
+\begin{minipage}[c][7.5cm][c]{\linewidth}
+\centering
+
+```{r polysig, echo=FALSE, results="asis"}
 knitr::kable(
-  data.frame(degree = degrees, prop = sprintf("%.2f", prop_significant)),
-  format    = "markdown",
-  col.names = c("Degree $p$", "Proportion of events with $\\theta_p$ significant at 5%"),
-  align     = "cc",
-  caption   = "Proportion of events for which the highest-order polynomial term is significant at the 5% level."
-)
+  data.frame(
+    degree = degrees,
+    prop = sprintf("%.2f", prop_significant)
+  ),
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  col.names = c("Degree $p$", "Proportion significant"),
+  align = "cc",
+  linesep = ""
+) %>%
+  kableExtra::kable_styling(
+    font_size = 8,
+    full_width = FALSE,
+    position = "center",
+    latex_options = "scale_down"
+  )
 ```
+
+\end{minipage}
+
+\captionof{table}{Proportion of events for which the highest-order polynomial term is significant at the 5\% level.}
+\label{tab:polysig}
+
+\end{minipage}%
+\hfill%
+\begin{minipage}[t]{0.59\textwidth}
+\vspace{0pt}
+\centering
+\begin{minipage}[c][7.5cm][c]{\linewidth}
+\centering
+
+```{r polychoice, echo=FALSE, fig.height=5, fig.width=6, out.width="100%", fig.align="default"}
+plot_choice(poly_choice, "Polynomial degree")
+```
+
+\end{minipage}
+
+\caption{Average absolute errors for training and test events by polynomial degree.}
+\label{fig:polychoice}
+
+\end{minipage}
+\end{figure}
+
 
 Figure \@ref(fig:polychoice) shows that the errors generally decrease with increasing degree, particularly when moving to higher odd degrees. Degree 7 gives a substantial improvement over degree 6 in RMSE, peak and timing errors, while higher degrees offer smaller improvements relative to the additional parameters. We therefore selected $p =$ `r p_chosen`, representing each hydrograph using eight shape parameters.
 
-```{r polychoice, echo=FALSE, fig.height=6, fig.cap="Average absolute errors for training and test events by polynomial degree.", out.width="80%", fig.align='center'}
-plot_choice(poly_choice, "Polynomial degree")
-```
 
 
 ## Principal component analysis (PCA) {#method-pca}
@@ -296,7 +342,7 @@ y_i(u_j) \approx \bar{y}(u_j) + \sum_{k=1}^{K} \xi_{ik}\,\phi_k(u_j), \qquad \xi
 
 The scores $\xi_{i1}, \dots, \xi_{iK}$ are the shape parameters for event $i$. Unlike polynomial coefficients, PCA scores are uncorrelated across the fitted events by construction, making their uncertanity easier to model.
 
-```{r pcaloadings, echo=FALSE, fig.height=4, fig.cap="The first three principal components against standardised time.", out.width="80%", fig.align='center'}
+```{r pcaloadings, echo=FALSE, fig.height=5, fig.width=8, fig.cap="The first three principal components against standardised time.", out.width="90%", fig.align='center'}
 matplot(grid_u, pca_result$rotation[, 1:3], type = "l", lty = 1, lwd = 2,
         col = c("#AA1945", "#5298BC", "#174B67"),
         xlab = "Standardised time u", ylab = "Loading", main = "")
@@ -308,10 +354,15 @@ legend("bottomright", c("PC1", "PC2", "PC3"), lty = 1, lwd = 2,
 Figure \@ref(fig:pcaloadings) shows that the first three principal components explain `r round(100 * cum_var[3])`% of the variation. PC1 (`r round(100 * cum_var[1])`%) mainly describes event width, PC2 contrasts the rising and falling limbs, and PC3 captures the difference in the steepness of the rising limb. All three are close to zero at the aligned peak, where the standardised hydrographs have almost no variation. 
 
 We select $K$ using cumulative variance explained (Figure \@ref(fig:pcacumvar)) and reconstruction errors (Figure \@ref(fig:pcachoice)). For the leave-one-our check, the mean curve and components were recalculated without each excluded event before reconstructing it. Six components explained approximately 95% of the variation with little improvement in leave-one-out RMSE from adding a seventh. We therefore selected $K=6$, reducing each hydrograph to six shape parameters.
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.37\textwidth}
+\vspace{0pt}
+\centering
+\begin{minipage}[c][7.5cm][c]{\linewidth}
+\centering
 
-
-```{r pcacumvar, echo=FALSE, fig.height=4.5, fig.align='center', out.width='75%'}
-
+```{r pcacumvar, echo=FALSE, fig.height=4.5, fig.width=5, out.width="100%", fig.align="default"}
 ggplot(
   data.frame(K = seq_along(cum_var), cum_var = cum_var),
   aes(x = K, y = cum_var)
@@ -333,15 +384,39 @@ ggplot(
     x = "Number of components (K)",
     y = "Cumulative proportion of variation"
   ) +
-  theme_bw()
+  theme_bw() +
+  theme(
+    plot.title = element_text(size = 10),
+    axis.title = element_text(size = 9)
+  )
 ```
-\begin{center}
-\captionof{figure}{Cumulative proportion of variation explained by the first $K$ principal components, with the dashed line at 95\%.\label{fig:pcacumvar}}
-\end{center}
 
-```{r pcachoice, echo=FALSE, fig.height=6, fig.cap="Average absolute errors, in-sample and leave-one-out, by number of principal components", out.width="80%", fig.align='center'}
+\end{minipage}
+
+\caption{Cumulative proportion of variation explained by the first $K$ principal components, with the dashed line at 95\%.}
+\label{fig:pcacumvar}
+
+\end{minipage}%
+\hfill%
+\begin{minipage}[t]{0.59\textwidth}
+\vspace{0pt}
+\centering
+\begin{minipage}[c][7.5cm][c]{\linewidth}
+\centering
+
+```{r pcachoice, echo=FALSE, fig.height=5, fig.width=6, out.width="100%", fig.align="default"}
 plot_choice(pca_choice, "Number of components K")
 ```
+
+\end{minipage}
+
+\caption{Average absolute errors, in-sample and leave-one-out, by number of principal components.}
+\label{fig:pcachoice}
+
+\end{minipage}
+\end{figure}
+
+
 
 ## Wavelets {#method-wavelets}
 Wavelets represent a hydrograph using functions localised in time and scale, making them useful for capturing sharp peaks and smaller fluctuations without changing the whole fitted curve [@wilson2026lec4]. We applied the discrete wavelet transformation (DWT) to each standardised hydrograph, separating it into a smooth component and details at three resolution levels:
@@ -356,20 +431,45 @@ where $a_{ik}$ are the smooth coefficients and $d_{ijk}$ are the detail coeffici
 To reduce the number of parameters, we kept all `r n_grid / 2^wav_levels` smooth coefficients and selected the $M$ detail coefficient positions with the largest average absolute values across events. The same positions were retained for every event, so each parameter represents the same feature.
 
 We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavdecomp)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
-
-```{r wavdecomp, echo=FALSE, fig.height=6, fig.cap="Wavelet decomposition of event 1: the detail coefficients at each level and the smooth coefficients.", out.width="80%", fig.align='center'}
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.37\textwidth}
+\vspace{0pt}
+\centering
+```{r wavdecomp, echo=FALSE, fig.height=7, fig.width=5, out.width="100%"}
 par(mfrow = c(4, 1), mar = c(2, 4, 2, 1))
-plot(wt_example@W[[1]], type = "h", lwd = 2, col = "#5298BC", xlab = "", ylab = "", main = "Level 1 detail (finest)")
-plot(wt_example@W[[2]], type = "h", lwd = 2, col = "#5298BC", xlab = "", ylab = "", main = "Level 2 detail")
-plot(wt_example@W[[3]], type = "h", lwd = 2, col = "#5298BC", xlab = "", ylab = "", main = "Level 3 detail (coarsest)")
-plot(wt_example@V[[3]], type = "h", lwd = 2, col = "#174B67", xlab = "", ylab = "", main = "Level 3 smooth")
+
+plot(wt_example@W[[1]], type = "h", lwd = 2, col = "#5298BC",
+     xlab = "", ylab = "", main = "Level 1 detail (finest)")
+
+plot(wt_example@W[[2]], type = "h", lwd = 2, col = "#5298BC",
+     xlab = "", ylab = "", main = "Level 2 detail")
+
+plot(wt_example@W[[3]], type = "h", lwd = 2, col = "#5298BC",
+     xlab = "", ylab = "", main = "Level 3 detail (coarsest)")
+
+plot(wt_example@V[[3]], type = "h", lwd = 2, col = "#174B67",
+     xlab = "", ylab = "", main = "Level 3 smooth")
+
 par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
 ```
-
-```{r wavchoice, echo=FALSE, fig.height=6, fig.cap="Average absolute errors, in-sample and leave-one-out, by number of detail coefficients kept.", out.width="80%", fig.align='center'}
+\vspace{15pt}
+\caption{Wavelet decomposition of event 1: the detail coefficients at each level and the smooth coefficients.}
+\label{fig:wavdecomp}
+\end{minipage}%
+\hfill%
+\begin{minipage}[t]{0.59\textwidth}
+\vspace{0pt}
+\centering
+```{r wavchoice, echo=FALSE, fig.height=5, fig.width=5, out.width="100%"}
 plot_choice(wav_choice, "Detail coefficients kept")
 ```
 
+\caption{Average absolute errors, in-sample and leave-one-out, by number of detail coefficients kept.}
+\label{fig:wavchoice}
+
+\end{minipage}
+\end{figure}
 We also compared `haar`, `d4` and `la8` wavelets at different decomposition levels table \@ref(tab:wavsens). Increasing the number of levels did reduce the parameter count but generally also increased errors. At three levels, `la8` gave the lowest `RMSE`, ($3.34 \text{m}^3/\text{s}$), peak error ($0.98 \text{m}^3/\text{s}$) and volume error ($0.10\%$). So we selected `la8` with three levels and five detail coefficients.
 
 ```{r wavsens, echo=FALSE, out.width="80%"}
