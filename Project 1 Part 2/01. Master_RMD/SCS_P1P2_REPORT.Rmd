@@ -76,6 +76,17 @@ source("master_code_part2.R")
 ```
 
 # Executive Summary
+Current flood models typically assume that the shape of an event of extreme river flow remains fixed, and is adjusted only for the how big the flow is. However, real extreme events vary considerably in how quickly water levels rise, how long they remain high for, and how gradually they return to normal. Ignoring these differences leads to an incomplete assessment of flood risk. As detailed flood inundation models are computationally expensive and time consuming, the Scottish Environment Protection Agency (SEPA) aims to use simpler statistical models, known as emulators, to approximate their results efficiently. 
+
+This report investigates alternative methods for representing variation in the shape of river flow hydrographs, which describe how river discharge changes over time during a period of extreme flow. Rather than considering only the maximum flow, we examine methods that use additional information from throughout the event to capture differences in event duration, the rate of rising and falling flows, the time taken to reach maximum, and overall shape.
+
+Using 25 years of river flow data from the River Don at Parkhill gauging station, we identified 118 extreme flow events for analysis. These events were used to investigate and compare different approaches to representing hydrograph shapes with a small number of parameters, allowing them to be incorporated into an emulator without excessive computational complexity.  
+
+We compared six methods: SEPA's existing approach, polynomial regression, principal component analysis (PCA), wavelet analysis, B-splines and a gamma-type function. The comparison considered how accurately each method reproduced historical high flow events, particularly their maximum flow, timing and total volume of water.
+
+PCA and wavelet analysis were identified as the two most promising methods and were selected for further uncertainty analysis. PCA was able to capture approximately 95% of the observed variation in hydrograph shape using only six parameters to describe shape. The most prominent source of variation was the width of the hydrograph, accounting for approximately 59% of the variation in shape. This highlights the importance of considering how long river flows remain elevated, rather than focusing solely on maximum flow.
+
+Based on these findings, we recommend that SEPA adopts principal component analysis (PCA) to represent uncertainty in hydrograph shape. This approach offered a favourable balance between reconstruction accuracy and computational efficiency, requiring only nine inputs to the emulator, compared with sixteen for the wavelet model. This allows a greater range of scenarios to be investigated without introducing unnecessary complexity. Although PCA may not fully reproduce particularly sharp or unusual flood events, it provides a practical approach to capturing the principal differences between observed hydrograph shapes. By incorporating uncertainty in hydrograph shape alongside maximum river flow, this approach allows SEPA to explore a wider range of plausible scenarios more accurately. When combined with an emulator, it could support more comprehensive flood risk assessments and better-informed decisions about flood defences, land use and future development.
 
 # Data and Exploratory Data Analysis {#initial-analysis}
 
@@ -216,7 +227,7 @@ Leave-one-out validation uses the average of the remaining $N - 1$ events to tes
 
 ## Evaluation criteria {#evaluation-criteria}
 
-We compared the methods using three criteria: accuracy, parsimony, and fitness for purpose [@wilson2026lec5]. These helped choose the initial number of parameters for each method (Sections @ref(method-polynomial) - @ref(method-other)) and the final comparison in (Section @ref(Comparison)).
+We compared the methods using three criteria: accuracy, parsimony, and fitness for purpose [@wilson2026lec5]. These helped choose the initial number of parameters for each method (Sections \@ref(method-polynomial) - \@ref(method-other)) and the final comparison in (Section \@ref(Comparison)).
 
 **Accuracy:** measures how closely each method reconstructs the observed hydrographs using the root mean squared error (RMSE): 
 
