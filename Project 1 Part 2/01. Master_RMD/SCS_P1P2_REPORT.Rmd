@@ -106,15 +106,14 @@ if (!is.null(unchecked_model)) {
 ```
 \endgroup
 
-We compared the original Unchecked readings with interpolated values to decide whether retaining these Unchecked readings was reasonable (Figure \@ref(fig:uncheckedscatter))
+Unchecked readings were compared to linearly interpolated values to decide if retaining the readings was reasonable. (Figure \@ref(fig:uncheckedscatter))
 
 ```{r uncheckedscatter, echo=FALSE, fig.cap="Unchecked readings against the linear interpolation between neighbouring checked readings."}
 if (!is.null(unchecked_model)) unchecked_model$plot
 ```
 
-All Unchecked readings lie close to this line with a `RMSE` of `r sprintf("%.3f", unchecked_model$rmse)` $\text{m}^3/\text{s}$ against discharge values of up to `r sprintf("%.0f", unchecked_model$max_q)` $\text{m}^3/\text{s}$, so these discrepancies are relatively small.
+All readings closely agree with interpolated values, with a `RMSE` of `r sprintf("%.3f", unchecked_model$rmse)` $\text{m}^3/\text{s}$ against discharges of up to `r sprintf("%.0f", unchecked_model$max_q)` $\text{m}^3/\text{s}$. Although this does not establish their accuracy, retaining them is unlikely to materially affect hydrograph shape.
 
-Although this does not prove that the Unchecked readings are completely accurate, it provides some reassurance that retaining them is unlikely to significantly affect the hydrograph shapes, and avoids unnecessary modification to the data.
 
 ### Suspect readings {#suspect-readings}
 
@@ -156,13 +155,11 @@ To investigate the variation in hydrograph shape, the `r nrow(peaks)` independen
 hydrograph_overlay_plot
 ```
 
-We observe significant variation in maximum discharge, the sharpness of peaks, and the rising and falling limbs.
-
-The mean hydrograph smooths over important differences between individual events. Consequently, representing every event using an average hydrograph scaled by peak discharge fails to capture the full variability in an event.
+Variation in peak discharge, sharpness and rising and falling limbs were observed, demonstrating that the fixed mean hydrograph doesn't adequately capture the variability between events.
 
 ## Standardising the hydrographs {#standardising-the-hydrographs}
 
-Our analysis reveals that extreme flow events differ in duration, peak discharge, and the relative timing of peaks. Since these differences obscure the variation in hydrograph shape, we standardise the extreme flow events:
+To isolate variation in hydrograph shape, we standardise each extreme flow event as follows:
 
 - Events are defined between rising and falling limb troughs.
 
@@ -178,12 +175,10 @@ Our analysis reveals that extreme flow events differ in duration, peak discharge
 
 - The resulting data are arranged into a matrix ($Y$), with one row per event and 64 columns for each time point.
 
-The original peak discharge, event duration and relative peak position are retained separately, allowing for the transformation of standardised hydrographs to their original discharge and time scales for subsequent model validation.
+Peak discharge, event duration and relative peak position are retained to reverse standardisation during validation.
 
 # Methods for representing hydrograph shape
-Since every input to an emulator increases the number of runs to fit it, and each run is slow, we aim to minimise the number of inputs. After standardisation (Section \@ref(#standardising-the-hydrographs)), each of the ($N =$ `r nrow(Y)`) extreme flow events are summarised to `r n_grid` time points $u_j$, their standardised discharge $y_i(u_j)$, peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$.
-
-Using all of these `r n_grid + 3` values as inputs would be impractical. So, we considered five methods for reducing the number of parameters needed to represent hydrograph shape. These methods are polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function.
+Each standardised event (Section \@ref(standardising-the-hydrographs)) comprises of `r n_grid` discharge values, peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$. To reduce computational cost of fitting an emulator, we investigate five different dimension reduction methods: polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function.
 
 Most methods approximate each standardised hydrograph by a weighted sum of $K$ basis functions,
 
@@ -199,11 +194,10 @@ where $\phi_k(u)$ are the basis functions and $\theta_{ik}$ are the shape parame
 (\#eq:inputs)
 \end{equation}
 
-Peak discharge, duration and relative peak position are retained separately, giving ($K+3$) inputs in total to the emulator, where $K$ is significantly smaller than the previous `r n_grid`.
+Peak discharge, duration and relative peak position are retained separately, giving ($K+3$) inputs in total to the emulator, where $K$ is considerably smaller than the previous `r n_grid`.
 
 ## SEPA's Approach {#method-SEPA}
-
-SEPA's current approach is our baseline. It uses a fix-shape hydrograph, which is scaled according to maximum discharge. We construction the baseline by averaging the standardised hydrographs (from \@ref(standardising-the-hydrographs)) without aligning their peaks, (as SEPA does not). The unaligned curves $\tilde{y}_i(u)$, are then averaged across extreme flow events,
+SEPA's fixed-shape approach provides our baseline. It uses a fixed shape hydrograph, which is scaled according to maximum discharge, the standardised hydrographs is averaged without peak alignment:
 
 \begin{equation}
 \bar{y}(u) = \frac{1}{N}\sum_{l=1}^{N} \tilde{y}_l(u),
@@ -217,9 +211,8 @@ and rescaled to have a peak value of one,
 (\#eq:sepa-2)
 \end{equation}
 
-The fitted hydrograph for extreme flow event $i$ is obtained by stretching $\hat{y}$ to the event's duration $W_i$ and multiplying it by its peak discharge $Q_i^{\text{peak}}$. This means every event shares the same shape and differs only in its height and length. To test how well this shape predicts an event it has not seen, each event is also compared with the average of the other $N - 1$ events only.
-
-Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary between events. This means the observed hydrographs now obtained may be more accurate than the strictly fixed-duration approach.
+The fitted hydrograph for event $i$ i stretched to duration $W_i$ and multiplied by peak discharge $Q_i^{\text{peak}}$. 
+Leave-one-out validation uses the average of the remaining $N - 1$ events to test how well this shape predicts events it has not seen. Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary, potentially improving its reconstruction accuracy.
 
 ## Evaluation criteria {#evaluation-criteria}
 
@@ -232,11 +225,11 @@ We compared the methods using three criteria: accuracy, parsimony, and fitness f
 (\#eq:rmse)
 \end{equation}
 
-As the flood inundation model uses actual discharge values not standardised, the errors were calculated after converting the reconstructed hydrographs back to their original discharge and time scales.
+Errors are calculated on the original discharge and time scales as this is what the flood inundation model uses. 
 
-For methods that estimate a shared shape or basis across extreme flow events (SEPA's approach, PCA and the wavelet coefficient selection), we used leave-one-out cross-validation. Each event was excluded in turn, while the shared model was refitted using the remaining $N - 1$ events The events excluded were then reconstructed using this fitted model.
+For methods estimating a shared shape or basis (SEPA's approach, PCA and the wavelet coefficient selection), leave-one-out validation refits this representation using the remaining $N - 1$ events.
 
-For methods where each event was fitted separately (polynomial, B-spline and gamma-type), leaving out an event doesn't change the other fitted curves. So, we randomly divided the events into `r length(train_floods)` training and `r length(test_floods)` test events to compare the reconstruction errors and guide our selection of parameters.  
+For individually fitted methods (polynomial, B-spline and gamma-type), this wouldn't change the other fitted curves. So, a random training-test split assesses whether the chosen model complexity generalises across events. The events are divided into `r length(train_floods)` training and `r length(test_floods)` test events to compare the reconstruction errors and guide our selection of parameters.  
 
 **Parsimony:** The number of shape parameters and their correlations across events was compared, as fewer parameters reduce complexity, provided that reconstruction accuracy is maintained, while strong correlations complicate uncertainty modelling.
 
@@ -324,22 +317,22 @@ plot_choice(poly_choice, "Polynomial degree")
 \end{figure}
 
 
-Figure \@ref(fig:polychoice) shows that the errors generally decrease with increasing degree, particularly when moving to higher odd degrees. Degree 7 gives a substantial improvement over degree 6 in RMSE, peak and timing errors, while higher degrees offer smaller improvements relative to the additional parameters. We therefore selected $p =$ `r p_chosen`, representing each hydrograph using eight shape parameters.
+The errors generally decrease with increasing degree, particularly when moving to higher odd degrees (Figure \@ref(fig:polychoice)). Degree 7 substantially improves RMSE, peak and timing errors, with diminishing returns thereafter. We therefore selected $p =$ `r p_chosen`, representing each hydrograph using eight shape parameters.
 
 
 
 ## Principal component analysis (PCA) {#method-pca}
 
-Unlike the polynomial, PCA estimates its basis functions from the hydrographs themselves, finding the curves that best describe the pattern of variation between events [@wilson2026lec4]. 
+PCA estimates basis functions directly from the observed hydrographs [@wilson2026lec4]. 
 
-We arranged the standardised hydrographs into a  `r nrow(Y)` $\times$ `r n_grid` matrix $Y$, with one row per event, and centred each column by subtracting the mean curve $\bar{y}(u_j)$. No further scaling was needed, as all discharge values were already standardised. The principle components $\phi_1, \phi_2, \dots$, are the eigenvectors of the sample covariance matrix, ordered by the amount of variation they explain. Each hydrograph is then approximated by
+The standardised hydrographs are arranged in a  `r nrow(Y)` $\times$ `r n_grid` matrix $Y$, with one row per event, and centred each column by subtracting the mean curve $\bar{y}(u_j)$. The principle components $\phi_1, \phi_2, \dots$, are the eigenvectors of the sample covariance matrix, ordered by explained variance. Each hydrograph is then approximated by
 
 \begin{equation}
 y_i(u_j) \approx \bar{y}(u_j) + \sum_{k=1}^{K} \xi_{ik}\,\phi_k(u_j), \qquad \xi_{ik} = \sum_{j=1}^{`r n_grid`} \big(y_i(u_j) - \bar{y}(u_j)\big)\,\phi_k(u_j),
 (\#eq:pca)
 \end{equation}
 
-The scores $\xi_{i1}, \dots, \xi_{iK}$ are the shape parameters for event $i$. Unlike polynomial coefficients, PCA scores are uncorrelated across the fitted events by construction, making their uncertanity easier to model.
+The scores $\xi_{i1}, \dots, \xi_{iK}$ are the shape parameters for event $i$. Unlike polynomial coefficients, they are uncorrelated by construction, simplifying uncertainty modelling.
 
 ```{r pcaloadings, echo=FALSE, fig.height=5, fig.width=8, fig.cap="The first three principal components against standardised time.", out.width="90%", fig.align='center'}
 matplot(grid_u, pca_result$rotation[, 1:3], type = "l", lty = 1, lwd = 2,
@@ -350,9 +343,10 @@ legend("bottomright", c("PC1", "PC2", "PC3"), lty = 1, lwd = 2,
        col = c("#AA1945", "#5298BC", "#174B67"), bty = "n")
 ```
 
-Figure \@ref(fig:pcaloadings) shows that the first three principal components explain `r round(100 * cum_var[3])`% of the variation. PC1 (`r round(100 * cum_var[1])`%) mainly describes event width, PC2 contrasts the rising and falling limbs, and PC3 captures the difference in the steepness of the rising limb. All three are close to zero at the aligned peak, where the standardised hydrographs have almost no variation. 
+The first three principal components explain `r round(100 * cum_var[3])`% of the variation (Figure \@ref(fig:pcaloadings)). PC1 (`r round(100 * cum_var[1])`%) mainly describes event width, PC2 contrasts the rising and falling limbs, and PC3 captures the difference in the steepness of the rising limb. All three are close to zero at the aligned peak, where the standardised hydrographs have almost no variation. 
 
-We select $K$ using cumulative variance explained (Figure \@ref(fig:pcacumvar)) and reconstruction errors (Figure \@ref(fig:pcachoice)). For the leave-one-our check, the mean curve and components were recalculated without each excluded event before reconstructing it. Six components explained approximately 95% of the variation with little improvement in leave-one-out RMSE from adding a seventh. We therefore selected $K=6$, reducing each hydrograph to six shape parameters.
+We select $K$ using cumulative variance explained (Figure \@ref(fig:pcacumvar)) and reconstruction errors (Figure \@ref(fig:pcachoice)). Six components explain approximately 95% of the variation, with little improvement in leave-one-out RMSE from adding a seventh. We therefore selected $K=6$, reducing each hydrograph to six shape parameters.
+
 \begin{figure}[H]
 \centering
 \begin{minipage}[t]{0.37\textwidth}
@@ -427,7 +421,7 @@ y_i(u) = \sum_{k} a_{ik}\,\varphi_k(u) + \sum_{j=1}^{`r wav_levels`}\sum_{k} d_{
 
 where $a_{ik}$ are the smooth coefficients and $d_{ijk}$ are the detail coefficients at scale $j$ and location $k$. At `r wav_levels` levels, each `r n_grid`-point hydrograph gives `r n_grid / 2^wav_levels` smooth and `r n_grid - n_grid / 2^wav_levels` detail coefficients, allowing exact reconstruction if all are retained. 
 
-To reduce the number of parameters, we kept all `r n_grid / 2^wav_levels` smooth coefficients and selected the $M$ detail coefficient positions with the largest average absolute values across events. The same positions were retained for every event, so each parameter represents the same feature.
+We retain all `r n_grid / 2^wav_levels` smooth coefficients and the $M$ detail coefficient positions with the largest mean absolute values across events, ensuring consistent parameter definitions.
 
 We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavdecomp)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
 \begin{figure}[H]
@@ -469,7 +463,8 @@ plot_choice(wav_choice, "Detail coefficients kept")
 
 \end{minipage}
 \end{figure}
-We also compared `haar`, `d4` and `la8` wavelets at different decomposition levels table \@ref(tab:wavsens). Increasing the number of levels did reduce the parameter count but generally also increased errors. At three levels, `la8` gave the lowest `RMSE`, ($3.34 \text{m}^3/\text{s}$), peak error ($0.98 \text{m}^3/\text{s}$) and volume error ($0.10\%$). So we selected `la8` with three levels and five detail coefficients.
+
+Sensitivity analysis compared `haar`, `d4` and `la8` wavelets across decomposition levels (table \@ref(tab:wavsens)). Higher levels reduced parameter counts but generally increased errors. We selected `la8` at three lev;es, which minimised `RMSE`, ($3.34 \text{m}^3/\text{s}$), peak error ($0.98 \text{m}^3/\text{s}$) and volume error ($0.10\%$).
 
 ```{r wavsens, echo=FALSE, out.width="80%"}
 knitr::kable(
@@ -495,11 +490,9 @@ y_i(u_j) \approx \theta_{i0} + \sum_{l=1}^{L} \theta_{il}\,B_l(u_j)
 where $B_l(u_j)$ are the spline basis functions and $\theta_{il}$ are estimated by least squares. We chose $L =$ `r n_basis_chosen`, giving `r n_basis_chosen + 1` fitted coefficients, close to the `r p_chosen + 1` used in polynomial regression, allowing comparison at similar complexity.
 
 
-### A known hydrograph function (Gamma-type function) {#method-gamma}
+### Gamma-type function {#method-gamma}
 
-We considered a gamma-type hydrograph based on Nash, [@nash1957instantaneous]. Since a known function which approximates hydrographs may give parameters that can be interpreted [@wilson]. Gamma-type provides three interpretable parameters describing baseflow relative to peak discharge, peak timing and peak sharpness.
-
-We fitted the function, with an additional baseflow term, separately to each standardised hydrograph using nonlinear least squares. Unlike the other methods, its parameters enter the model nonlinearly. This provides a more parsimonious alternative, although its shape is restricted to a single peak [@nash1957instantaneous].
+Following Nash, [@nash1957instantaneous], we fit a gamma-type hydrograph with additional baseflow terms using a nonlinear least squares. Its three interpretable parameters describe relative baseflow, peak timing and peak sharpness. Although parsimonious, the function is restricted to single-peak events.
 
 # Validation and comparison of methods {#Comparison}
 
