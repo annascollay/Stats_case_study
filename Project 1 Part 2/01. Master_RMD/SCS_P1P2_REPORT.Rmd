@@ -211,7 +211,7 @@ and rescaled to have a peak value of one,
 (\#eq:sepa-2)
 \end{equation}
 
-The fitted hydrograph for event $i$ i stretched to duration $W_i$ and multiplied by peak discharge $Q_i^{\text{peak}}$. 
+The fitted hydrograph for event $i$ is stretched to duration $W_i$ and multiplied by peak discharge $Q_i^{\text{peak}}$. 
 Leave-one-out validation uses the average of the remaining $N - 1$ events to test how well this shape predicts events it has not seen. Unlike SEPA's current approach, our baseline allows duration ($W_i$) to vary, potentially improving its reconstruction accuracy.
 
 ## Evaluation criteria {#evaluation-criteria}
