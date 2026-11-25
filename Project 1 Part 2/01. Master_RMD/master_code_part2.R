@@ -643,6 +643,72 @@ Y <- t(sapply(seq_len(nrow(events)), standardise_event))
 
 cat("Y:", nrow(Y), "events x", ncol(Y), "points; peaks aligned at u =", round(u_star, 3), "\n")
 
+# Exploratory plots for the report (Section 2)
+eda_theme <- theme_minimal() +
+  theme(panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold", size = 12))
+
+# Events aligned at their peak: observed and scaled by peak flow
+Y_scaled <- Y_raw / Y_raw[, rel_time_hours == 0]
+
+overlay_panel <- function(curves, ylab, title) {
+  long <- tibble(event = rep(seq_len(nrow(curves)), each = ncol(curves)),
+                 hours = rep(rel_time_hours, times = nrow(curves)),
+                 flow  = as.vector(t(curves)))
+  ggplot() +
+    geom_line(data = long, aes(hours, flow, group = event),
+              colour = "#5298BC", linewidth = 0.4, alpha = 0.25) +
+    geom_line(data = tibble(hours = rel_time_hours, flow = colMeans(curves)),
+              aes(hours, flow), colour = "#174B67", linewidth = 1.3) +
+    geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
+    scale_x_continuous(breaks = seq(-48, 72, by = 24)) +
+    labs(title = title, x = "Hours from peak", y = ylab) +
+    eda_theme
+}
+
+hydrograph_overlay_eda_plot <-
+  (overlay_panel(Y_raw, expression("Discharge (" * m^3 * "/s)"), "Observed") +
+     geom_hline(yintercept = u_final, linetype = "dotted", linewidth = 0.7)) |
+  overlay_panel(Y_scaled, "Flow / peak flow", "Scaled by peak flow")
+
+# Peak flow, duration and peak position: distributions and pairwise scatter
+size_timing_df <- tibble(peak_flow = events$peak_flow, duration = events$width_h,
+                         peak_position = events$peak_position)
+flow_lab <- expression("Peak flow (" * m^3 * "/s)")
+
+hist_panel <- function(var, xlab) {
+  ggplot(size_timing_df, aes(.data[[var]])) +
+    geom_histogram(bins = 20, fill = "#5298BC", colour = "white", alpha = 0.8) +
+    labs(x = xlab, y = "Events") + eda_theme
+}
+scatter_panel <- function(x, y, xlab, ylab) {
+  ggplot(size_timing_df, aes(.data[[x]], .data[[y]])) +
+    geom_point(colour = "#174B67", alpha = 0.6, size = 1.6) +
+    labs(x = xlab, y = ylab) + eda_theme
+}
+
+size_timing_plot <-
+  (hist_panel("peak_flow", flow_lab) |
+     hist_panel("duration", "Duration (h)") |
+     hist_panel("peak_position", "Relative peak position")) /
+  (scatter_panel("peak_flow", "duration", flow_lab, "Duration (h)") |
+     scatter_panel("peak_flow", "peak_position", flow_lab, "Relative peak position") |
+     scatter_panel("duration", "peak_position", "Duration (h)", "Relative peak position"))
+
+# The standardised hydrographs (rows of Y)
+standardised_long <- tibble(event = rep(seq_len(nrow(Y)), each = n_grid),
+                            u     = rep(grid_u, times = nrow(Y)),
+                            flow  = as.vector(t(Y)))
+
+standardised_curves_plot <- ggplot() +
+  geom_line(data = standardised_long, aes(u, flow, group = event),
+            colour = "#5298BC", linewidth = 0.4, alpha = 0.25) +
+  geom_line(data = tibble(u = grid_u, flow = colMeans(Y)), aes(u, flow),
+            colour = "#174B67", linewidth = 1.3) +
+  geom_vline(xintercept = u_star, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
+  labs(x = "Standardised time u", y = "Flow / peak flow") +
+  eda_theme
+
 # ------------------------------------------------------------------------------
 # 9. Reconstruct a real hydrograph
 # ------------------------------------------------------------------------------
@@ -2081,6 +2147,9 @@ volume_table <- rbind(
   }))
 )
 print(volume_table, digits = 3)
+
+# Flood volumes from the recommended combination, for the report text
+pca_boot_volume <- volume_table[volume_table$scheme == "PCA, Conditional bootstrap", ]
 
 # Table is built in the report chunk "volumes"
 
