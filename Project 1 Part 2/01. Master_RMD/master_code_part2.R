@@ -157,7 +157,7 @@ tidy_data_table <- kable(
   caption = "Data used in this analysis, and the quality codes assigned to each reading",
   label = "tidyingthedata") %>%
   kable_styling(
-    latex_options = c("striped", "hold_position"),
+    latex_options = c("striped", "HOLD_position"),
     font_size = 9,
     full_width = FALSE,
     position = "left"
@@ -1733,8 +1733,7 @@ synthesis <- tribble(
   
   "SEPA (average shape)",
   sprintf("Poor: %s m$^3$/s", f1(S("SEPA (average shape)", "rmse_out"))),
-  sprintf("Peak matched; timing %s h; volume %+.0f\\%%",
-          f1(S("SEPA (average shape)", "timing_out"), 0), S("SEPA (average shape)", "volume_bias")),
+  sprintf("Peak matched; volume %s\\%%", f1(S("SEPA (average shape)", "volume_out"))),
   "One shape for every event",
   "0 shape parameters",
   "None to model",
