@@ -257,7 +257,7 @@ For individually fitted methods (polynomial, B-spline and gamma-type), this woul
 
 Flow volumes were calculated using the trapezium rule. As all methods except SEPA's baseline align peaks to their observed positions, timing errors are expected to be small by construction. This measure is therefore most useful for assessing the baseline.
 
-Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assessed further in Section @ref(uncertainty), where uncertainty in the shape parameters is modelled.
+Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assessed further in Section \@ref(uncertainty), where uncertainty in the shape parameters is modelled.
 
 ## Polynomial regression {#method-polynomial}
 The first method uses polynomial regression of a degree-p polynomial in time to approximate each standardised hydrograph:
@@ -623,7 +623,7 @@ We now model how the PCA and wavelet shape parameters vary between events, so th
 
 As peak flow, duration and peak position are held separately from the shape parameters, we first check whether the two are dependent.
 
-```{r dependence, echo = FALSE}
+```{r dependence, echo = FALSE, fig.cap = "Spearman correlations between each shape parameter (PCA scores above the line, wavelet coefficients below) and peak flow, duration and peak position (red: negative; blue: positive; bold: magnitude of at least 0.5)."}
 plot_dependence()
 ```
 
