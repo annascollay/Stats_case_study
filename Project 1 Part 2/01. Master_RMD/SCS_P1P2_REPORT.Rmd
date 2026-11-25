@@ -243,7 +243,7 @@ Errors are calculated on the original discharge and time scales as this is what 
 
 For methods estimating a shared shape or basis (SEPA's approach, PCA and the wavelet coefficient selection), leave-one-out validation refits this representation using the remaining $N - 1$ events.
 
-For individually fitted methods (polynomial, B-spline and gamma-type), this wouldn't change the other fitted curves. So, a random training-test split assesses whether the chosen model complexity generalises across events. The events are divided into `r length(train_floods)` training and `r length(test_floods)` test events to compare the reconstruction errors and guide our selection of parameters.  
+For methods where each event is fitted separately (polynomial, B-spline and gamma-type), leaving an event out does not change its fit, so their errors are in-sample; we report them over all `r nrow(Y)` events.
 
 **Parsimony:** The number of shape parameters and their correlations across events was compared, as fewer parameters reduce complexity, provided that reconstruction accuracy is maintained, while strong correlations complicate uncertainty modelling.
 
@@ -274,7 +274,7 @@ For each event, the $p+1$ coefficients were estimated by ordinary least squares,
 
 where $X$ is the `r n_grid`$\times(p+1)$ design matrix with columns $1,u,\ldots,u^p$, and $\mathbf{y}_i$ contains the `r n_grid` standardised discharge values. These coefficients form the shape parameters of each event.
 
-To choose the degree $p$, we tested degrees 2-15, comparing errors across training and test events (Figure \@ref(fig:polychoice)). We also examined the significance of the highest-order coefficient (Table \@ref(tab:polysig)). However,  these tests are less reliable as neighbouring discharge readings are correlated, violating the independence assumption used to calculate standard errors.
+To choose the degree $p$, we tested degrees 2-15, comparing errors across all events (Figure \@ref(fig:polychoice)). We also examined the significance of the highest-order coefficient (Table \@ref(tab:polysig)). However,  these tests are less reliable as neighbouring discharge readings are correlated, violating the independence assumption used to calculate standard errors.
 
 \begin{figure}[H]
 \centering
@@ -324,7 +324,7 @@ plot_choice(poly_choice, "Polynomial degree")
 
 \end{minipage}
 
-\caption{Average absolute errors for training and test events by polynomial degree.}
+\caption{Average absolute errors over all events by polynomial degree.}
 \label{fig:polychoice}
 
 \end{minipage}
@@ -437,7 +437,7 @@ where $a_{ik}$ are the smooth coefficients and $d_{ijk}$ are the detail coeffici
 
 We retain all `r n_grid / 2^wav_levels` smooth coefficients and the $M$ detail coefficient positions with the largest mean absolute values across events, ensuring consistent parameter definitions.
 
-We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavdecomp)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
+We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavchoice)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
 \begin{figure}[H]
 \centering
 \begin{minipage}[t]{0.37\textwidth}

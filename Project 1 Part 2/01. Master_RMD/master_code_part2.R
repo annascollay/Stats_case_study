@@ -728,11 +728,6 @@ loocv <- function(fit_left_out) {
   Y_pred
 }
 
-# Fixed train/test split, 20% held out
-set.seed(2026)
-test_floods  <- sort(sample(1:nrow(Y), size = round(0.2 * nrow(Y))))
-train_floods <- setdiff(1:nrow(Y), test_floods)
-
 # Observed vs fitted for six contrasting events
 sharpness <- rowMeans(Y > 0.5)   # share of time above half the peak
 
@@ -790,14 +785,12 @@ fit_all_with <- function(fit_model, setting) {
   t(sapply(1:nrow(Y), function(i) fitted(fit_model(Y[i, ], setting))))
 }
 
-# Train/test errors by setting
-train_test_choice <- function(settings, fit_all) {
+# Errors over all events by setting, for per-event methods. Each event is
+# fitted on its own, so leaving events out would not change its fit.
+all_events_choice <- function(settings, fit_all) {
   map_dfr(settings, function(s) {
-    errors <- method_errors(fit_all(s))
-    rbind(
-      data.frame(setting = s, type = "train", t(average_errors(errors[train_floods, ]))),
-      data.frame(setting = s, type = "test",  t(average_errors(errors[test_floods, ])))
-    )
+    data.frame(setting = s, type = "all events",
+               t(average_errors(method_errors(fit_all(s)))))
   })
 }
 
@@ -898,9 +891,9 @@ prop_significant <- cached("poly_prop_sig", sapply(degrees, function(p) {
 
 print(data.frame(degree = degrees, prop_significant = prop_significant))
 
-# Train and test errors by degree
+# Errors over all events by degree
 poly_choice <- cached("poly_choice",
-                      train_test_choice(degrees, poly_fit_all), key = degrees)
+                      all_events_choice(degrees, poly_fit_all), key = degrees)
 
 print(poly_choice, digits = 3)
 plot_choice(poly_choice, "Polynomial degree")
@@ -1246,7 +1239,7 @@ print(round(cor(gamma_params[gamma_ok, ]), 2))
 # 16. Method 5: B-splines
 # ------------------------------------------------------------------------------
 # Cubic B-spline basis fitted with lm() (Ramsay & Silverman). Number of basis
-# functions chosen on the train/test split, like the polynomial degree.
+# functions chosen on errors over all events, like the polynomial degree.
 
 # Fit one event's curve with n_basis B-spline basis functions
 fit_bspline_model <- function(y, n_basis) {
@@ -1260,7 +1253,7 @@ bspline_fit_all <- function(n_basis) fit_all_with(fit_bspline_model, n_basis)
 n_basis_values <- 4:15
 
 bspline_choice <- cached("bspline_choice",
-                         train_test_choice(n_basis_values, bspline_fit_all),
+                         all_events_choice(n_basis_values, bspline_fit_all),
                          key = n_basis_values)
 
 print(bspline_choice, digits = 3)
