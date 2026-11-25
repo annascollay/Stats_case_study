@@ -99,6 +99,8 @@ We have extended the 15-minute discharge data for the River Don at Parkhill from
 tidy_data_table
 ```
 
+## Data quality
+
 ### Unchecked readings {#unchecked-readings}
 
 We identified `r nrow(unchecked_model$unique_readings)` Unchecked readings falling within `r n_distinct(unchecked_model$in_windows$Event_ID)` of the standardised event windows (Table \@ref(tab:uncheckeddata)).
@@ -165,8 +167,9 @@ if (!is.null(suspect_model_plot)) suspect_model_plot
 
 To investigate the variation in hydrograph shape, the `r nrow(peaks)` independent extreme flow events are aligned at their maximum discharge, with the peak assigned time zero.
 
-```{r Hydrograph, echo=FALSE}
-hydrograph_overlay_plot
+```{r hydrograph-overlay, echo = FALSE, fig.cap = "Hydrographs of the 118 extreme flow events, aligned at their peak (time zero) and shown from 48 hours before to 72 hours after it. The bold curve is the mean hydrograph and the dotted line is the 65 m$^3$/s threshold."}
+hydrograph_overlay_plot +
+  labs(subtitle = NULL)
 ```
 
 Variation in peak discharge, sharpness and rising and falling limbs were observed, demonstrating that the fixed mean hydrograph doesn't adequately capture the variability between events.
@@ -257,7 +260,7 @@ For individually fitted methods (polynomial, B-spline and gamma-type), this woul
 
 Flow volumes were calculated using the trapezium rule. As all methods except SEPA's baseline align peaks to their observed positions, timing errors are expected to be small by construction. This measure is therefore most useful for assessing the baseline.
 
-Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assessed further in Section @ref(uncertainty), where uncertainty in the shape parameters is modelled.
+Finally, a method must be able to represent the variation seen in extreme flow events, not just reproduce typical hydrographs. This is assessed further in Section \@ref(uncertainty), where uncertainty in the shape parameters is modelled.
 
 ## Polynomial regression {#method-polynomial}
 The first method uses polynomial regression of a degree-p polynomial in time to approximate each standardised hydrograph:
@@ -437,7 +440,7 @@ where $a_{ik}$ are the smooth coefficients and $d_{ijk}$ are the detail coeffici
 
 We retain all `r n_grid / 2^wav_levels` smooth coefficients and the $M$ detail coefficient positions with the largest mean absolute values across events, ensuring consistent parameter definitions.
 
-We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavdecomp)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
+We selected $M$ by comparing in-sample and leave-one-out reconstruction errors (Figure \@ref(fig:wavchoice)). Peak error fell sharply up to $M = 5$, with little improvement thereafter, while `RMSE` decreased more gradually. We therefore retained five detail coefficients, giving 13 shape parameters. 
 \begin{figure}[H]
 \centering
 \begin{minipage}[t]{0.37\textwidth}
@@ -531,7 +534,7 @@ plot_all_methods()
 plot_all_residuals()
 ```
 
-The polynomial method fits a single peak that is too low and broad, so it misses sharp and multi-peak extreme flow events (Figure \@ref(fig:all-methods-plot)), and its higher-order terms make the fit drift at the ends. Its residuals (Figure \@ref(fig:residuals-all)) are positive at the peak and negative either side for most events. The B-spline method shares this peak problem but fits the recession closely, with residuals near zero after $u \approx 0.6$. The gamma-type method fits worst, as each curve has a single peak and the same baseflow at both ends.
+The polynomial method fits a single peak that is too low and broad, so it misses sharp and multi-peak extreme flow events (Figure \@ref(fig:all-methods-plot)), and its higher-order terms make the fit drift at the ends. Its residuals (Figure \@ref(fig:residuals-all)) are positive at the peak and negative either side for most events. The B-spline method shares this peak problem but fits the recession closely, with residuals near zero after $u \approx 0.6$. The gamma-type method fits poorly, as each curve has a single peak and the same baseflow at both ends.
 
 PCA reproduces single-peak events almost exactly and multi-peak events closely, though it underestimates some smaller peaks; its residuals are small, and largest on the rising limb. Wavelets are similarly accurate but show unrealistic dips, as every event keeps the same detail coefficients, and deviations at the ends from the periodic boundary. Residuals are correlated over time, which is harmless as the fits serve as a basis, not for inference.
 
@@ -623,7 +626,7 @@ We now model how the PCA and wavelet shape parameters vary between events, so th
 
 As peak flow, duration and peak position are held separately from the shape parameters, we first check whether the two are dependent.
 
-```{r dependence, echo = FALSE}
+```{r dependence, echo = FALSE, fig.cap = "Correlations between each shape parameter and the standardisation parameters (peak flow, duration and peak position), for the PCA scores (PC1-PC6) and the wavelet smooth (S1-S8) and detail (D1-D5) coefficients."}
 plot_dependence()
 ```
 
@@ -655,13 +658,13 @@ $$
 \boldsymbol{\varepsilon}^\ast = \frac{\hat{\boldsymbol{\varepsilon}}_J + h\,\mathbf{z}}{\sqrt{1+h^2}}, \qquad J \sim \text{Uniform}\{1,\dots,N\}, \quad \mathbf{z} \sim N_K(\mathbf{0}, \hat{\Sigma}),
 $$
 
-with $h = \big(4/((K+2)N)\big)^{1/(K+4)}$ (Silverman, 1986). The bootstrap retains some of the heavy tails seen in Section \@ref(distribution-and-dependencies-of-the-shape-parameters), although the Normal noise accounts for `r round(100 * noise_share_pca)`% (PCA) and `r round(100 * noise_share_wav)`% (wavelets) of the variance of the simulated residuals.
+with $h = \big(4/((K+2)N)\big)^{1/(K+4)}$ [@silverman1986]. The bootstrap retains some of the heavy tails seen in Section \@ref(distribution-and-dependencies-of-the-shape-parameters), although the Normal noise accounts for `r round(100 * noise_share_pca)`% (PCA) and `r round(100 * noise_share_wav)`% (wavelets) of the variance of the simulated residuals.
 
 Finally, we turn $\boldsymbol{\theta}^\ast$ into a curve using Equation \@ref(eq:pca) for PCA or \@ref(eq:wavelet) for wavelets, and reverse the standardisation with $\mathbf{s}^\ast$.
 
 ## Evaluation criteria {#uncertainty-criteria}
 
-To evaluate how well each approach simulates extreme flow events, we simulate $M =$ `r n_each` shapes for each event $i$ using its own standardisation parameters $\mathbf{s}_i$ and convert them to hydrographs $\hat{Q}_i^{(m)}(t_j)$. We then compare these with the observed hydrograph $Q_i(t_j)$ at the `r n_grid` time points of Section \@ref(evaluation-criteria), averaging each criterion over all events.
+To evaluate how well each approach simulates extreme flow events, we simulate $M =$ `r n_each` shapes for each event $i$ using its own standardisation parameters $\mathbf{s}_i$ and convert them to hydrographs $\hat{Q}_i^{(m)}(t_j)$. We then compare these with the observed hydrograph $Q_i(t_j)$ at the `r n_grid` time points of Section \@ref(standardising-the-hydrographs), averaging each criterion over all events.
 
 **Coverage:** the percentage of the observed hydrograph lying inside the simulated 90\% band,
 
@@ -672,7 +675,7 @@ $$
 where $L_i(t_j)$ and $U_i(t_j)$ are the 5\% and 95\% quantiles of the simulated flows at $t_j$.
 
 
-**CRPS:** a measure that rewards simulations that are both accurate and appropriately spread (Gneiting & Raftery, 2007),
+**CRPS:** a measure that rewards simulations that are both accurate and appropriately spread [@gneitingraftery2007],
 
 $$
 \text{CRPS}_i = \frac{1}{`r n_grid`}\sum_{j}\left( \frac{1}{M}\sum_{m} \big|\hat{Q}_i^{(m)}(t_j) - Q_i(t_j)\big| - \frac{1}{2M^2}\sum_{m}\sum_{m'} \big|\hat{Q}_i^{(m)}(t_j) - \hat{Q}_i^{(m')}(t_j)\big| \right),
