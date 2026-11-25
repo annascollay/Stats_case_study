@@ -80,15 +80,15 @@ Current flood models typically assume that the shape of an event of extreme rive
 
 This report investigates methods for representing variation in the shape of river flow hydrographs, which describe how river discharge changes during a period of extreme flow. Rather than considering only the maximum flow, we examine methods that use information from throughout the event to capture differences in event duration, the rate of rising and falling flows, the time to the maximum, and overall shape. 
 
-Using 25 years of river flow data from the River Don at Parkhill gauging station, we identified 118 extreme flow events for analysis. These events were used to investigate and compare different approaches to represent hydrograph shapes with a small number of parameters. This allows them to be incorporated into an emulator without excessive computational complexity. 
+Using 25 years of river flow data from the River Don at Parkhill gauging station, we identified `r N_events` extreme flow events for analysis. These events were used to investigate and compare different approaches to represent hydrograph shapes with a small number of parameters. This allows them to be incorporated into an emulator without excessive computational complexity. 
 
-We compared six methods: SEPA’s existing approach, polynomial regression, principal component analysis (PCA), wavelet analysis, B-splines and a gamma-type function. The comparison considered how accurately each method reproduced historical extreme events, particularly their maximum flow, timing and total volume of water. 
+We compared six methods: SEPA's existing approach, polynomial regression, principal component analysis (PCA), wavelet analysis, B-splines and a gamma-type function. The comparison considered how accurately each method reproduced historical extreme events, particularly their maximum flow, timing and total volume of water. 
 
 PCA and wavelets were identified as the two most promising methods and were selected for further uncertainty analysis. PCA was able to capture 95% of the observed variation in hydrograph shape using only six parameters to describe shape. The most prominent source of variation was in the width of the hydrograph, accounting for around 59% of the variation in shape. This highlights the importance of considering the length river flows remain elevated for, rather than focusing solely on maximum flow. 
 
 Based on these findings, we recommend that SEPA adopts PCA to represent uncertainty in hydrograph shape. This approach offered a favourable balance between reconstruction accuracy and computational efficiency, requiring only nine inputs to the emulator, compared with sixteen for the wavelet model. This allows a greater range of scenarios to be investigated without introducing unnecessary complexity. 
 
-Although PCA doesn’t fully reproduce particularly sharp or unusual flood events, it provides a practical approach to capturing the principal differences between observed hydrograph shapes. By incorporating uncertainty in hydrograph shape alongside maximum river flow, this approach allows SEPA to explore a wider range of plausible scenarios more accurately. When combined with an emulator, it could support more comprehensive flood risk assessments and better-informed decisions about flood defences, land use and future development.
+Although PCA doesn't fully reproduce particularly sharp or unusual flood events, it provides a practical approach to capturing the principal differences between observed hydrograph shapes. By incorporating uncertainty in hydrograph shape alongside maximum river flow, this approach allows SEPA to explore a wider range of plausible scenarios more accurately. When combined with an emulator, it could support more comprehensive flood risk assessments and better-informed decisions about flood defences, land use and future development.
 
 
 # Data and Exploratory Data Analysis {#initial-analysis}
@@ -113,7 +113,7 @@ if (!is.null(unchecked_model)) {
     format    = "markdown",
     align     = "llrrrrrr",
     col.names = c("Burst", "Event(s)", "Start", "Readings", "Duration (min)",
-                  "Max flow (m³/s)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
+                  "Max flow (m$^3$/s)", "RMSE (m$^3$/s)", "Max abs. diff (m$^3$/s)"),
     caption   = "Unchecked readings (code 254) within the event windows, compared with linear interpolation between the neighbouring checked readings. Dashed 1:1 line represents perfect agreement."
   )
 }
@@ -151,7 +151,7 @@ if (!is.null(suspect_model)) {
     format    = "markdown",
     align     = "llrrrrrr",
     col.names = c("Burst", "Event(s)", "Start", "Readings", "Duration (min)",
-                  "Max flow (m³/s)", "RMSE (m³/s)", "Max abs. diff (m³/s)"),
+                  "Max flow (m$^3$/s)", "RMSE (m$^3$/s)", "Max abs. diff (m$^3$/s)"),
     caption   = "Suspect readings (code 150) within the event windows. RMSE and maximum absolute difference compare each excluded reading with the linear interpolation used in its place."
   )
 }
@@ -274,7 +274,7 @@ For each event, the $p+1$ coefficients were estimated by ordinary least squares,
 
 where $X$ is the `r n_grid`$\times(p+1)$ design matrix with columns $1,u,\ldots,u^p$, and $\mathbf{y}_i$ contains the `r n_grid` standardised discharge values. These coefficients form the shape parameters of each event.
 
-To choose the degree $p$, we tested degrees 2–15, comparing errors across training and test events (Figure \@ref(fig:polychoice)). We also examined the significance of the highest-order coefficient (Table \@ref(tab:polysig)). However,  these tests are less reliable as neighbouring discharge readings are correlated, violating the independence assumption used to calculate standard errors.
+To choose the degree $p$, we tested degrees 2-15, comparing errors across training and test events (Figure \@ref(fig:polychoice)). We also examined the significance of the highest-order coefficient (Table \@ref(tab:polysig)). However,  these tests are less reliable as neighbouring discharge readings are correlated, violating the independence assumption used to calculate standard errors.
 
 \begin{figure}[H]
 \centering
@@ -478,13 +478,13 @@ plot_choice(wav_choice, "Detail coefficients kept")
 \end{minipage}
 \end{figure}
 
-Sensitivity analysis compared `haar`, `d4` and `la8` wavelets across decomposition levels (table \@ref(tab:wavsens)). Higher levels reduced parameter counts but generally increased errors. We selected `la8` at three lev;es, which minimised `RMSE`, ($3.34 \text{m}^3/\text{s}$), peak error ($0.98 \text{m}^3/\text{s}$) and volume error ($0.10\%$).
+Sensitivity analysis compared `haar`, `d4` and `la8` wavelets across decomposition levels (table \@ref(tab:wavsens)). Higher levels reduced parameter counts but generally increased errors. We selected `la8` at three levels, which minimised `RMSE`, ($3.34 \text{m}^3/\text{s}$), peak error ($0.98 \text{m}^3/\text{s}$) and volume error ($0.10\%$).
 
 ```{r wavsens, echo=FALSE, out.width="80%"}
 knitr::kable(
   wav_sensitivity, digits = 2, format = "markdown",
-  col.names = c("Wavelet", "Levels", "Shape parameters", "RMSE (m³/s)",
-                "Peak error (m³/s)", "Timing error (h)", "Volume error (%)"),
+  col.names = c("Wavelet", "Levels", "Shape parameters", "RMSE (m$^3$/s)",
+                "Peak error (m$^3$/s)", "Timing error (h)", "Volume error (%)"),
   caption = "Average absolute errors for different wavelets and numbers of levels, keeping the same number of detail coefficients."
 )
 ```
@@ -633,7 +633,7 @@ From Figure \@ref(fig:dependence), some of these correlations are moderate to st
 plot_residual_qq()
 ```
 
-Figure \@ref(fig:param-qq) suggests that the residuals are approximately Normal through the centre of their distributions, but that several depart from Normality in the tails. In particular, PC2 and PC4–PC6 have heavy lower tails, while for the wavelets, S1–S3 are right-skewed and D1, D2, D4 and D5 have heavy tails, particularly in the upper tail. We therefore fit a conditional multivariate Normal distribution alongside a conditional smoothed bootstrap, which does not assume normality.
+Figure \@ref(fig:param-qq) suggests that the residuals are approximately Normal through the centre of their distributions, but that several depart from Normality in the tails. In particular, PC2 and PC4-PC6 have heavy lower tails, while for the wavelets, S1-S3 are right-skewed and D1, D2, D4 and D5 have heavy tails, particularly in the upper tail. We therefore fit a conditional multivariate Normal distribution alongside a conditional smoothed bootstrap, which does not assume normality.
 
 ## Statistical model and sampling scheme {#model}
 
