@@ -25,7 +25,7 @@ Knit the report (works from any directory; PDF is written next to the Rmd):
 
 Run the analysis alone: `Rscript master_code_part2.R` from the same folder.
 
-Packages: tidyverse, lubridate, knitr, kableExtra, patchwork, wavelets, splines, rlang, bookdown.
+Packages: tidyverse, lubridate, knitr, kableExtra, patchwork, wavelets, splines, rlang, bookdown, gridGraphics.
 
 Data: `river_don_parkhill_flow.rds` (gitignored) is loaded if present in the working directory; otherwise the script downloads 2001–2026 from the SEPA KiWIS API and saves it there (slow).
 
