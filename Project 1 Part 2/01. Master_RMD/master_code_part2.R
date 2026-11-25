@@ -820,36 +820,44 @@ as_flood <- function(curve, i) {
 # ------------------------------------------------------------------------------
 # 11. SEPA's current approach
 # -----------------------------------------------------------------------------
-# One average shape scaled by peak flow, with no peak realignment
+# SEPA: one average hydrograph in real hours from the peak, scaled by peak flow only
 
-# Each event's curve on its own timing
-unaligned_curve <- function(i) {
-  real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
-                                 events$width_h[i], events$peak_flow[i])
-  approx(real$hours / events$width_h[i], Y[i, ], xout = grid_u, rule = 2)$y
+# Hours from the peak, up to 7 days either side
+sepa_hours <- seq(-search_days * 24, search_days * 24, by = dt_hours)
+
+# Event i's flow divided by its peak flow, against hours from the peak.
+# NA outside the event's own start and end.
+scaled_event <- function(i) {
+  rows  <- events$start_row[i]:events$end_row[i]
+  hours <- as.numeric(difftime(t[rows], events$peak_time[i], units = "hours"))
+  approx(hours, q[rows] / events$peak_flow[i], xout = sepa_hours)$y
 }
 
-Y_unaligned <- t(sapply(1:nrow(Y), unaligned_curve))
+# One row per event
+Y_sepa_raw <- t(sapply(1:nrow(Y), scaled_event))
 
-# Average shape for event i, laid out like Y
+# Average hydrograph over the chosen events, with a peak of 1
+sepa_average <- function(rows) {
+  average <- colMeans(Y_sepa_raw[rows, , drop = FALSE], na.rm = TRUE)
+  average / max(average, na.rm = TRUE)
+}
+
+# The average hydrograph placed at event i's peak, laid out like Y
 baseline_curve <- function(average_shape, i) {
-  real <- reconstruct_hydrograph(Y[i, ], events$peak_position[i],
-                                 events$width_h[i], events$peak_flow[i])
-  approx(grid_u, average_shape, xout = real$hours / events$width_h[i], rule = 2)$y
+  real <- as_flood(Y[i, ], i)
+  hours_from_peak <- real$hours - events$time_to_peak_h[i]
+  approx(sepa_hours, average_shape, xout = hours_from_peak, rule = 2)$y
 }
 
 # In-sample: every event gets the average of all events
-average_shape <- colMeans(Y_unaligned)
-average_shape <- average_shape / max(average_shape)   # peak of 1, as SEPA does
-Y_baseline    <- t(sapply(1:nrow(Y), function(i) baseline_curve(average_shape, i)))
-
+average_shape   <- sepa_average(1:nrow(Y))
+Y_baseline      <- t(sapply(1:nrow(Y), function(i) baseline_curve(average_shape, i)))
 baseline_errors <- method_errors(Y_baseline)
 
 # Leave-one-out: every event gets the average of the other events
-baseline_errors_loocv <- cached("baseline_loocv",
+baseline_errors_loocv <- cached("baseline_loocv_fixed",
                                 method_errors(loocv(function(i) {
-                                  s <- colMeans(Y_unaligned[-i, ])
-                                  baseline_curve(s / max(s), i)
+                                  baseline_curve(sepa_average(-i), i)
                                 })))
 
 cat("\nSEPA's approach (average shape), average errors:\n")
@@ -1370,9 +1378,8 @@ all_comparison <- rbind(
 n_smooth_cmp <- length(wav_all[[1]]@V[[wav_levels]])
 
 # Held-out curves. Per-event methods just use their in-sample fits.
-Y_sepa_loo <- cached("cmp_sepa_loo_curves", loocv(function(i) {
-  s <- colMeans(Y_unaligned[-i, ])
-  baseline_curve(s / max(s), i)
+Y_sepa_loo <- cached("cmp_sepa_loo_curves_fixed", loocv(function(i) {
+  baseline_curve(sepa_average(-i), i)
 }))
 Y_pca_loo <- cached("cmp_pca_loo_curves",
                     loocv(function(i) pca_left_out(i, k_chosen)), key = k_chosen)
@@ -1385,7 +1392,7 @@ all_rows <- seq_len(nrow(Y))
 # One entry per method. inputs is K plus peak flow, duration and peak position.
 cmp <- list(
   "SEPA (average shape)" = list(fit_in = Y_baseline, fit_out = Y_sepa_loo, rows = all_rows,
-                                K = 0, inputs = 2, params = NULL),
+                                K = 0, inputs = 1, params = NULL),
   "Gamma-type" = list(fit_in = Y_gamma, fit_out = Y_gamma, rows = gamma_ok,
                       K = 3, inputs = 3 + 3, params = gamma_params[gamma_ok, ]),
   "Polynomial" = list(fit_in = Y_poly, fit_out = Y_poly, rows = all_rows,
@@ -1716,7 +1723,6 @@ synthesis <- tribble(
   sprintf("%d events negative", S("Wavelets", "neg_events")),
   "Low"
 )
-# TODO: Unusual and Interpret columns are typed by hand from Sections 4.1-4.3
 
 # ------------------------------------------------------------------------------
 # 19. Uncertainty in the shape parameters
@@ -1950,10 +1956,9 @@ score_event <- function(curves, i) {
     above_peak = 100 * mean(apply(curves, 1, max) > 1.01))
 }
 
-# SEPA: average shape of the other events, no uncertainty
+# SEPA: average hydrograph of the other events, no uncertainty
 score_sepa <- function(i) {
-  average <- colMeans(Y_unaligned[-i, ])
-  shape   <- baseline_curve(average / max(average), i)
+  shape <- baseline_curve(sepa_average(-i), i)
   c(coverage = NA, crps = events$peak_flow[i] * mean(abs(shape - Y[i, ])),
     negative = NA, above_peak = NA)
 }
@@ -2064,9 +2069,13 @@ volume_of <- function(shape) {
   area_under(flood$hours, flood$discharge) * 3600 / 1e6   # million m^3
 }
 
-sepa_shape  <- colMeans(Y_unaligned) / max(colMeans(Y_unaligned))
-sepa_volume <- area_under(grid_u * typical["duration"], sepa_shape * typical["peak_flow"]) *
-  3600 / 1e6
+# SEPA's average hydrograph for the typical event, placed at its peak
+typical_hours <- reconstruct_hydrograph(rep(1, n_grid), typical["peak_position"],
+                                        typical["duration"], typical["peak_flow"])$hours
+typical_from_peak <- typical_hours - typical["peak_position"] * typical["duration"]
+sepa_flow   <- approx(sepa_hours, average_shape, xout = typical_from_peak, rule = 2)$y *
+  typical["peak_flow"]
+sepa_volume <- area_under(typical_hours, sepa_flow) * 3600 / 1e6
 
 set.seed(2026)
 volume_table <- rbind(
@@ -2177,4 +2186,3 @@ sampling_table <- data.frame(
     mean(apply(sapply(bands, function(b) b[2, ]), 1, sd)))
 )
 print(sampling_table, digits = 3)
-# Table is built in the report chunk "sampling"
