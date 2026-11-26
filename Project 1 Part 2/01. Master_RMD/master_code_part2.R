@@ -1775,9 +1775,9 @@ synthesis <- tribble(
   ~Method, ~Accuracy, ~Features, ~Unusual, ~Parsimony, ~Behaviour, ~Valid, ~Interpret,
   
   "SEPA (average shape)",
-  sprintf("Peak matched; volume %s\\%%", f1(S("SEPA (average shape)", "volume_out"))),
-  sprintf("Peak matched; timing %s h; volume %+.0f\\%%",
-          f1(S("SEPA (average shape)", "timing_out"), 0), S("SEPA (average shape)", "volume_bias")),
+  sprintf("Poor: %s m$^3$/s", f1(S("SEPA (average shape)", "rmse_out"))),
+  sprintf("Peak matched; timing %s h; volume %s\\%%",
+          f1(S("SEPA (average shape)", "timing_out")), f1(S("SEPA (average shape)", "volume_out"))),
   "One shape for every event",
   "0 shape parameters",
   "None to model",
