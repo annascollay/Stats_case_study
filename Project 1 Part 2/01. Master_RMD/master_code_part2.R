@@ -587,6 +587,22 @@ if (!is.null(unchecked_model)) {
   cat("No unchecked quality codes within the modelling events.\n\n")
 }
 
+# Unchecked readings table and plot for the report, shown side by side
+unchecked_side_tbl <- bind_rows(
+  unchecked_model$burst_tbl %>%
+    transmute(Event, Start = substr(Start, 1, 10), Readings, Max_Flow, RMSE, Max_Abs_Diff),
+  tibble(
+    Event        = "\\textbf{All}",
+    Start        = "-",
+    Readings     = sprintf("\\textbf{%d}", nrow(unchecked_model$unique_readings)),
+    Max_Flow     = sprintf("\\textbf{%.1f}", unchecked_model$max_q),
+    RMSE         = sprintf("\\textbf{%.3f}", unchecked_model$rmse),
+    Max_Abs_Diff = sprintf("\\textbf{%.3f}", unchecked_model$max_ad)
+  )
+)
+
+unchecked_side_plot <- unchecked_model$plot + labs(title = NULL, subtitle = NULL)
+
 # Suspect readings within the trough-to-trough events
 suspect_model_in_events <- unchecked_in_windows(
   starts     = events$start_time,
@@ -625,7 +641,7 @@ grid_u <- seq(0, 1, length.out = n_grid)
 standardise_event <- function(i) {
   rows <- events$start_row[i]:events$end_row[i]
   p    <- events$peak_position[i]
-
+  
   # rescale time onto [0, 1]
   u <- as.numeric(difftime(t[rows], events$start_time[i], units = "hours")) /
     events$width_h[i]
@@ -646,11 +662,11 @@ cat("Y:", nrow(Y), "events x", ncol(Y), "points; peaks aligned at u =", round(u_
 # Exploratory plots for the report (Section 2)
 eda_theme <- theme_minimal() +
   theme(panel.grid.minor = element_blank(),
-        plot.title = element_text(face = "bold", size = 12))
+        plot.title = element_text(face = "bold", size = 11))
 
-# Events aligned at their peak: observed and scaled by peak flow
-Y_scaled <- Y_raw / Y_raw[, rel_time_hours == 0]
+discharge_lab <- expression("Discharge (" * m^3 * "/s)")
 
+# Figure 1: events aligned at their peak, from 48 hours before to 72 hours after
 overlay_panel <- function(curves, ylab, title) {
   long <- tibble(event = rep(seq_len(nrow(curves)), each = ncol(curves)),
                  hours = rep(rel_time_hours, times = nrow(curves)),
@@ -667,11 +683,10 @@ overlay_panel <- function(curves, ylab, title) {
 }
 
 hydrograph_overlay_eda_plot <-
-  (overlay_panel(Y_raw, expression("Discharge (" * m^3 * "/s)"), "Observed") +
-     geom_hline(yintercept = u_final, linetype = "dotted", linewidth = 0.7)) |
-  overlay_panel(Y_scaled, "Flow / peak flow", "Scaled by peak flow")
+  overlay_panel(Y_raw, discharge_lab, NULL) +
+  geom_hline(yintercept = u_final, linetype = "dotted", linewidth = 0.7)
 
-# Peak flow, duration and peak position: distributions and pairwise scatter
+# Figure 2: peak flow, duration and peak position, distributions and correlations
 size_timing_df <- tibble(peak_flow = events$peak_flow, duration = events$width_h,
                          peak_position = events$peak_position)
 flow_lab <- expression("Peak flow (" * m^3 * "/s)")
@@ -682,9 +697,10 @@ hist_panel <- function(var, xlab) {
     labs(x = xlab, y = "Events") + eda_theme
 }
 scatter_panel <- function(x, y, xlab, ylab) {
+  r <- cor(size_timing_df[[x]], size_timing_df[[y]], method = "spearman")
   ggplot(size_timing_df, aes(.data[[x]], .data[[y]])) +
     geom_point(colour = "#174B67", alpha = 0.6, size = 1.6) +
-    labs(x = xlab, y = ylab) + eda_theme
+    labs(x = xlab, y = ylab, subtitle = sprintf("Spearman r = %.2f", r)) + eda_theme
 }
 
 size_timing_plot <-
@@ -695,19 +711,42 @@ size_timing_plot <-
      scatter_panel("peak_flow", "peak_position", flow_lab, "Relative peak position") |
      scatter_panel("duration", "peak_position", "Duration (h)", "Relative peak position"))
 
+# Figure 3: each step of standardisation
+# Every reading in each event, at each step
+standardise_steps <- map_dfr(seq_len(nrow(events)), function(i) {
+  rows <- events$start_row[i]:events$end_row[i]
+  p    <- events$peak_position[i]
+  u    <- as.numeric(difftime(t[rows], events$start_time[i], units = "hours")) /
+    events$width_h[i]
+  tibble(event     = i,
+         u         = u,
+         u_aligned = ifelse(u <= p, u * u_star / p, u_star + (u - p) * (1 - u_star) / (1 - p)),
+         flow      = q[rows])
+})
+
 # The standardised hydrographs (rows of Y)
 standardised_long <- tibble(event = rep(seq_len(nrow(Y)), each = n_grid),
                             u     = rep(grid_u, times = nrow(Y)),
                             flow  = as.vector(t(Y)))
 
-standardised_curves_plot <- ggplot() +
-  geom_line(data = standardised_long, aes(u, flow, group = event),
-            colour = "#5298BC", linewidth = 0.4, alpha = 0.25) +
-  geom_line(data = tibble(u = grid_u, flow = colMeans(Y)), aes(u, flow),
-            colour = "#174B67", linewidth = 1.3) +
-  geom_vline(xintercept = u_star, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
-  labs(x = "Standardised time u", y = "Flow / peak flow") +
-  eda_theme
+step_panel <- function(data, x, ylab, title) {
+  ggplot(data, aes(.data[[x]], flow, group = event)) +
+    geom_line(colour = "#5298BC", linewidth = 0.4, alpha = 0.25) +
+    labs(title = title, x = "Standardised time u", y = ylab) +
+    eda_theme
+}
+
+peak_line <- geom_vline(xintercept = u_star, linetype = "dashed", colour = "#AA1945",
+                        linewidth = 0.6)
+
+standardised_curves_plot <-
+  step_panel(standardise_steps, "u", discharge_lab, "1. Time rescaled to [0, 1]") |
+  (step_panel(standardise_steps, "u_aligned", discharge_lab, "2. Peaks aligned at u*") +
+     peak_line) |
+  (step_panel(standardised_long, "u", "Flow / peak flow", "3. Divided by peak flow") +
+     peak_line +
+     geom_line(data = tibble(u = grid_u, flow = colMeans(Y)), aes(u, flow),
+               inherit.aes = FALSE, colour = "#174B67", linewidth = 1.3))
 
 # ------------------------------------------------------------------------------
 # 9. Reconstruct a real hydrograph
@@ -1732,8 +1771,9 @@ synthesis <- tribble(
   ~Method, ~Accuracy, ~Features, ~Unusual, ~Parsimony, ~Behaviour, ~Valid, ~Interpret,
   
   "SEPA (average shape)",
-  sprintf("Poor: %s m$^3$/s", f1(S("SEPA (average shape)", "rmse_out"))),
   sprintf("Peak matched; volume %s\\%%", f1(S("SEPA (average shape)", "volume_out"))),
+  sprintf("Peak matched; timing %s h; volume %+.0f\\%%",
+          f1(S("SEPA (average shape)", "timing_out"), 0), S("SEPA (average shape)", "volume_bias")),
   "One shape for every event",
   "0 shape parameters",
   "None to model",

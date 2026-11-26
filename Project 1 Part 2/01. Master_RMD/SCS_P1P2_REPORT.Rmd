@@ -101,28 +101,53 @@ tidy_data_table
 
 We identified `r nrow(unchecked_model$unique_readings)` Unchecked readings falling within `r n_distinct(unchecked_model$in_windows$Event_ID)` of the standardised event windows (Table \@ref(tab:uncheckeddata)).
 
-\begingroup
-\scriptsize
-\setlength{\tabcolsep}{3pt}
-```{r uncheckeddata, results="asis", echo=FALSE}
-if (!is.null(unchecked_model)) {
-  knitr::kable(
-    unchecked_model$table,
-    format    = "markdown",
-    align     = "llrrrrrr",
-    col.names = c("Burst", "Event(s)", "Start", "Readings", "Duration (min)",
-                  "Max flow (m$^3$/s)", "RMSE (m$^3$/s)", "Max abs. diff (m$^3$/s)"),
-    caption   = "Unchecked readings (code 254) within the event windows, compared with linear interpolation between the neighbouring checked readings. Dashed 1:1 line represents perfect agreement."
-  )
-}
-```
-\endgroup
-
 Unchecked readings were compared to linearly interpolated values to decide if retaining the readings was reasonable. (Figure \@ref(fig:uncheckedscatter))
 
-```{r uncheckedscatter, echo=FALSE, fig.cap="Unchecked readings against the linear interpolation between neighbouring checked readings."}
-if (!is.null(unchecked_model)) unchecked_model$plot
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.58\textwidth}
+\vspace{0pt}
+\centering
+\setlength{\tabcolsep}{4pt}
+
+```{r uncheckeddata, echo=FALSE, results="asis"}
+knitr::kable(
+  unchecked_side_tbl,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  col.names = kableExtra::linebreak(c("Event(s)", "Start", "Readings",
+                                      "Max flow\n(m$^3$/s)", "RMSE\n(m$^3$/s)",
+                                      "Max abs.\ndiff (m$^3$/s)"), align = "c"),
+  align = "llrrrr",
+  linesep = ""
+) %>%
+  kableExtra::kable_styling(
+    font_size = 8,
+    full_width = FALSE,
+    position = "center"
+  )
 ```
+
+\captionof{table}{Unchecked readings (code 254) within the event windows, compared with linear interpolation between the neighbouring checked readings. Dashed 1:1 line represents perfect agreement.}
+\label{tab:uncheckeddata}
+
+\end{minipage}%
+\hfill%
+\begin{minipage}[t]{0.38\textwidth}
+\vspace{0pt}
+\centering
+\captionsetup{justification=raggedright}
+
+```{r uncheckedscatter, echo=FALSE, fig.width=4, fig.height=3.6, out.width="100%", fig.align="default"}
+unchecked_side_plot
+```
+
+\caption{Unchecked readings against the linear interpolation between neighbouring checked readings.}
+\label{fig:uncheckedscatter}
+
+\end{minipage}
+\end{figure}
 
 All readings closely agree with interpolated values, with a `RMSE` of `r sprintf("%.3f", unchecked_model$rmse)` $\text{m}^3/\text{s}$ against discharges of up to `r sprintf("%.0f", unchecked_model$max_q)` $\text{m}^3/\text{s}$. Although this does not establish their accuracy, retaining them is unlikely to materially affect hydrograph shape.
 
@@ -163,15 +188,19 @@ if (!is.null(suspect_model_plot)) suspect_model_plot
 
 To investigate the variation in hydrograph shape, the `r nrow(peaks)` independent extreme flow events are aligned at their maximum discharge, with the peak assigned time zero (Figure \@ref(fig:hydrograph-overlay)).
 
-```{r hydrograph-overlay, echo=FALSE, fig.width=10, fig.height=4.5, fig.cap=paste0("The ", nrow(Y), " extreme flow events aligned at their peak (time zero), from 48 hours before to 72 hours after it: in m$^3$/s (left, dotted line at the ", u_final, " m$^3$/s threshold) and scaled by peak flow, as in SEPA's approach (right). Bold curves are the means.")}
+```{r hydrograph-overlay, echo=FALSE, fig.width=9, fig.height=4, fig.cap=paste0("The ", nrow(Y), " extreme flow events aligned at their peak (time zero), from 48 hours before to 72 hours after it. The dotted line is the ", u_final, " m$^3$/s threshold, and the bold curve is the mean.")}
 hydrograph_overlay_eda_plot
 ```
 
-Variation in peak discharge, sharpness and rising and falling limbs were observed, demonstrating that the fixed mean hydrograph doesn't adequately capture the variability between events.
+We observe variation in peak discharge, sharpness and rising and falling limbs, demonstrating that the fixed mean hydrograph doesn't adequately capture the variability between events. Figure \@ref(fig:size-timing) shows this directly for peak discharge, duration and relative peak position, where there is correlation across events, motivating us to seperate them from the shape of each hydrograph.
+
+```{r size-timing, echo=FALSE, fig.width=9, fig.height=5.5, fig.cap=paste0("Peak flow, duration and relative peak position of the ", nrow(Y), " events: their distributions (top) and how they relate to each other, with Spearman correlations (bottom).")}
+size_timing_plot
+```
 
 ## Standardising the hydrographs {#standardising-the-hydrographs}
 
-To isolate variation in hydrograph shape, we standardise each extreme flow event as follows:
+To seperate these parameters and isolate variation in hydrograph shape, we standardise each extreme flow event as follows (Figure \@ref(fig:standardised-curves)):
 
 - Events are defined between rising and falling limb troughs.
 
@@ -189,11 +218,7 @@ To isolate variation in hydrograph shape, we standardise each extreme flow event
 
 Peak discharge, event duration and relative peak position are retained to reverse standardisation during validation.
 
-```{r size-timing, echo=FALSE, fig.width=9, fig.height=5.5, fig.cap=paste0("Peak flow, duration and relative peak position of the ", nrow(Y), " events: their distributions (top) and how they relate to each other (bottom).")}
-size_timing_plot
-```
-
-```{r standardised-curves, echo=FALSE, fig.width=8, fig.height=4.5, out.width="85%", fig.align="center", fig.cap=paste0("The ", nrow(Y), " standardised hydrographs (rows of $Y$), with time rescaled to [0, 1], peaks aligned at $u^*$ (dashed) and flow divided by peak flow. The bold curve is the mean.")}
+```{r standardised-curves, echo=FALSE, fig.width=11, fig.height=3.8, fig.cap=paste0("Each step of standardisation applied to the ", nrow(Y), " events. The dashed line marks the common peak position $u^*$, and the bold curve in the final panel is the mean of the standardised hydrographs (rows of $Y$).")}
 standardised_curves_plot
 ```
 
@@ -218,7 +243,7 @@ Peak discharge, duration and relative peak position are retained separately, giv
 
 ## SEPA's Approach {#method-SEPA}
 
-Our basline is SEPA's current approach, in which each event's flow is divided by its peak flow, aligned at its peak and averaged over events in real hours $h$ from the peak,
+Our baseline is SEPA's current approach, in which each event's flow is divided by its peak flow, aligned at its peak and averaged over events in real hours $h$ from the peak,
 \begin{equation}
 \bar{y}(h) = \frac{1}{N}\sum_{l=1}^{N} \frac{Q_l(t_l^{\text{peak}} + h)}{Q_l^{\text{peak}}},
 (\#eq:sepa)
