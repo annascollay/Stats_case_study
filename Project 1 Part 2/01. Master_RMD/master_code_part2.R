@@ -374,7 +374,7 @@ summarise_unchecked_readings <- function(in_windows, n_events, label = "Unchecke
     labs(
       title = paste(label, "readings vs linear interpolation"),
       subtitle = bquote("n =" ~ .(nrow(unique_readings)) ~ "| RMSE =" ~
-                          .(sprintf("%.3f", rmse)) ~ m^3/s ~ "| dashed line = 1:1"),
+                          .(sprintf("%.3f", rmse)) ~ m^3 * "/s" ~ "| dashed line = 1:1"),
       x = expression("Interpolated discharge (" * m^3 * "/s)"),
       y = bquote(.(label) ~ "discharge (" * m^3 * "/s)")
     ) +
@@ -823,7 +823,7 @@ plot_example_fits <- function(Y_fit, title) {
 plot_residuals <- function(Y_fit, title) {
   residuals <- Y - Y_fit
   matplot(grid_u, t(residuals), type = "l", lty = 1, col = "grey",
-          xlab = "Rescaled time u", ylab = "Observed - fitted",
+          xlab = "Standardised time u", ylab = "Observed - fitted",
           main = paste(title, ": residuals against time"))
   lines(grid_u, colMeans(residuals), col = "#AA1945", lwd = 2)
   abline(h = 0, lty = 2)
@@ -832,10 +832,14 @@ plot_residuals <- function(Y_fit, title) {
 # The four average errors against a method's setting
 plot_choice <- function(choice_table, setting_name) {
   types <- unique(choice_table$type)
+  error_titles <- list(rmse         = expression("RMSE (" * m^3 * "/s)"),
+                       peak_error   = expression("Peak error (" * m^3 * "/s)"),
+                       timing_error = "Timing error (h)",
+                       volume_error = "Volume error (%)")
   par(mfrow = c(2, 2))
-  for (error in c("rmse", "peak_error", "timing_error", "volume_error")) {
+  for (error in names(error_titles)) {
     plot(range(choice_table$setting), range(choice_table[[error]]), type = "n",
-         xlab = setting_name, ylab = "Average absolute error", main = error)
+         xlab = setting_name, ylab = "Average absolute error", main = error_titles[[error]])
     for (j in seq_along(types)) {
       rows <- choice_table$type == types[j]
       lines(choice_table$setting[rows], choice_table[[error]][rows],
@@ -1061,7 +1065,7 @@ pca_left_out    <- pca$left_out
 # Loadings of the first three components
 plot(grid_u, pca_result$rotation[, 1], type = "l", col = "red",
      ylim = range(pca_result$rotation[, 1:3]),
-     xlab = "Rescaled time u", ylab = "Loading",
+     xlab = "Standardised time u", ylab = "Loading",
      main = "Loadings for PC1, PC2 and PC3")
 lines(grid_u, pca_result$rotation[, 2], col = "blue")
 lines(grid_u, pca_result$rotation[, 3], col = "darkgreen")
@@ -1391,7 +1395,7 @@ plot_all_methods <- function() {
     }
   }
   mtext("Hours since start",   side = 1, outer = TRUE, line = 1)
-  mtext("Discharge (m^3/s)",   side = 2, outer = TRUE, line = 1)
+  mtext(expression("Discharge (" * m^3 * "/s)"), side = 2, outer = TRUE, line = 1)
   par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0))
 }
 
@@ -1410,14 +1414,14 @@ plot_all_residuals <- function() {
   for (j in 1:5) {
     matplot(grid_u, t(residuals_by_method[[j]]), type = "l", lty = 1,
             col = adjustcolor("grey40", alpha.f = 0.3), ylim = y_range,
-            xlab = "Rescaled time u", ylab = "Observed - fitted", main = method_names[j])
+            xlab = "Standardised time u", ylab = "Observed - fitted", main = method_names[j])
     lines(grid_u, colMeans(residuals_by_method[[j]]), col = method_colours[j], lwd = 2.5)
     abline(h = 0, lty = 2)
   }
   # last panel: all five means
   averages <- sapply(residuals_by_method, colMeans)
   matplot(grid_u, averages, type = "l", lty = 1, lwd = 2, col = method_colours,
-          xlab = "Rescaled time u", ylab = "Average residual", main = "Averages compared")
+          xlab = "Standardised time u", ylab = "Average residual", main = "Averages compared")
   abline(h = 0, lty = 2)
   legend("bottomright", method_names, col = method_colours, lwd = 2, cex = 0.7)
   par(mfrow = c(1, 1))
@@ -1577,7 +1581,7 @@ chosen_K <- c("Polynomial" = p_chosen + 1, "B-spline" = n_basis_chosen + 1,
 tradeoff <- tradeoff %>% mutate(chosen = K == chosen_K[method])
 
 # plotmath labels, drawn with label_parsed
-metric_labels <- c(rmse = "RMSE~(m^3/s)", peak_error = "Peak~error~(m^3/s)",
+metric_labels <- c(rmse = "RMSE~(m^3*'/s')", peak_error = "Peak~error~(m^3*'/s')",
                    volume_error = "Volume~error~('%')")
 tradeoff_long <- tradeoff %>%
   pivot_longer(c(rmse, peak_error, volume_error), names_to = "metric") %>%
@@ -1662,7 +1666,7 @@ cmp_feat_tbl <- cmp_summary %>%
   transmute(
     Method      = method,
     peak_bias   = sprintf("%+.2f", peak_bias),
-    volume_bias = sprintf("%+.1f", volume_bias),
+    volume_bias = sprintf("%+.1f", ifelse(abs(volume_bias) < 0.05, 0, volume_bias)),   # no "-0.0"
     p90         = fmt_best(rmse_p90, 1),
     worst       = fmt_best(rmse_max, 1),
     duration    = fmt_best(duration, 1),
@@ -1747,12 +1751,12 @@ synthesis <- tribble(
   "Single peak only; same baseflow at start and end",
   "3",
   sprintf("Weakly correlated (max %s)", f1(S("Gamma-type", "max_cor"), 2)),
-  sprintf("Valid; %d fits failed", cmp_text$gamma_failed),
+  sprintf("Valid; %d %s failed", cmp_text$gamma_failed, ifelse(cmp_text$gamma_failed == 1, "fit", "fits")),
   "High (baseflow, peak time, sharpness)",
   
   "Polynomial",
   sprintf("Moderate: %s m$^3$/s", f1(S("Polynomial", "rmse_out"))),
-  sprintf("Peak too low by %s m$^3$/s", f1(S("Polynomial", "peak_out"))),
+  sprintf("Peak error %s m$^3$/s, too low", f1(S("Polynomial", "peak_out"))),
   "Fails multi-peak events; drifts at ends",
   as.character(S("Polynomial", "K")),
   sprintf("Near-collinear (max %s)", f1(S("Polynomial", "max_cor"), 2)),
@@ -1761,7 +1765,7 @@ synthesis <- tribble(
   
   "B-spline",
   sprintf("Moderate: %s m$^3$/s", f1(S("B-spline", "rmse_out"))),
-  sprintf("Peak too low by %s m$^3$/s", f1(S("B-spline", "peak_out"))),
+  sprintf("Peak error %s m$^3$/s, too low", f1(S("B-spline", "peak_out"))),
   "Good tails; peaks flattened",
   as.character(S("B-spline", "K")),
   sprintf("Correlated (max %s)", f1(S("B-spline", "max_cor"), 2)),
@@ -1923,6 +1927,34 @@ plot_residual_qq <- function() {
       mgp = c(3, 1, 0), cex.axis = 1)
 }
 
+# Residuals against fitted values from the same regressions, to check the
+# constant-variance assumption (look for a fan shape), laid out as the Q-Q plots
+pca_fitted <- fitted(lm(pca_scores ~ flood_size_timing))
+wav_fitted <- fitted(lm(wav_params ~ flood_size_timing))
+
+plot_residual_fitted <- function() {
+  par(mfrow = c(3, 7), mar = c(2.5, 2.5, 2, 0.5), oma = c(2.5, 2.5, 0, 0),
+      mgp = c(2, 0.6, 0), cex.axis = 0.8)
+  fitted_panel <- function(fitted_values, residuals, name, colour) {
+    plot(fitted_values, residuals, pch = 19, cex = 0.6, col = adjustcolor(colour, 0.6),
+         main = name, xlab = "", ylab = "")
+    abline(h = 0, lty = 2)
+  }
+  for (j in 1:ncol(pca_residuals)) {
+    fitted_panel(pca_fitted[, j], pca_residuals[, j], colnames(pca_residuals)[j], pca_colour)
+  }
+  plot.new()
+  legend("center", c("PCA residuals", "Wavelet residuals"), col = c(pca_colour, wav_colour),
+         pch = 19, bty = "n")
+  for (j in 1:ncol(wav_residuals)) {
+    fitted_panel(wav_fitted[, j], wav_residuals[, j], colnames(wav_residuals)[j], wav_colour)
+  }
+  mtext("Fitted values", side = 1, outer = TRUE, line = 1)
+  mtext("Residuals",     side = 2, outer = TRUE, line = 1)
+  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0),
+      mgp = c(3, 1, 0), cex.axis = 1)
+}
+
 # ------------------------------------------------------------------------------
 # 19c. Conditional models for the shape parameters (Section 6.2)
 # ------------------------------------------------------------------------------
@@ -2075,7 +2107,7 @@ plot_held_out_bands <- function(events_to_plot = example_events[c(2, 4, 5)]) {
     }
   }
   mtext("Hours since start", side = 1, outer = TRUE, line = 1)
-  mtext("Discharge (m^3/s)", side = 2, outer = TRUE, line = 1)
+  mtext(expression("Discharge (" * m^3 * "/s)"), side = 2, outer = TRUE, line = 1)
   par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0))
 }
 
@@ -2109,7 +2141,7 @@ plot_fan_charts <- function() {
     colour <- method_colour[[combos$method[r]]]
     band   <- bands[[r]]
     plot(grid_u, band[3, ], type = "n", ylim = y_range, main = combo_names[r],
-         xlab = "Rescaled time u", ylab = "Flow / peak flow")
+         xlab = "Standardised time u", ylab = "Flow / peak flow")
     polygon(c(grid_u, rev(grid_u)), c(band[1, ], rev(band[5, ])),
             col = adjustcolor(colour, 0.2), border = NA)
     polygon(c(grid_u, rev(grid_u)), c(band[2, ], rev(band[4, ])),
@@ -2158,6 +2190,15 @@ print(volume_table, digits = 3)
 
 # Flood volumes from the recommended combination, for the report text
 pca_boot_volume <- volume_table[volume_table$scheme == "PCA, Conditional bootstrap", ]
+
+# Same, keeping only physically valid curves (no negative flow, peak within 1%)
+set.seed(2026)
+pca_boot_curves <- simulate_curves("PCA", "Conditional bootstrap", typical_size_timing)
+valid_curve     <- apply(pca_boot_curves, 1, min) >= 0 & apply(pca_boot_curves, 1, max) <= 1.01
+valid_volumes   <- apply(pca_boot_curves[valid_curve, ], 1, volume_of)
+pca_boot_valid_volume <- list(share = 100 * mean(valid_curve),
+                              lower = unname(quantile(valid_volumes, 0.05)),
+                              upper = unname(quantile(valid_volumes, 0.95)))
 
 # Table is built in the report chunk "volumes"
 
@@ -2237,7 +2278,7 @@ plot_sampling_bands <- function() {
     colour <- adjustcolor(method_colour[[combos$method[r]]], 0.2)
     matplot(grid_u, sapply(refitted_bands[[r]], function(b) b[1, ]), type = "l", lty = 1,
             col = colour, ylim = y_range, main = combo_names[r],
-            xlab = "Rescaled time u", ylab = "Flow / peak flow")
+            xlab = "Standardised time u", ylab = "Flow / peak flow")
     matlines(grid_u, sapply(refitted_bands[[r]], function(b) b[2, ]), lty = 1, col = colour)
   }
   par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
