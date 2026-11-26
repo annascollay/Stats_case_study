@@ -13,7 +13,8 @@ library(patchwork)
 library(wavelets)
 library(splines)
 library(kableExtra)
-library(gridGraphics)
+
+if (!isTRUE(getOption("knitr.in.progress"))) pdf(NULL)
 
 # Longer timeout for the SEPA download
 options(timeout = 300)
@@ -257,9 +258,6 @@ Y_raw <- t(sapply(1:N_events, function(i) extract_event_hydrograph(i, peak_rows[
 rownames(Y_raw) <- paste0("Event_", 1:N_events)
 colnames(Y_raw) <- paste0("t_", sprintf("%+.2fh", rel_time_hours))
 
-# Mean hydrograph
-mean_hydrograph <- colMeans(Y_raw)
-
 # ------------------------------------------------------------------------------
 # 5. Unchecked readings vs interpolation for peak windows
 # ------------------------------------------------------------------------------
@@ -417,27 +415,6 @@ plot_flagged_events <- function(flagged, starts, ends, peak_times, label,
     theme_minimal()
 }
 
-# Fixed [-48h, +72h] windows
-unchecked_in_events <- unchecked_in_windows(
-  starts     = peaks$Timestamp - win_before_h * 3600,
-  ends       = peaks$Timestamp + win_after_h * 3600,
-  peak_times = peaks$Timestamp
-)
-unchecked_fixed <- summarise_unchecked_readings(unchecked_in_events, N_events)
-
-if (!is.null(unchecked_fixed)) {
-  # Names used in the Rmd
-  unique_readings        <- unchecked_fixed$unique_readings
-  rmse                   <- unchecked_fixed$rmse
-  max_ad                 <- unchecked_fixed$max_ad
-  burst_tbl              <- unchecked_fixed$burst_tbl
-  overall_row            <- unchecked_fixed$overall_row
-  unchecked_table        <- unchecked_fixed$table
-  unchecked_scatter_plot <- unchecked_fixed$plot
-} else {
-  cat("No unchecked quality codes detected within the 120-hour peak event windows.\n\n")
-}
-
 # Suspect readings are excluded, so the model interpolates across them.
 # Compare each one with that interpolation.
 
@@ -452,81 +429,6 @@ suspect_all <- compare_unchecked(
   river_data_raw %>% filter(QualityCode %in% c(retained_codes, suspect_code)),
   unchecked_codes = suspect_code
 )
-# Bursts at either end of the record are skipped
-cat(sprintf("Suspect readings: %d in record (%.2f%%), %d above u, max %.1f m3/s; %d compared with interpolation\n",
-            n_suspect, pct_suspect, n_suspect_above, max_suspect, nrow(suspect_all)))
-
-# Fixed [-48h, +72h] windows
-suspect_in_events <- unchecked_in_windows(
-  starts     = peaks$Timestamp - win_before_h * 3600,
-  ends       = peaks$Timestamp + win_after_h * 3600,
-  peak_times = peaks$Timestamp,
-  readings   = suspect_all
-)
-suspect_fixed <- summarise_unchecked_readings(suspect_in_events, N_events, label = "Suspect")
-
-if (is.null(suspect_fixed)) {
-  cat("No Suspect readings within the 120-hour peak event windows.\n\n")
-} else {
-  cat(sprintf("Fixed windows: %d Suspect readings in %d events\n\n",
-              nrow(suspect_fixed$unique_readings),
-              n_distinct(suspect_fixed$in_windows$Event_ID)))
-}
-
-# ------------------------------------------------------------------------------
-# 6. Master Hydrograph Overlay Plot Generation
-# ------------------------------------------------------------------------------
-df_events_long <- as_tibble(Y_raw) %>%
-  mutate(event_id = factor(1:N_events)) %>%
-  pivot_longer(
-    cols = starts_with("t_"),
-    names_to = "t_col",
-    values_to = "Discharge"
-  ) %>%
-  mutate(hours_from_peak = rep(rel_time_hours, times = N_events))
-
-df_mean <- tibble(
-  hours_from_peak = rel_time_hours,
-  Discharge = mean_hydrograph
-)
-
-# All event hydrographs centred on the peak, mean in bold
-hydrograph_overlay_plot <- ggplot() +
-  geom_line(
-    data = df_events_long,
-    aes(x = hours_from_peak, y = Discharge, group = event_id),
-    colour = "#5298BC",
-    linewidth = 0.4,
-    alpha = 0.25
-  ) +
-  geom_line(
-    data = df_mean,
-    aes(x = hours_from_peak, y = Discharge),
-    colour = "#174B67",
-    linewidth = 1.3
-  ) +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "#AA1945", linewidth = 0.6) +
-  geom_hline(yintercept = u_final, linetype = "dotted", colour = "black", linewidth = 0.7) +
-  annotate("text", x = 0, y = max(Y_raw) * 0.98, label = "Peak Arrival (t = 0)", 
-           colour = "#AA1945", hjust = -0.1, size = 3.5, fontface = "bold") +
-  annotate("text", x = -45, y = u_final + 5, label = paste0("u == ", u_final, " ~ m^3/s"), parse = TRUE,
-           colour = "black", hjust = 0, size = 3.2) +
-  scale_x_continuous(breaks = seq(-48, 72, by = 12)) +
-  labs(
-    title = paste0("River Don Hydrograph Shape Variability (N = ", N_events, " Events)"),
-    subtitle = expression("Centred at peak arrival (t = 0) [-48h, +72h]. Bold line: mean curve" ~
-                            bar(Q)(t) * ". Unchecked values retained; Suspect (code 150) excluded."),
-    x = "Hours from Peak Arrival (t = 0)",
-    y = expression("Discharge (" * m^3 * "/s)")
-  ) +
-  theme_minimal() +
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold", size = 12),
-    plot.subtitle = element_text(size = 9.5, colour = "grey30")
-  )
-
-print(hydrograph_overlay_plot)
 
 # ------------------------------------------------------------------------------
 # 7. Event start, end and width (trough to trough)
@@ -572,20 +474,6 @@ unchecked_model_in_events <- unchecked_in_windows(
   peak_times = events$peak_time
 )
 unchecked_model <- summarise_unchecked_readings(unchecked_model_in_events, nrow(events))
-
-if (!is.null(unchecked_model)) {
-  fixed_ts <- if (is.null(unchecked_fixed)) as.POSIXct(character(0)) else
-    unchecked_fixed$unique_readings$Timestamp
-  cat(sprintf(
-    "Modelling events (trough to trough): %d unchecked readings, %d of them outside the fixed windows.\n",
-    nrow(unchecked_model$unique_readings),
-    sum(!unchecked_model$unique_readings$Timestamp %in% fixed_ts)))
-  cat(sprintf("RMSE vs interpolation: %.3f m3/s | max abs diff: %.3f m3/s\n\n",
-              unchecked_model$rmse, unchecked_model$max_ad))
-  # $table and $plot are used in the report
-} else {
-  cat("No unchecked quality codes within the modelling events.\n\n")
-}
 
 # Unchecked readings table and plot for the report, shown side by side
 unchecked_side_tbl <- bind_rows(
@@ -1073,7 +961,7 @@ print(round(cor(poly_coefs), 2))
 # Centred but not scaled.
 
 make_pca <- function(data, log = FALSE) {
-  X    <- if (log) log(data) else data      # log needs positive flow
+  X    <- if (log) log(data) else data      
   back <- if (log) exp else identity
   fit  <- prcomp(X, center = TRUE, scale. = FALSE)
   
@@ -1470,19 +1358,6 @@ plot_all_residuals <- function() {
 # ------------------------------------------------------------------------------
 # 18. Comparing all methods
 # ------------------------------------------------------------------------------
-# Accuracy, number of shape parameters and negative flows for each method
-
-all_comparison <- rbind(
-  cmp_row("SEPA (average shape)", 0, "in-sample", baseline_errors, sum(Y_baseline < 0)),
-  cmp_row("SEPA (average shape)", 0, "leave-one-out", baseline_errors_loocv),
-  cmp_row("Polynomial", p_chosen + 1, "in-sample", poly_errors, sum(Y_poly < 0)),
-  cmp_row("PCA", k_chosen, "in-sample", pca_errors, sum(Y_pca < 0)),
-  cmp_row("PCA", k_chosen, "leave-one-out", pca_errors_loocv),
-  cmp_row("Wavelets", ncol(wav_params), "in-sample", wav_errors, sum(Y_wav < 0)),
-  cmp_row("Wavelets", ncol(wav_params), "leave-one-out", wav_errors_loocv),
-  cmp_row("Gamma-type", 3, "in-sample", gamma_errors, sum(Y_gamma[gamma_ok, ] < 0)),
-  cmp_row("B-spline", n_basis_chosen + 1, "in-sample", bspline_errors, sum(Y_bspline < 0))
-)
 
 n_smooth_cmp <- length(wav_all[[1]]@V[[wav_levels]])
 
@@ -1583,14 +1458,6 @@ cmp_summary <- imap_dfr(cmp, function(m, name) {
     neg_events  = sum(apply(m$fit_out[m$rows, , drop = FALSE], 1, min) < 0),
     max_cor     = max_abs_cor(m$params)
   )
-})
-
-# Worst-fitted event for each method
-worst_events <- imap_dfr(cmp_err, function(e, name) {
-  rows <- cmp[[name]]$rows
-  w    <- rows[which.max(e$out[, "rmse"])]
-  tibble(method = name, event = w, rmse = max(e$out[, "rmse"]),
-         peak_flow = events$peak_flow[w], width_h = events$width_h[w])
 })
 
 # Errors against number of shape parameters K. Smallest K is 2 for the
@@ -1888,30 +1755,6 @@ wav_colour <- "#CC6679"
 qq_panel <- function(values, name, colour) {
   qqnorm(values, pch = 19, cex = 0.7, col = colour, main = name, xlab = "", ylab = "")
   qqline(values, col = "black", lwd = 1.5)
-}
-
-plot_all_qq <- function() {
-  par(mfrow = c(3, 7), mar = c(2.5, 2.5, 2, 0.5), oma = c(2.5, 2.5, 0, 0),
-      mgp = c(2, 0.6, 0), cex.axis = 0.8)
-  
-  # row 1: PCA scores, then the legend
-  for (j in 1:ncol(pca_scores)) {
-    qq_panel(pca_scores[, j], colnames(pca_scores)[j], pca_colour)
-  }
-  
-  plot.new()
-  legend("center", c("PCA scores", "Wavelet parameters"), col = c(pca_colour, wav_colour),
-         pch = 19, bty = "n")
-  
-  # rows 2-3: wavelet parameters
-  for (j in 1:ncol(wav_params)) {
-    qq_panel(wav_params[, j], colnames(wav_params)[j], wav_colour)
-  }
-  
-  mtext("Theoretical Normal quantiles", side = 1, outer = TRUE, line = 1)
-  mtext("Sample quantiles",             side = 2, outer = TRUE, line = 1)
-  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1, oma = c(0, 0, 0, 0),
-      mgp = c(3, 1, 0), cex.axis = 1)
 }
 
 # Is shape related to peak flow, duration and peak position?
@@ -2239,44 +2082,6 @@ valid_volumes   <- apply(pca_boot_curves[valid_curve, ], 1, volume_of)
 pca_boot_valid_volume <- list(share = 100 * mean(valid_curve),
                               lower = unname(quantile(valid_volumes, 0.05)),
                               upper = unname(quantile(valid_volumes, 0.95)))
-
-# Table is built in the report chunk "volumes"
-
-
-# Simulate whole events in real units, rescaled to peak at the drawn flow
-# TODO: draw peak flow from the Part 1 GPD instead of resampling
-draw_size_timing <- function(n) flood_size_timing[sample(nrow(Y), n, replace = TRUE), ]
-
-simulate_events <- function(n, method, scheme) {
-  size_timing <- draw_size_timing(n)
-  shapes <- simulate_curves(method, scheme, size_timing)
-  shapes <- shapes / apply(shapes, 1, max)
-  lapply(1:n, function(j) reconstruct_hydrograph(shapes[j, ], size_timing[j, "peak_position"],
-                                                 size_timing[j, "duration"],
-                                                 size_timing[j, "peak_flow"]))
-}
-
-# 30 simulated events per combination over the real events
-plot_simulated_events <- function(n = 30) {
-  real <- lapply(1:nrow(Y), function(i) as_flood(Y[i, ], i))
-  set.seed(2026)
-  simulated  <- lapply(1:4, function(r) simulate_events(n, combos$method[r], combos$scheme[r]))
-  all_events <- c(real, unlist(simulated, recursive = FALSE))
-  max_hours  <- max(sapply(all_events, function(f) max(f$hours)))
-  flow_range <- range(sapply(all_events, function(f) range(f$discharge)))
-  par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
-  for (r in 1:4) {
-    plot(NA, xlim = c(0, max_hours), ylim = flow_range, main = combo_names[r],
-         xlab = "Hours since start", ylab = "Discharge (m^3/s)")
-    for (f in real) lines(f$hours, f$discharge, col = adjustcolor("grey30", 0.3))
-    for (f in simulated[[r]]) lines(f$hours, f$discharge,
-                                    col = adjustcolor(method_colour[[combos$method[r]]], 0.7))
-  }
-  legend("topright", c("Real events", "Simulated events"), lty = 1, bty = "n", cex = 0.8,
-         col = c("grey30", "grey20"))
-  par(mfrow = c(1, 1), mar = c(5, 4, 4, 2) + 0.1)
-}
-
 
 # ------------------------------------------------------------------------------
 # 19f. Sampling uncertainty (Section 6.5)
