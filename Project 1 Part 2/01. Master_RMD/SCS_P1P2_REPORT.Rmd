@@ -77,13 +77,13 @@ source("master_code_part2.R")
 
 # Executive Summary
 
-SEPA’s current flood models assume that an extreme river flow event has a fixed shape, which is only varied by its maximum flow. SEPA's flood inundation models are computationally expensive and time consuming, so they use simpler statistical models (emulators) to approximate the results of the inundation models. These models use hydrographs, graphs showing how river flow changes over a period of extreme flow, as inputs. 
+SEPA’s current flood models assume that an extreme river flow event has a fixed shape, which is only varied by its maximum flow. Its flood inundation models are computationally expensive and time consuming, so they use simpler statistical models (emulators) to approximate the results of the inundation models. These models use hydrographs, graphs showing how river flow changes over a period of extreme flow, as inputs. 
 
 Unlike the current models, we examined the whole event, including aspects of the overall shape in addition to its peak. We used `r n_years` years of data from the River Don at Parkhill gauging station and identified `r N_events` extreme flow events. Using these events, we compared SEPA’s approach to five other methods of describing hydrograph shapes: polynomial regression, principal component analysis (PCA), wavelets, B-splines and a gamma-type function. As emulators favour fewer parameters, we also evaluated how well each method reproduced the event hydrographs with as few parameters as possible.
 
-PCA and wavelets were the most promising, reducing the reconstruction error from `r sprintf("%.1f", cmp_text$rmse_sepa)` $\text{m}^3/\text{s}$ with SEPA’s approach to `r sprintf("%.2f", cmp_text$rmse_pca)` and `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$ respectively. PCA captured `r round(100 * cum_var[k_chosen])`\% of the observed variation in shape with only `r k_chosen` parameters.
+PCA and wavelets were the most promising, reducing the reconstruction error from `r sprintf("%.1f", cmp_text$rmse_sepa)` $\text{m}^3/\text{s}$ with SEPA’s approach to `r sprintf("%.2f", cmp_text$rmse_pca)` and `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$ respectively. Our chosen PCA setting requires `r S("PCA", "inputs")` emulator inputs compared to `r S("Wavelets", "inputs")` for the wavelet model, reducing the number of inundation model runs considerably, and at this level it still explains 95\% of the observed variation in shape.
 
-We recommend SEPA adopts PCA and uses a conditional smoothed bootstrap method to simulate new hydrograph shapes, this reuses the variation seen in past events and adjusts the size and timing to the new event. Our chosen PCA setting requires `r S("PCA", "inputs")` emulator inputs compared to `r S("Wavelets", "inputs")` for the wavelet model, reducing the number of inundation model runs considerably. SEPA’s approach on average miscalculated the volume of water by `r sprintf("%.0f", S("SEPA (average shape)", "volume_out"))`\% and gave a single volume of `r sprintf("%.1f", volume_table$median[1])` million m$^3$ for an event of median size and timing, whereas 90\% of our simulated shapes gives a range between  `r sprintf("%.1f", pca_boot_volume$lower)` and `r sprintf("%.1f", pca_boot_volume$upper)` million m$^3$.
+We recommend SEPA adopts PCA and uses a conditional smoothed bootstrap method to simulate new hydrograph shapes, this reuses the variation seen in past events and adjusts the size and timing to the new event. SEPA’s approach on average miscalculated the volume of water by `r sprintf("%.0f", S("SEPA (average shape)", "volume_out"))`\% and gave a single volume of `r sprintf("%.1f", volume_table$median[1])` million m$^3$ for an event of median size and timing, whereas 90\% of our simulated shapes gives a range between  `r sprintf("%.1f", pca_boot_volume$lower)` and `r sprintf("%.1f", pca_boot_volume$upper)` million m$^3$.
 
 Our recommendation does have limitations, including that it does not fully reproduce unusual events, such as multi-peaks, and its simulated 90\% ranges contain only `r sprintf("%.0f", oos("PCA", "Conditional bootstrap", "coverage"))`\% of all observed flows. Despite this, when combined with an emulator, a PCA method lets SEPA explore a wider range of plausible extreme flow events, supporting better informed decisions on flood risk. 
 
@@ -151,7 +151,7 @@ All of the readings agree closely with the interpolated values, with an RMSE of 
 
 ### Suspect readings {#suspect-readings}
 
-SEPA flags `r format(n_suspect, big.mark = ",")` readings (`r sprintf("%.2f", pct_suspect)`% of the record) as Suspect (code 150), meaning that the flow lies beyond the acceptable extrapolation limit of the gauge's stage-discharge relationship. None of these exceed the `r u_final` $\text{m}^3/\text{s}$ threshold, with the largest being `r sprintf("%.1f", max_suspect)` $\text{m}^3/\text{s}$, or lie within the 118 event windows. Hence, we continue to exclude these readings, as we did in Part 1.
+SEPA flags `r format(n_suspect, big.mark = ",")` readings (`r sprintf("%.2f", pct_suspect)`% of the record) as Suspect (code 150), meaning that the flow lies beyond the acceptable extrapolation limit of the gauge's stage-discharge relationship. None of these exceed the `r u_final` $\text{m}^3/\text{s}$ threshold, with the largest being `r sprintf("%.1f", max_suspect)` $\text{m}^3/\text{s}$, or lie within the 118 event windows. Hence, we continue to exclude these readings.
 
 ## Exploratory data analysis {#exploratory-analysis}
 
@@ -169,7 +169,7 @@ size_timing_plot
 
 ## Standardising the hydrographs {#standardising-the-hydrographs}
 
-To separate these parameters and isolate each hydrograph's shape, we standardise the events. We denote peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$, and do so as follows (Figure \@ref(fig:standardised-curves)):
+To separate these parameters and isolate each hydrograph's shape, we standardise the events. We denote peak discharge $Q_i^{\text{peak}}$, duration $W_i$, and relative peak position $\tau_i$, and do so as follows:
 
 - Each event is defined between its rising trough, last reading within 5\% of the minimum flow in the 7 days before the peak, and falling limb trough, first reading within 5\% of the minimum flow in the 7 days after it, or the next peak if this occurs first.
 
@@ -217,7 +217,7 @@ Our baseline is SEPA's current approach, in which each event's flow is divided b
 \bar{y}(h) = \frac{1}{N}\sum_{l=1}^{N} \frac{Q_l(t_l^{\text{peak}} + h)}{Q_l^{\text{peak}}},
 (\#eq:sepa)
 \end{equation}
-and then its peak is rescaled to one. Every event then uses this single shape and scales by its peak flow, $\hat{Q}_i(t) = Q_i^{\text{peak}}\,\bar{y}(t - t_i^{\text{peak}})$. For leave-one-out validation the average is taken over the remaining $N-1$ events.
+and then its peak is rescaled to one. Every event then uses this single shape and scales by its peak flow, $\hat{Q}_i(t) = Q_i^{\text{peak}}\,\bar{y}(t - t_i^{\text{peak}})$.
 
 ## Evaluation criteria {#evaluation-criteria}
 
@@ -257,7 +257,7 @@ whose $p+1$ coefficients, estimated for each event by ordinary least squares,
 \end{equation}
 form its shape parameters, where $X$ has columns $1,u,\ldots,u^p$ and $\mathbf{y}_i$ contains the event's `r n_grid` standardised discharge values.
 
-To choose the degree $p$, we tested degrees 2-15 and compared the errors across all events (Figure \@ref(fig:polychoice)). We also checked whether the highest-order coefficient was significant (Table \@ref(tab:polysig)), although this check is less reliable, as neighbouring discharge readings are correlated and violate the independence assumption used to calculate the standard errors.
+To choose the degree $p$, we tested degrees 2-15 and compared the errors across all events (Figure \@ref(fig:polychoice)).
 
 \begin{figure}[H]
 \centering
@@ -290,7 +290,7 @@ knitr::kable(
 
 \end{minipage}
 
-\captionof{table}{The proportion of events for which the highest-order polynomial term is significant at the 5\% level.}
+\captionof{table}{The proportion of events for which the highest-order polynomial term is significant at the 5\% level. Since neighbouring discharge readings are correlated and violate the independence assumption used to calculate the standard errors, this check is less reliable, and is here as a guide.}
 \label{tab:polysig}
 
 \end{minipage}%
@@ -473,11 +473,11 @@ knitr::kable(
 
 ## Other methods {#method-other}
 
-As well as the three methods explored in lectures, we considered two further methods, each addressing a weakness found above.
+We considered two further methods, each addressing a weakness found above.
 
 ### B-splines {#method-bspline}
 
-The polynomial's weaknesses stem from using a single curve across the whole event, so we introduce the B-spline method, which joins smaller, smooth pieces of a polynomial together, allowing for more local changes. In particular, we fitted cubic B-splines, with equally spaced knots, to each standardised event:
+The polynomial's weaknesses stem from using a single curve across the whole event, so we introduce the B-spline method [@ramsay2005functional], which joins smaller, smooth pieces of a polynomial together, allowing for more local changes. In particular, we fitted cubic B-splines, with equally spaced knots, to each standardised event:
 
 \begin{equation}
 y_i(u_j) \approx \theta_{i0} + \sum_{l=1}^{L} \theta_{il}\,B_l(u_j)
