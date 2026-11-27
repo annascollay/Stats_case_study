@@ -56,11 +56,12 @@ if (file.exists(cache_file)) {
   saveRDS(river_data, cache_file)
 }
 
-# Codes kept for modelling. Suspect is checked separately in section 5
+# Codes kept for modelling. Suspect is checked separately later in the code, in 
+# 'Suspect readings analysis'
 retained_codes <- c(50, 100, 200, 254)   
-suspect_code   <- 150                    
+suspect_code <- 150                    
 
-# Full record before filtering, used to check Suspect readings in section 5
+# Full record before filtering, used to check Suspect readings in the later section
 river_data_raw <- river_data %>%
   arrange(Timestamp) %>%
   mutate(QualityCode = as.numeric(QualityCode))
@@ -693,7 +694,7 @@ reconstruct_hydrograph <- function(y, peak_position, width_h, peak_flow) {
 # Shared functions for errors, plotting, comparing and validating across each method
 # ------------------------------------------------------------------------------
 
-# We cached these functions to speed up the run time of the script
+# We cached the results of these slow computations
 use_cache <- TRUE
 
 cached <- function(name, expr, key = NULL) {
@@ -1160,7 +1161,7 @@ cat("Max error of full rebuild:", max(abs(Y[1, ] - as.numeric(idwt(wt_example)))
 # The range of detail coefficients we consider
 keep_values <- c(1, 2, 3, 5, 8, 10, 15, 20)
 
-# Choosing the number of detail coefficients to keep, comparing in-sample and leave-one-out erros
+# Choosing the number of detail coefficients to keep, comparing in-sample and leave-one-out errors
 wav_choice <- cached("wav_choice",
                      insample_loo_choice(keep_values, wavelet_fit_all, wavelet_left_out),
                      key = keep_values)
@@ -1234,7 +1235,7 @@ gamma_curve <- function(u, b, up, m) {
   b + (1 - b) * (u / up)^m * exp(m * (1 - u / up))
 }
 
-# Fit one event's curve, which returns NULL is nonlinear least squares fails
+# Fit one event's curve, which returns NULL if nonlinear least squares fails
 fit_gamma_model <- function(y) {
   tryCatch(
     nls(y ~ gamma_curve(u, b, up, m),
@@ -1255,7 +1256,7 @@ gamma_ok <- which(!sapply(gamma_models, is.null))
 cat("Gamma fits that failed to converge:", nrow(Y) - length(gamma_ok), "\n")
 
 # The fitted curves, with one row per event. Failed fits stay as the observed curve 
-# and are left our of the errors and parameters below
+# and are left out of the errors and parameters below
 Y_gamma <- Y
 for (i in gamma_ok) {
   Y_gamma[i, ] <- fitted(gamma_models[[i]])
@@ -1413,7 +1414,7 @@ plot_all_residuals <- function() {
 
 # Conducting the comparison, extending the evaluation criteria from Section 3
 
-# Store the number of smooth coefficients at the coarsets wavelet level, as these are always kept
+# Store the number of smooth coefficients at the coarsest wavelet level, as these are always kept
 n_smooth_cmp <- length(wav_all[[1]]@V[[wav_levels]])
 
 # The held-out curves for the appropriate methods, while per-event methods just use 
@@ -1643,7 +1644,7 @@ cmp_main_tbl <- cmp_summary %>%
   )
 
 
-# Constructing the event-feature table, containing bias, worst cases and flood feature events
+# Constructing the event-feature table, containing bias, worst cases and flood feature errors
 cmp_feat_tbl <- cmp_summary %>%
   transmute(
     Method = method,
@@ -1989,7 +1990,7 @@ wav_params_from <- function(rows, kept) {
 }
 
 # Define a function to conduct leave-one-out validation, where each event i is left out
-# of the fit and 200 curves are simulated  with its own standardisation parameters
+# of the fit and 200 curves are simulated with its own standardisation parameters
 held_out_curves <- function(i, method, simulate) {
   train <- setdiff(1:nrow(Y), i)
   new_size_timing <- flood_size_timing[rep(i, n_each), ]
