@@ -155,13 +155,13 @@ SEPA flags `r format(n_suspect, big.mark = ",")` readings (`r sprintf("%.2f", pc
 
 ## Exploratory data analysis {#exploratory-analysis}
 
-Continuing our exploration from Part 1, in Figure \@ref(fig:hydrograph-overlay) we plot our 118 extreme flow events, aligned at their maximum flow.
+Continuing from Part 1, Figure \@ref(fig:hydrograph-overlay) plots our 118 extreme flow events, aligned at their maximum flow.
 
 ```{r hydrograph-overlay, echo=FALSE, fig.width=9, fig.height=4, fig.cap=paste0("The ", nrow(Y), " extreme flow events aligned at their peak (time zero), from 48 hours before to 72 hours after it. The dotted line is the ", u_final, " m$^3$/s threshold, and the bold curve is the mean.")}
 hydrograph_overlay_eda_plot
 ```
 
-We observe large variation in shape, that a fixed mean hydrograph does not capture. We can see this directly for peak discharge, duration and relative peak position in Figure \@ref(fig:size-timing). These are only weakly correlated, between 0.12 and 0.34, which motivates us to keep each as a separate input, as otherwise they would dominate the variation between events.
+We observe large variation in shape, which a fixed mean hydrograph would not capture. This is shown for peak discharge, duration and relative peak position in Figure \@ref(fig:size-timing). These are only weakly correlated, between 0.12 and 0.34, motivating us to keep each as separate inputs, as otherwise they would dominate the variation between events.
 
 ```{r size-timing, echo=FALSE, fig.width=9, fig.height=5.5, fig.cap=paste0("Peak flow, duration and relative peak position of the ", nrow(Y), " events: their distributions (top) and how they relate to each other, with Spearman correlations (bottom).")}
 size_timing_plot
@@ -185,7 +185,7 @@ To separate these parameters and isolate each hydrograph's shape, we standardise
 
 - The resulting data are arranged into a matrix ($Y$), with one row per event and 64 columns, one for each time point.
 
-Alongside these steps, we retain peak discharge, event duration and relative peak position separately, which allows standardisation to be reversed.
+Alongside these, we retain peak discharge, event duration and relative peak position separately, allowing for standardisation to be reversed.
 
 ```{r standardised-curves, echo=FALSE, fig.width=11, fig.height=3.8, fig.cap=paste0("Each step of the standardisation, where the red dashed lines are the common peak position $u^*$ and the bold line is the mean of the standardised hydrographs.")}
 standardised_curves_plot
@@ -212,7 +212,7 @@ This gives $K+3$ inputs in total, where $K$ is considerably smaller than the pre
 
 ## SEPA's approach {#method-SEPA}
 
-Our baseline is SEPA's current approach, in which each event's flow is divided by its peak flow, aligned at its peak and averaged over events in real hours $h$ from the peak,
+Our baseline is SEPA's approach, in which each event's flow is divided by its peak flow, aligned at its peak and averaged over events in real hours $h$ from the peak,
 \begin{equation}
 \bar{y}(h) = \frac{1}{N}\sum_{l=1}^{N} \frac{Q_l(t_l^{\text{peak}} + h)}{Q_l^{\text{peak}}},
 (\#eq:sepa)
@@ -234,7 +234,7 @@ For the SEPA, PCA and wavelet methods, that estimate a shared basis or shape, we
 
 **Parsimony:** We consider the number of shape parameters used, comparing both the accuracy at different numbers, and strong correlations between parameters, which increase complexity.
 
-**Fitness for purpose:** We also want to understand whether the method reproduces a valid range of hydrograph shapes. We do so by measuring errors in peak discharge, peak timing and total flow volume [@wilson2026lec5]:
+**Fitness for purpose:** To understand whether the method reproduces a valid range of hydrograph shapes. We measure errors in peak discharge, peak timing and total flow volume [@wilson2026lec5]:
 
 \begin{align}
 \text{Peak error}_i &= \max_j \hat{Q}_i(t_j) - \max_j Q_i(t_j), (\#eq:peak)\\
@@ -313,7 +313,7 @@ plot_choice(poly_choice, "Polynomial degree")
 \end{minipage}
 \end{figure}
 
-In Figure \@ref(fig:polychoice), the errors generally decrease as the degree increases, particularly when moving to higher odd degrees. We select degree 7, because it substantially improves RMSE, peak error and timing error, with diminishing returns beyond it. This means each hydrograph has eight shape parameters, including the intercept.
+In Figure \@ref(fig:polychoice), the errors generally decrease as the degree increases, particularly when moving to higher odd degrees. We select degree 7, because it improves RMSE, peak error and timing error, with diminishing returns beyond it. This means each hydrograph has eight shape parameters, including the intercept.
 
 ## Principal component analysis (PCA) {#method-pca}
 
@@ -335,7 +335,7 @@ legend("bottomright", c("PC1", "PC2", "PC3"), lty = 1, lwd = 2,
        col = c("#AA1945", "#5298BC", "#174B67"), bty = "n")
 ```
 
-From Figure \@ref(fig:pcacumvar), the first three principal components explain `r round(100 * cum_var[3])`% of the variation, and they each have a physical interpretation, for example, PC1 mainly describes event width.
+From Figure \@ref(fig:pcacumvar), the first three principal components explain `r round(100 * cum_var[3])`% of the variation, and they have a physical interpretation, for example, PC1 mainly describes event width.
 
 We select the number of parameters using the percentage of cumulative variance explained, as well as the errors in Figure \@ref(fig:pcachoice). We see that six components explain approximately 95% of the variation, and there is little improvement in leave-one-out RMSE from adding another. Hence, we select $K=6$, which reduces each hydrograph to six shape parameters.
 
@@ -404,7 +404,7 @@ plot_choice(pca_choice, "Number of components K")
 
 ## Wavelets {#method-wavelets}
 
-The wavelets method represents a hydrograph using small, localised waves [@wilson2026lec4], and we applied the discrete wavelet transform (DWT) to each standardised hydrograph, splitting it into a smooth component and detail components at three resolution levels:
+The wavelets method represents a hydrograph using small, localised waves [@wilson2026lec4]. We applied the discrete wavelet transform (DWT) to each standardised hydrograph, splitting it into a smooth component and detail components at three resolution levels:
 
 \begin{equation}
 y_i(u) = \sum_{k} a_{ik}\,\varphi_k(u) + \sum_{j=1}^{`r wav_levels`}\sum_{k} d_{ijk}\,\psi_{jk}(u),
@@ -413,7 +413,7 @@ y_i(u) = \sum_{k} a_{ik}\,\varphi_k(u) + \sum_{j=1}^{`r wav_levels`}\sum_{k} d_{
 
 where $a_{ik}$ are the smooth coefficients and $d_{ijk}$ are the detail coefficients at scale $j$ and location $k$. 
 
-At `r wav_levels` levels, each `r n_grid`-point hydrograph gives `r n_grid / 2^wav_levels` smooth and `r n_grid - n_grid / 2^wav_levels` detail coefficients, which allows exact reconstruction if all are retained. We do in fact choose to retain all `r n_grid / 2^wav_levels` smooth coefficients, but we select the $M$ detail coefficients with the largest mean absolute values across all events. Comparing the errors in Figure \@ref(fig:wavchoice), peak and timing error fell sharply up to $M = 5$, with little improvement after that, while RMSE decreased more gradually. Hence, we retain five detail coefficients, which gives thirteen shape parameters in total.
+At `r wav_levels` levels, each `r n_grid`-point hydrograph gives `r n_grid / 2^wav_levels` smooth and `r n_grid - n_grid / 2^wav_levels` detail coefficients, which allows exact reconstruction if all are retained. We choose to retain all `r n_grid / 2^wav_levels` smooth coefficients, but we select the $M$ detail coefficients with the largest mean absolute values across all events. Comparing the errors in Figure \@ref(fig:wavchoice), peak and timing error fell sharply up to $M = 5$, with little improvement after that, while RMSE decreased more gradually. Hence, we retain five detail coefficients, which gives thirteen shape parameters in total.
 
 \begin{figure}[H]
 \centering
@@ -513,9 +513,9 @@ plot_all_methods()
 plot_all_residuals()
 ```
 
-The polynomial method fits a single peak that is too low and broad, so it misses sharp and multi-peak events (Figure \@ref(fig:all-methods-plot)), and it also drifts at the ends of each event. Its residuals in Figure \@ref(fig:residuals-all) reflect this, being positive around the peak and negative on either side of it. The B-spline method has the same problem at the peak but follows the recession closely, with residuals close to zero after $u \approx 0.6$, whereas the gamma-type method fits poorly overall, since each curve can only have a single peak and must have the same baseflow at both ends.
+The polynomial method fits a single peak that is low and broad, so misses sharp and multi-peak events (Figure \@ref(fig:all-methods-plot)), and it also drifts at the ends of each event. Its residuals in Figure \@ref(fig:residuals-all) reflect this, being positive around the peak and negative on either side of it. The B-spline method has the same problem at the peak but follows the recession closely, with residuals close to zero after $u \approx 0.6$, whereas the gamma-type method fits poorly overall, since each curve can only have a single peak and must have the same baseflow at both ends.
 
-PCA reproduces single-peak events almost exactly and multi-peak events closely, although it does underestimate some of the smaller peaks in the latter. Its residuals are small throughout, with the largest on the rising limb. Wavelets are similarly accurate but show unrealistic dips, because every event keeps the same detail coefficients, as well as deviations at the ends caused by the periodic boundary. The residuals are correlated over time, but this is not a concern here because the fits are only used as a basis rather than for inference.
+PCA reproduces single-peak events well and multi-peak events closely, although it does underestimate some of the smaller peaks in the latter. Its residuals are small throughout, with the largest on the rising limb. Wavelets are similarly accurate but show unrealistic dips, because every event keeps the same detail coefficients, as well as deviations at the ends caused by the periodic boundary. The residuals are correlated over time, but this is not a concern here because the fits are only used as a basis rather than for inference.
 
 ## Accuracy and fitness for purpose {#cmp-accuracy}
 
@@ -553,7 +553,7 @@ kable(cmp_feat_tbl, format = "latex", booktabs = TRUE, escape = FALSE, align = "
 per_event_long_plot
 ```
 
-All of the methods achieve a lower RMSE than SEPA's fixed shape (Table \@ref(tab:cmp-main)), and the improvement is largest for PCA and wavelets, which bring it down from `r sprintf("%.1f", cmp_text$rmse_sepa)` $\text{m}^3/\text{s}$ to `r sprintf("%.2f", cmp_text$rmse_pca)` and `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$, or roughly `r sprintf("%.0f", cmp_text$rmse_sepa / cmp_text$rmse_pca)` and `r sprintf("%.0f", cmp_text$rmse_sepa / cmp_text$rmse_wav)` times lower. Because SEPA matches the peak by construction, its errors come from the shape of the hydrograph, and since it gives every event the same duration it overstates the volume of some events and understates others. Hence, its volume error averages `r sprintf("%.0f", S("SEPA (average shape)", "volume_out"))`\% even though its overall bias is only `r sprintf("%+.0f", cmp_text$volume_sepa)`\% (Table \@ref(tab:cmp-features)). The polynomial and B-spline methods both underestimate the peak, with peak errors of `r sprintf("%.1f", cmp_text$peak_poly)` and `r sprintf("%.1f", cmp_text$peak_bspline)` $\text{m}^3/\text{s}$, and they each give negative flow in `r S("Polynomial", "neg_events")` events. Their flattened peaks, along with the single-peak form of the gamma-type method, also mean that the timing of the maximum is out by between `r sprintf("%.1f", min(sapply(c("Gamma-type", "Polynomial", "B-spline"), S, col = "timing_out")))` and `r sprintf("%.1f", max(sapply(c("Gamma-type", "Polynomial", "B-spline"), S, col = "timing_out")))` hours.
+All of the methods achieve a lower RMSE than SEPA's approach (Table \@ref(tab:cmp-main)), and the improvement is largest for PCA and wavelets, which bring it down from `r sprintf("%.1f", cmp_text$rmse_sepa)` $\text{m}^3/\text{s}$ to `r sprintf("%.2f", cmp_text$rmse_pca)` and `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$, or roughly `r sprintf("%.0f", cmp_text$rmse_sepa / cmp_text$rmse_pca)` and `r sprintf("%.0f", cmp_text$rmse_sepa / cmp_text$rmse_wav)` times lower. Because SEPA matches the peak by construction, its errors come from the shape of the hydrograph, and since it gives every event the same duration it overstates the volume of some events and understates others. Hence, its volume error averages `r sprintf("%.0f", S("SEPA (average shape)", "volume_out"))`\% even though its overall bias is only `r sprintf("%+.0f", cmp_text$volume_sepa)`\% (Table \@ref(tab:cmp-features)). The polynomial and B-spline methods both underestimate the peak, with peak errors of `r sprintf("%.1f", cmp_text$peak_poly)` and `r sprintf("%.1f", cmp_text$peak_bspline)` $\text{m}^3/\text{s}$, and they each give negative flow in `r S("Polynomial", "neg_events")` events. Their flattened peaks, along with the single-peak form of the gamma-type method, also mean that the timing of the maximum is out by between `r sprintf("%.1f", min(sapply(c("Gamma-type", "Polynomial", "B-spline"), S, col = "timing_out")))` and `r sprintf("%.1f", max(sapply(c("Gamma-type", "Polynomial", "B-spline"), S, col = "timing_out")))` hours.
 
 Wavelets give the lowest errors on most metrics, although they produce negative flow in `r S("Wavelets", "neg_events")` events, compared with `r S("PCA", "neg_events")` for PCA. PCA's 90th-percentile error of `r sprintf("%.1f", S("PCA", "rmse_p90"))` $\text{m}^3/\text{s}$ is still less than half of SEPA's average error (Table \@ref(tab:cmp-features), Figure \@ref(fig:cmp-distribution)). Also, its RMSE only rises from `r sprintf("%.2f", cmp_text$rmse_pca_in)` to `r sprintf("%.2f", cmp_text$rmse_pca)` $\text{m}^3/\text{s}$ when events are held out, which suggests that its basis generalises well to new events.
 
@@ -563,7 +563,7 @@ Wavelets give the lowest errors on most metrics, although they produce negative 
 tradeoff_long_plot
 ```
 
-We know that each shape parameter adds an emulator input, and with it more runs of the slow inundation model. So, we consider the methods at the same number of parameters, and we find that PCA usually gives the lowest errors (Figure \@ref(fig:cmp-tradeoff)), except for volume error, where it is in line with the other methods. In particular, comparing at $K =$ `r ncol(wav_params)`, PCA's held-out RMSE is `r sprintf("%.2f", cmp_text$pca_at_wav_K)` $\text{m}^3/\text{s}$ against wavelets' `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$, which suggests that wavelets' lower error comes from extra parameters, not a better basis.
+Each shape parameter adds an emulator input, and with it more runs of the slow inundation model. So, we consider the methods at the same number of parameters, and we find that PCA usually gives the lowest errors (Figure \@ref(fig:cmp-tradeoff)), except for volume error, where it is in line with the other methods. In particular, comparing at $K =$ `r ncol(wav_params)`, PCA's held-out RMSE is `r sprintf("%.2f", cmp_text$pca_at_wav_K)` $\text{m}^3/\text{s}$ against wavelets' `r sprintf("%.2f", cmp_text$rmse_wav)` $\text{m}^3/\text{s}$, which suggests that wavelets' lower error comes from extra parameters, not a better basis.
 
 In terms of correlations, PCA scores are uncorrelated by construction and gamma-type parameters are weakly correlated, up to `r sprintf("%.2f", S("Gamma-type", "max_cor"))`. On the other hand, polynomial coefficients are near-collinear, up to `r sprintf("%.2f", S("Polynomial", "max_cor"))`, while B-spline and wavelet coefficients reach `r sprintf("%.2f", S("B-spline", "max_cor"))` and `r sprintf("%.2f", S("Wavelets", "max_cor"))`. This is important for Section \@ref(uncertainty), where we fit a joint distribution for the shape parameters.
 
@@ -597,7 +597,7 @@ kable(synthesis, format = "latex", booktabs = TRUE, escape = FALSE,
   row_spec(which(synthesis$Method %in% c("PCA", "Wavelets")), bold = TRUE)
 ```
 
-Following our comparison, we eliminate SEPA's fixed shape, which cannot capture differences in duration or volume, as well as the polynomial and B-spline methods, which erode the peak and give negative flows, and the gamma-type method, which, though the most parsimonious and interpretable, cannot represent multi-peak events and has `r sprintf("%.1f", S("Gamma-type", "rmse_out") / S("PCA", "rmse_out"))` times PCA's RMSE. We move forward with PCA, which has fewer, uncorrelated parameters, and wavelets, which have the lowest error. Our choice between them will depend on their ability to simulate new events in Section \@ref(uncertainty).
+Following our comparison, we eliminate SEPA's fixed shape, which cannot capture differences in duration or volume, as well as the polynomial and B-spline methods, which erode the peak and give negative flows, and the gamma-type method, which, though the most parsimonious and interpretable, cannot represent multi-peak events and has `r sprintf("%.1f", S("Gamma-type", "rmse_out") / S("PCA", "rmse_out"))` times PCA's RMSE. We move forward with PCA, which has fewer, uncorrelated parameters, and wavelets, which have the lowest error. Our choice between them depends on their ability to simulate new events in Section \@ref(uncertainty).
 
 # Uncertainty analysis {#uncertainty}
 
@@ -611,7 +611,7 @@ As peak flow, duration and peak position are held separately from the shape para
 plot_dependence()
 ```
 
-Some of the correlations in Figure \@ref(fig:dependence) are moderate to strong, in particular, $-0.80$ between PC2 and peak position and $-0.74$ between S5 and peak position. Hence, this motivates fitting a conditional scheme, otherwise we may pair shapes with sizes and timings that do not actually occur together. To explore which scheme, we regress the shape parameters on the standardisation parameters and model the residuals.
+Some of the correlations in Figure \@ref(fig:dependence) are moderate to strong, in particular, $-0.80$ between PC2 and peak position and $-0.74$ between S5 and peak position. This motivates fitting a conditional scheme, otherwise we may pair shapes with sizes and timings that do not actually occur together. To explore which scheme, we regress the shape parameters on the standardisation parameters and model the residuals.
 
 ```{r param-qq, echo = FALSE, fig.width = 12, fig.height = 6, fig.cap = "Normal Q-Q plots of the residuals of each shape parameter after regressing it on peak flow, duration and peak position. The PCA scores (PC1-PC6) are blue and on the top row, while the wavelet smooth (S1-S8) and detail (D1-D5) coefficients are pink and on the bottom two rows."}
 plot_residual_qq()
@@ -697,7 +697,7 @@ The coverage is below 90\% for every combination, and Figure \@ref(fig:held-out-
 
 ## Simulating new extreme flow events {#uncertainty-sim}
 
-We now refit each combination to every event and simulate `r n_sim` new standardised hydrographs, each using the peak flow, duration and peak position of a randomly chosen observed event.
+We refit each combination to every event and simulate `r n_sim` new standardised hydrographs, each using the peak flow, duration and peak position of a randomly chosen observed event.
 
 ```{r fan-charts, echo=FALSE, fig.width=10, fig.height=8, fig.cap=paste0("The median, 25-75\\% and 5-95\\% bands of the ", n_sim, " simulated standardised hydrographs for each combination, where the observed events are in grey.")}
 plot_fan_charts()
@@ -721,7 +721,7 @@ Our combinations give medians of `r sprintf("%.1f", min(volume_table$median[-1])
 
 ## Other uncertainties
 
-We first analyse sampling error, that is how far our events depend on the `r nrow(Y)` events we observed. We resample them with replacement `r n_boot` times, and each time we refit both the shape method and the distribution and record the edges of the simulated 90\% band.
+We first analyse sampling error, (how far our events depend on the `r nrow(Y)` events we observed). We resample them with replacement `r n_boot` times, each time refitting both the shape method and the distribution and record the edges of the simulated 90\% band.
 
 ```{r sampling, echo=FALSE}
 kable(sampling_table, format = "latex", booktabs = TRUE, digits = 3, row.names = FALSE,
